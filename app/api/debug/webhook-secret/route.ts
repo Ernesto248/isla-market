@@ -5,7 +5,7 @@
 // export async function GET() {
 //   const envSecret = process.env.STRIPE_WEBHOOK_SECRET;
 //   const cliSecret =
-//     "whsec_db4900120d306bafde95ea932b4bda2fd2d0c91ef0862963c3026b46f9879788";
+//
 
 //   return NextResponse.json({
 //     env_secret_configured: !!envSecret,
