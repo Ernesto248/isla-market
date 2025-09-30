@@ -1,5 +1,5 @@
 {
-  "mcpServers": {
+  "servers": {
     "supabase": {
       "command": "npx",
       "args": [
