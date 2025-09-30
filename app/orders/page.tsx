@@ -1,32 +1,91 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Package, Calendar, DollarSign, Truck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/lib/store';
-import { translations } from '@/lib/translations';
-import { mockOrders } from '@/lib/mock-data';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Package, Calendar, DollarSign, Truck } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAuth } from "@/contexts/auth-context";
+import { useAppStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
+import { DataService } from "@/lib/data-service";
+import { Order } from "@/lib/types";
 
-export default function OrdersPage() {
-  const router = useRouter();
-  const { language, user } = useAppStore();
-  const t = translations[language];
+function OrdersContent() {
+  const { user } = useAuth();
+  const t = translations["es"];
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Función para obtener el texto del estado
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "pending":
+        return t.pending;
+      case "paid":
+        return t.paid;
+      case "confirmed":
+        return t.confirmed;
+      case "processing":
+        return t.processing;
+      case "shipped":
+        return t.shipped;
+      case "delivered":
+        return t.delivered;
+      case "cancelled":
+        return t.cancelled;
+      default:
+        return status;
+    }
+  };
+
+  // Función para obtener la variante del badge
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "delivered":
+        return "default";
+      case "paid":
+      case "confirmed":
+      case "processing":
+      case "shipped":
+        return "secondary";
+      case "cancelled":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
 
   useEffect(() => {
-    if (!user) {
-      router.push('/');
-    }
-  }, [user, router]);
+    const loadOrders = async () => {
+      if (!user) return;
 
-  if (!user) {
-    return null;
+      try {
+        // TODO: Implement DataService.getUserOrders(user.id)
+        // For now, use mock data
+        const userOrders = await DataService.getUserOrders(user.id);
+        setOrders(userOrders);
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
   }
-
-  // Filter orders for current user
-  const userOrders = mockOrders.filter(order => order.userId === user.id);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -38,14 +97,11 @@ export default function OrdersPage() {
       >
         <h1 className="text-3xl lg:text-4xl font-bold mb-4">{t.myOrders}</h1>
         <p className="text-xl text-muted-foreground">
-          {language === 'en' 
-            ? `You have ${userOrders.length} orders`
-            : `Tienes ${userOrders.length} órdenes`
-          }
+          {`Tienes ${orders.length} órdenes`}
         </p>
       </motion.div>
 
-      {userOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -53,21 +109,15 @@ export default function OrdersPage() {
         >
           <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <p className="text-lg text-muted-foreground mb-4">
-            {language === 'en' 
-              ? 'You haven\'t placed any orders yet'
-              : 'Aún no has realizado ningún pedido'
-            }
+            Aún no has realizado ningún pedido
           </p>
           <p className="text-sm text-muted-foreground">
-            {language === 'en' 
-              ? 'Start shopping to send love to your family in Cuba'
-              : 'Comienza a comprar para enviar amor a tu familia en Cuba'
-            }
+            Comienza a comprar para enviar amor a tu familia en Cuba
           </p>
         </motion.div>
       ) : (
         <div className="space-y-6">
-          {userOrders.map((order, index) => (
+          {orders.map((order, index) => (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 20 }}
@@ -79,14 +129,17 @@ export default function OrdersPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2">
                       <Package className="h-5 w-5" />
-                      <span>{t.orderNumber}{order.id}</span>
+                      <span>
+                        {t.orderNumber}
+                        {order.id}
+                      </span>
                     </CardTitle>
-                    <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
-                      {order.status === 'pending' ? t.pending : t.delivered}
+                    <Badge variant={getStatusVariant(order.status)}>
+                      {getStatusText(order.status)}
                     </Badge>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-6">
                   {/* Order Info */}
                   <div className="grid sm:grid-cols-3 gap-4">
@@ -95,27 +148,32 @@ export default function OrdersPage() {
                       <div>
                         <p className="text-sm font-medium">{t.orderDate}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.createdAt.toLocaleDateString()}
+                          {order.created_at
+                            ? new Date(order.created_at).toLocaleDateString()
+                            : "Fecha no disponible"}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">{t.orderTotal}</p>
                         <p className="text-sm text-muted-foreground">
-                          ${order.total.toFixed(2)}
+                          $
+                          {order.total_amount
+                            ? Number(order.total_amount).toFixed(2)
+                            : "0.00"}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Truck className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">{t.orderStatus}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.status === 'pending' ? t.pending : t.delivered}
+                          {getStatusText(order.status)}
                         </p>
                       </div>
                     </div>
@@ -123,44 +181,54 @@ export default function OrdersPage() {
 
                   {/* Recipient Info */}
                   <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">
-                      {language === 'en' ? 'Recipient in Cuba' : 'Destinatario en Cuba'}
-                    </h4>
+                    <h4 className="font-medium mb-2">Destinatario en Cuba</h4>
                     <p className="text-sm text-muted-foreground">
-                      {order.recipientInfo.firstName} {order.recipientInfo.lastName}
+                      {order.recipientInfo?.first_name || "Nombre"}{" "}
+                      {order.recipientInfo?.last_name || "no disponible"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {order.recipientInfo.street} #{order.recipientInfo.houseNumber}, {order.recipientInfo.betweenStreets}
+                      {order.recipientInfo?.street || "Dirección"} #
+                      {order.recipientInfo?.house_number || "N/A"},{" "}
+                      {order.recipientInfo?.between_streets || ""}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {order.recipientInfo.neighborhood}, {order.recipientInfo.province}
+                      {order.recipientInfo?.neighborhood || "Barrio"},{" "}
+                      {order.recipientInfo?.province || "Provincia"}
                     </p>
                   </div>
 
                   {/* Order Items */}
                   <div className="border-t pt-4">
-                    <h4 className="font-medium mb-3">
-                      {language === 'en' ? 'Items' : 'Artículos'}
-                    </h4>
+                    <h4 className="font-medium mb-3">Artículos</h4>
                     <div className="space-y-3">
-                      {order.items.map((item) => (
-                        <div key={item.product.id} className="flex items-center space-x-4">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="w-12 h-12 object-cover rounded-md"
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium">{item.product.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {t.quantity}: {item.quantity} × ${item.product.price.toFixed(2)}
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item) => (
+                          <div
+                            key={item.product.id}
+                            className="flex items-center space-x-4"
+                          >
+                            <img
+                              src={item.product.image}
+                              alt={item.product.name}
+                              className="w-12 h-12 object-cover rounded-md"
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium">{item.product.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {t.quantity}: {item.quantity} × $
+                                {item.product.price.toFixed(2)}
+                              </p>
+                            </div>
+                            <p className="font-medium">
+                              ${(item.product.price * item.quantity).toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-medium">
-                            ${(item.product.price * item.quantity).toFixed(2)}
-                          </p>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Cargando artículos...
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -170,5 +238,13 @@ export default function OrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <AuthGuard requireAuth={true}>
+      <OrdersContent />
+    </AuthGuard>
   );
 }

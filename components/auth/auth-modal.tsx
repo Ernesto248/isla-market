@@ -1,52 +1,67 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAppStore } from '@/lib/store';
-import { translations } from '@/lib/translations';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAppStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
+import { useAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
 
-const signupSchema = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
+const signupSchema = z
+  .object({
+    firstName: z.string().min(2),
+    lastName: z.string().min(2),
+    email: z.string().email(),
+    password: z.string().min(6),
+    confirmPassword: z.string().min(6),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+const forgotPasswordSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 type SignupForm = z.infer<typeof signupSchema>;
+type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'login' | 'signup';
-  onModeChange: (mode: 'login' | 'signup') => void;
+  mode: "login" | "signup" | "forgot-password";
+  onModeChange: (mode: "login" | "signup" | "forgot-password") => void;
 }
 
-export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProps) {
+export function AuthModal({
+  isOpen,
+  onClose,
+  mode,
+  onModeChange,
+}: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { language, setUser } = useAppStore();
-  const t = translations[language];
+  const { signIn, signUp, resetPassword } = useAuth();
+  const t = translations["es"];
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -56,40 +71,71 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     resolver: zodResolver(signupSchema),
   });
 
+  const forgotPasswordForm = useForm<ForgotPasswordForm>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
+
   const handleLogin = async (data: LoginForm) => {
     setIsLoading(true);
-    // TODO: Integrate with Supabase
-    setTimeout(() => {
-      // Mock login
-      setUser({
-        id: '1',
-        email: data.email,
-        firstName: 'John',
-        lastName: 'Doe',
-        role: 'client',
-        createdAt: new Date(),
-      });
-      setIsLoading(false);
+
+    try {
+      const { error } = await signIn(data.email, data.password);
+
+      if (error) {
+        toast.error("Error al iniciar sesión. Verifica tus credenciales.");
+        return;
+      }
+
+      toast.success("¡Bienvenido de vuelta!");
       onClose();
-    }, 1000);
+    } catch (error) {
+      toast.error("Error inesperado. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = async (data: SignupForm) => {
     setIsLoading(true);
-    // TODO: Integrate with Supabase
-    setTimeout(() => {
-      // Mock signup
-      setUser({
-        id: '1',
-        email: data.email,
+
+    try {
+      const { error } = await signUp(data.email, data.password, {
         firstName: data.firstName,
         lastName: data.lastName,
-        role: 'client',
-        createdAt: new Date(),
       });
-      setIsLoading(false);
+
+      if (error) {
+        toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
+        return;
+      }
+
+      toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       onClose();
-    }, 1000);
+    } catch (error) {
+      toast.error("Error inesperado. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (data: ForgotPasswordForm) => {
+    setIsLoading(true);
+
+    try {
+      const { error } = await resetPassword(data.email);
+
+      if (error) {
+        toast.error("Error al enviar el email. Inténtalo de nuevo.");
+        return;
+      }
+
+      toast.success("Email enviado. Revisa tu bandeja de entrada.");
+      onModeChange("login");
+    } catch (error) {
+      toast.error("Error inesperado. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,20 +143,36 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'login' ? t.login : t.signup}
+            {mode === "login"
+              ? t.login
+              : mode === "signup"
+              ? t.signup
+              : "Recuperar Contraseña"}
           </DialogTitle>
+          <DialogDescription>
+            {mode === "login"
+              ? "Inicia sesión en tu cuenta"
+              : mode === "signup"
+              ? "Crea una nueva cuenta"
+              : "Ingresa tu email para recuperar tu contraseña"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {mode === 'login' ? (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+          {mode === "login" ? (
+            <form
+              onSubmit={loginForm.handleSubmit(handleLogin)}
+              className="space-y-4"
+            >
               <div className="space-y-2">
                 <Label htmlFor="email">{t.email}</Label>
                 <Input
                   id="email"
                   type="email"
-                  {...loginForm.register('email')}
-                  className={loginForm.formState.errors.email ? 'border-red-500' : ''}
+                  {...loginForm.register("email")}
+                  className={
+                    loginForm.formState.errors.email ? "border-red-500" : ""
+                  }
                 />
                 {loginForm.formState.errors.email && (
                   <p className="text-sm text-red-500">
@@ -124,8 +186,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Input
                   id="password"
                   type="password"
-                  {...loginForm.register('password')}
-                  className={loginForm.formState.errors.password ? 'border-red-500' : ''}
+                  {...loginForm.register("password")}
+                  className={
+                    loginForm.formState.errors.password ? "border-red-500" : ""
+                  }
                 />
                 {loginForm.formState.errors.password && (
                   <p className="text-sm text-red-500">
@@ -138,23 +202,44 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 {isLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : (
                   t.login
                 )}
               </Button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => onModeChange("forgot-password")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             </form>
-          ) : (
-            <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
+          ) : mode === "signup" ? (
+            <form
+              onSubmit={signupForm.handleSubmit(handleSignup)}
+              className="space-y-4"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">{t.firstName}</Label>
                   <Input
                     id="firstName"
-                    {...signupForm.register('firstName')}
-                    className={signupForm.formState.errors.firstName ? 'border-red-500' : ''}
+                    {...signupForm.register("firstName")}
+                    className={
+                      signupForm.formState.errors.firstName
+                        ? "border-red-500"
+                        : ""
+                    }
                   />
                   {signupForm.formState.errors.firstName && (
                     <p className="text-sm text-red-500">
@@ -167,8 +252,12 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                   <Label htmlFor="lastName">{t.lastName}</Label>
                   <Input
                     id="lastName"
-                    {...signupForm.register('lastName')}
-                    className={signupForm.formState.errors.lastName ? 'border-red-500' : ''}
+                    {...signupForm.register("lastName")}
+                    className={
+                      signupForm.formState.errors.lastName
+                        ? "border-red-500"
+                        : ""
+                    }
                   />
                   {signupForm.formState.errors.lastName && (
                     <p className="text-sm text-red-500">
@@ -183,8 +272,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Input
                   id="email"
                   type="email"
-                  {...signupForm.register('email')}
-                  className={signupForm.formState.errors.email ? 'border-red-500' : ''}
+                  {...signupForm.register("email")}
+                  className={
+                    signupForm.formState.errors.email ? "border-red-500" : ""
+                  }
                 />
                 {signupForm.formState.errors.email && (
                   <p className="text-sm text-red-500">
@@ -198,8 +289,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Input
                   id="password"
                   type="password"
-                  {...signupForm.register('password')}
-                  className={signupForm.formState.errors.password ? 'border-red-500' : ''}
+                  {...signupForm.register("password")}
+                  className={
+                    signupForm.formState.errors.password ? "border-red-500" : ""
+                  }
                 />
                 {signupForm.formState.errors.password && (
                   <p className="text-sm text-red-500">
@@ -213,8 +306,12 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 <Input
                   id="confirmPassword"
                   type="password"
-                  {...signupForm.register('confirmPassword')}
-                  className={signupForm.formState.errors.confirmPassword ? 'border-red-500' : ''}
+                  {...signupForm.register("confirmPassword")}
+                  className={
+                    signupForm.formState.errors.confirmPassword
+                      ? "border-red-500"
+                      : ""
+                  }
                 />
                 {signupForm.formState.errors.confirmPassword && (
                   <p className="text-sm text-red-500">
@@ -227,7 +324,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 {isLoading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : (
@@ -235,16 +336,68 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 )}
               </Button>
             </form>
+          ) : (
+            <form
+              onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">{t.email}</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  {...forgotPasswordForm.register("email")}
+                  className={
+                    forgotPasswordForm.formState.errors.email
+                      ? "border-red-500"
+                      : ""
+                  }
+                />
+                {forgotPasswordForm.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {forgotPasswordForm.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                  />
+                ) : (
+                  "Enviar Email"
+                )}
+              </Button>
+            </form>
           )}
 
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => onModeChange(mode === 'login' ? 'signup' : 'login')}
-              className="text-sm text-primary hover:underline"
-            >
-              {mode === 'login' ? t.dontHaveAccount : t.alreadyHaveAccount}
-            </button>
+            {mode === "forgot-password" ? (
+              <button
+                type="button"
+                onClick={() => onModeChange("login")}
+                className="text-sm text-primary hover:underline"
+              >
+                Volver al inicio de sesión
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  onModeChange(mode === "login" ? "signup" : "login")
+                }
+                className="text-sm text-primary hover:underline"
+              >
+                {mode === "login" ? t.dontHaveAccount : t.alreadyHaveAccount}
+              </button>
+            )}
           </div>
         </div>
       </DialogContent>

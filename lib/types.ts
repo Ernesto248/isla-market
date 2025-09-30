@@ -1,23 +1,40 @@
 export interface Product {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  image: string;
-  category: string;
-  stock: number;
+  category_id: string;
+  images: string[] | null;
+  stock_quantity: number | null;
+  is_active: boolean | null;
+  weight: number | null;
+  dimensions: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Relaciones
+  categories?: Category;
+  // Para compatibilidad con código existente
+  image?: string;
+  category?: string;
+  stock?: number;
   featured?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Category {
   id: string;
   name: string;
-  description: string;
-  image: string;
-  createdAt: Date;
-  updatedAt: Date;
+  description: string | null;
+  slug: string;
+  image_url: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Para compatibilidad con código existente
+  image?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface CartItem {
@@ -30,33 +47,61 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'client' | 'admin';
+  role: "client" | "admin";
   createdAt: Date;
 }
 
+// Tipos basados en la estructura real de Supabase
 export interface Order {
   id: string;
-  userId: string;
-  items: CartItem[];
-  total: number;
-  status: 'pending' | 'delivered';
-  customerInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
+  user_id: string;
+  shipping_address_id: string;
+  status:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled"
+    | "paid";
+  total_amount: number;
+  stripe_payment_intent_id?: string | null;
+  stripe_session_id?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  // Datos relacionados que vienen del JOIN
+  email?: string;
+  full_name?: string;
+  // Información del destinatario (de shipping_addresses)
+  recipientInfo?: {
+    first_name: string;
+    last_name: string;
     phone: string;
-  };
-  recipientInfo: {
-    firstName: string;
-    lastName: string;
     street: string;
-    houseNumber: string;
-    betweenStreets: string;
+    house_number: string;
+    between_streets: string;
     neighborhood: string;
     province: string;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  // Items de la orden
+  items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  // Datos del producto (del JOIN)
+  product?: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
 }
 
 export interface DashboardStats {
@@ -72,5 +117,5 @@ export interface DashboardStats {
   topProducts: { product: Product; sales: number }[];
 }
 
-export type Language = 'en' | 'es';
-export type Theme = 'light' | 'dark';
+export type Language = "en" | "es";
+export type Theme = "light" | "dark";

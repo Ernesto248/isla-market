@@ -1,39 +1,64 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ShoppingCart, User, Menu, X, Sun, Moon, Globe } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAppStore } from '@/lib/store';
-import { translations } from '@/lib/translations';
-import { AuthModal } from '@/components/auth/auth-modal';
-import { CartDrawer } from '@/components/cart/cart-drawer';
+import { useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ShoppingCart, User, Menu, X, Sun, Moon, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAppStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { CartDrawer } from "@/components/cart/cart-drawer";
+import { useAuth } from "@/contexts/auth-context";
+import { useHydration } from "@/hooks/use-hydration";
+import { toast } from "sonner";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<
+    "login" | "signup" | "forgot-password"
+  >("login");
   const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  const { theme, language, user, setTheme, setLanguage, getCartItemsCount } = useAppStore();
-  const t = translations[language];
-  const cartItemsCount = getCartItemsCount();
+
+  const { theme, setTheme, getCartItemsCount, isHydrated } = useAppStore();
+  const { user, signOut, loading } = useAuth();
+  const clientHydrated = useHydration();
+  const t = translations["es"];
+  const cartItemsCount = isHydrated ? getCartItemsCount() : 0;
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'es' : 'en');
-  };
-
-  const openAuthModal = (mode: 'login' | 'signup') => {
+  const openAuthModal = (mode: "login" | "signup" | "forgot-password") => {
     setAuthMode(mode);
     setIsAuthModalOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        toast.error("Error al cerrar sesión");
+        return;
+      }
+
+      toast.success("Sesión cerrada exitosamente");
+    } catch (error) {
+      toast.error("Error inesperado");
+    }
   };
 
   return (
@@ -53,19 +78,31 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link
+                href="/"
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
                 {t.home}
               </Link>
-              <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link
+                href="/products"
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
                 {t.products}
               </Link>
               {user && (
-                <Link href="/orders" className="text-sm font-medium hover:text-primary transition-colors">
+                <Link
+                  href="/orders"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                >
                   {t.myOrders}
                 </Link>
               )}
-              {user?.role === 'admin' && (
-                <Link href="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+              {user?.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="text-sm font-medium hover:text-primary transition-colors"
+                >
                   {t.admin}
                 </Link>
               )}
@@ -80,18 +117,11 @@ export function Header() {
                 onClick={toggleTheme}
                 className="h-9 w-9"
               >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-
-              {/* Language Toggle */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleLanguage}
-                className="h-9 w-9"
-              >
-                <Globe className="h-4 w-4" />
-                <span className="sr-only">{language === 'en' ? 'ES' : 'EN'}</span>
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
               </Button>
 
               {/* Cart */}
@@ -102,7 +132,7 @@ export function Header() {
                 className="h-9 w-9 relative"
               >
                 <ShoppingCart className="h-4 w-4" />
-                {cartItemsCount > 0 && (
+                {isHydrated && cartItemsCount > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
@@ -114,30 +144,61 @@ export function Header() {
 
               {/* User Menu */}
               {user ? (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium hidden sm:inline">
-                    {user.firstName}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => useAppStore.getState().setUser(null)}
-                  >
-                    {t.logout}
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">
+                          {user.user_metadata?.first_name ||
+                            user.email?.split("@")[0] ||
+                            "Usuario"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="w-full">
+                        {t.myOrders}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="w-full">
+                        Mi Perfil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="text-red-600 focus:text-red-600"
+                      disabled={loading}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t.logout}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <div className="hidden sm:flex items-center space-x-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => openAuthModal('login')}
+                    onClick={() => openAuthModal("login")}
+                    disabled={loading}
                   >
                     {t.login}
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => openAuthModal('signup')}
+                    onClick={() => openAuthModal("signup")}
+                    disabled={loading}
                   >
                     {t.signup}
                   </Button>
@@ -151,7 +212,11 @@ export function Header() {
                 className="md:hidden h-9 w-9"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {isMenuOpen ? (
+                  <X className="h-4 w-4" />
+                ) : (
+                  <Menu className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -160,7 +225,7 @@ export function Header() {
           {isMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-t py-4"
             >
@@ -188,7 +253,7 @@ export function Header() {
                     {t.myOrders}
                   </Link>
                 )}
-                {user?.role === 'admin' && (
+                {user?.role === "admin" && (
                   <Link
                     href="/admin"
                     className="text-sm font-medium hover:text-primary transition-colors"
@@ -202,7 +267,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        openAuthModal('login');
+                        openAuthModal("login");
                         setIsMenuOpen(false);
                       }}
                     >
@@ -210,7 +275,7 @@ export function Header() {
                     </Button>
                     <Button
                       onClick={() => {
-                        openAuthModal('signup');
+                        openAuthModal("signup");
                         setIsMenuOpen(false);
                       }}
                     >
@@ -231,10 +296,7 @@ export function Header() {
         onModeChange={setAuthMode}
       />
 
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-      />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 }

@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Heart, Mail, Phone, MapPin } from 'lucide-react';
-import { useAppStore } from '@/lib/store';
-import { translations } from '@/lib/translations';
+import Link from "next/link";
+import { Heart, Mail, Phone, MapPin } from "lucide-react";
+import { useAppStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
 
 export function Footer() {
-  const { language } = useAppStore();
-  const t = translations[language];
+  const t = translations["es"];
 
   return (
     <footer className="bg-muted/50 border-t">
@@ -19,26 +18,30 @@ export function Footer() {
               Isla Market
             </div>
             <p className="text-sm text-muted-foreground">
-              {language === 'en' 
-                ? 'Connecting families across borders with love and care.'
-                : 'Conectando familias a través de fronteras con amor y cuidado.'
-              }
+              Conectando familias a través de fronteras con amor y cuidado.
             </p>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold">
-              {language === 'en' ? 'Quick Links' : 'Enlaces Rápidos'}
-            </h3>
+            <h3 className="font-semibold">Enlaces Rápidos</h3>
             <div className="space-y-2 text-sm">
-              <Link href="/" className="block hover:text-primary transition-colors">
+              <Link
+                href="/"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.home}
               </Link>
-              <Link href="/products" className="block hover:text-primary transition-colors">
+              <Link
+                href="/products"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.products}
               </Link>
-              <Link href="/orders" className="block hover:text-primary transition-colors">
+              <Link
+                href="/orders"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.myOrders}
               </Link>
             </div>
@@ -46,17 +49,24 @@ export function Footer() {
 
           {/* Categories */}
           <div className="space-y-4">
-            <h3 className="font-semibold">
-              {t.categories}
-            </h3>
+            <h3 className="font-semibold">{t.categories}</h3>
             <div className="space-y-2 text-sm">
-              <Link href="/products?category=1" className="block hover:text-primary transition-colors">
+              <Link
+                href="/products?category=1"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.electronics}
               </Link>
-              <Link href="/products?category=2" className="block hover:text-primary transition-colors">
+              <Link
+                href="/products?category=2"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.home}
               </Link>
-              <Link href="/products?category=3" className="block hover:text-primary transition-colors">
+              <Link
+                href="/products?category=3"
+                className="block hover:text-primary transition-colors"
+              >
                 {t.food}
               </Link>
             </div>
@@ -64,9 +74,7 @@ export function Footer() {
 
           {/* Contact */}
           <div className="space-y-4">
-            <h3 className="font-semibold">
-              {language === 'en' ? 'Contact Us' : 'Contáctanos'}
-            </h3>
+            <h3 className="font-semibold">Contáctanos</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
@@ -87,13 +95,9 @@ export function Footer() {
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p className="flex items-center justify-center space-x-1">
             <span>© 2024 Isla Market.</span>
-            <span>
-              {language === 'en' ? 'Made with' : 'Hecho con'}
-            </span>
+            <span>Hecho con</span>
             <Heart className="h-4 w-4 text-red-500" />
-            <span>
-              {language === 'en' ? 'for Cuban families' : 'para familias cubanas'}
-            </span>
+            <span>para familias cubanas</span>
           </p>
         </div>
       </div>

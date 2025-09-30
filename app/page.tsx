@@ -1,21 +1,54 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { ArrowRight, Truck, Shield, Star, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ProductCard } from '@/components/products/product-card';
-import { useAppStore } from '@/lib/store';
-import { translations } from '@/lib/translations';
-import { mockProducts, mockCategories } from '@/lib/mock-data';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { ArrowRight, Truck, Shield, Star, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ProductCard } from "@/components/products/product-card";
+import { useAppStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
+import { DataService } from "@/lib/data-service";
+import { Product, Category } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
-  const { language } = useAppStore();
-  const t = translations[language];
-  
-  const featuredProducts = mockProducts.filter(product => product.featured).slice(0, 4);
+  const { setAuthModalOpen } = useAppStore();
+  const { user } = useAuth();
+  const t = translations["es"]; // Solo español
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesData, productsData] = await Promise.all([
+          DataService.getCategories(),
+          DataService.getFeaturedProducts(),
+        ]);
+        setCategories(categoriesData);
+        setFeaturedProducts(productsData);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-16">
@@ -42,19 +75,34 @@ export default function HomePage() {
                   {t.heroSubtitle}
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" asChild>
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  asChild
+                >
                   <Link href="/products">
                     {t.shopNow}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="/products">
-                    {t.categories}
-                  </Link>
-                </Button>
+
+                {user ? (
+                  // Si el usuario está autenticado, mostrar botón de categorías
+                  <Button variant="outline" size="lg" asChild>
+                    <Link href="/products">{t.categories}</Link>
+                  </Button>
+                ) : (
+                  // Si no está autenticado, mostrar botón de iniciar sesión
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setAuthModalOpen(true)}
+                  >
+                    {t.login}
+                  </Button>
+                )}
               </div>
             </motion.div>
 
@@ -88,15 +136,13 @@ export default function HomePage() {
         >
           <h2 className="text-3xl lg:text-4xl font-bold">{t.categories}</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {language === 'en' 
-              ? 'Browse our carefully curated categories of products'
-              : 'Explora nuestras categorías de productos cuidadosamente seleccionadas'
-            }
+            Explora nuestras categorías de productos cuidadosamente
+            seleccionadas
           </p>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {mockCategories.map((category, index) => (
+          {categories.map((category, index) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 20 }}
@@ -108,16 +154,22 @@ export default function HomePage() {
                 <Card className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 shadow-md">
                   <div className="relative overflow-hidden">
                     <img
-                      src={category.image}
+                      src={
+                        category.image_url ||
+                        category.image ||
+                        "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=500"
+                      }
                       alt={category.name}
                       className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4 text-white">
                       <h3 className="text-xl font-bold mb-1">
-                        {language === 'en' ? category.name : t[category.name.toLowerCase().replace(' & ', '') as keyof typeof t] || category.name}
+                        {category.name}
                       </h3>
-                      <p className="text-sm opacity-90">{category.description}</p>
+                      <p className="text-sm opacity-90">
+                        {category.description}
+                      </p>
                     </div>
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
@@ -141,12 +193,11 @@ export default function HomePage() {
           viewport={{ once: true }}
           className="text-center space-y-4 mb-12"
         >
-          <h2 className="text-3xl lg:text-4xl font-bold">{t.featuredProducts}</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold">
+            {t.featuredProducts}
+          </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {language === 'en' 
-              ? 'Discover our most popular products chosen by families'
-              : 'Descubre nuestros productos más populares elegidos por las familias'
-            }
+            Descubre nuestros productos más populares elegidos por las familias
           </p>
         </motion.div>
 
@@ -159,7 +210,7 @@ export default function HomePage() {
         <div className="text-center">
           <Button variant="outline" size="lg" asChild>
             <Link href="/products">
-              {language === 'en' ? 'View All Products' : 'Ver Todos los Productos'}
+              Ver Todos los Productos
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -178,10 +229,7 @@ export default function HomePage() {
           >
             <h2 className="text-3xl lg:text-4xl font-bold">{t.whyChooseUs}</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              {language === 'en' 
-                ? 'We make it easy and secure to send love to your family in Cuba'
-                : 'Hacemos que sea fácil y seguro enviar amor a tu familia en Cuba'
-              }
+              Hacemos que sea fácil y seguro enviar amor a tu familia en Cuba
             </p>
           </motion.div>
 
@@ -216,7 +264,9 @@ export default function HomePage() {
                       <feature.icon className="h-8 w-8 text-white" />
                     </div>
                     <h3 className="text-xl font-bold">{feature.title}</h3>
-                    <p className="text-muted-foreground">{feature.description}</p>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
