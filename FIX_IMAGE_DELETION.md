@@ -3,24 +3,32 @@
 ## 🐛 Problemas Encontrados
 
 ### Problema 1: Imágenes duplicadas en UI
+
 **Síntoma:** Al subir una imagen, aparecía duplicada en la interfaz (pero en la DB solo había una).
 
 **Causa raíz:**
+
 ```typescript
 // ❌ ANTES: Combinaba dos arrays que podían tener la misma imagen
 const allImages = [
-  ...existingImages.map((url) => ({ url, key: url, originalName: "Existente" })),
-  ...uploadedImages,  // ← Esta imagen también estaba en existingImages
+  ...existingImages.map((url) => ({
+    url,
+    key: url,
+    originalName: "Existente",
+  })),
+  ...uploadedImages, // ← Esta imagen también estaba en existingImages
 ];
 ```
 
 Flujo del problema:
+
 1. Usuario sube imagen → se agrega a `uploadedImages[]` (estado interno)
-2. Componente llama a `onUploadComplete(url)` 
+2. Componente llama a `onUploadComplete(url)`
 3. Padre actualiza su estado y pasa nueva imagen en `existingImages` prop
 4. Ahora la imagen está en AMBOS arrays → **duplicada en UI**
 
 **Solución:**
+
 ```typescript
 // ✅ DESPUÉS: Solo mostrar las imágenes del padre (single source of truth)
 const allImages = existingImages.map((url) => ({
@@ -31,6 +39,7 @@ const allImages = existingImages.map((url) => ({
 ```
 
 El componente `ImageUpload` ahora es **stateless** respecto a las imágenes mostradas:
+
 - NO mantiene estado interno de imágenes
 - Solo muestra las que vienen por prop (`existingImages`)
 - El padre controla completamente qué imágenes se muestran
@@ -38,6 +47,7 @@ El componente `ImageUpload` ahora es **stateless** respecto a las imágenes most
 ---
 
 ### Problema 2: Redirección al eliminar imagen
+
 **Síntoma:** Al eliminar una imagen, te redirigía a `/admin/products` en lugar de quedarse en el formulario.
 
 **Causa raíz:**
@@ -94,6 +104,7 @@ useEffect(() => {
 ---
 
 ### Problema 3: Imagen no se eliminaba de Digital Ocean Spaces
+
 **Síntoma:** Al eliminar una imagen de la UI, permanecía en el bucket de DO Spaces ocupando espacio.
 
 **Causa raíz:**
@@ -137,18 +148,23 @@ const handleRemove = async (image: UploadedImage) => {
     if (!response.ok) {
       const error = await response.json();
       console.error("Error al eliminar imagen del servidor:", error);
-      toast.warning("La imagen se removió de la lista pero puede quedar en el servidor");
+      toast.warning(
+        "La imagen se removió de la lista pero puede quedar en el servidor"
+      );
     } else {
       toast.success("Imagen eliminada correctamente");
     }
   } catch (error) {
     console.error("Error deleting image:", error);
-    toast.warning("La imagen se removió de la lista pero puede quedar en el servidor");
+    toast.warning(
+      "La imagen se removió de la lista pero puede quedar en el servidor"
+    );
   }
 };
 ```
 
 **Ventajas de este enfoque:**
+
 - ✅ UI responde inmediatamente (no espera al servidor)
 - ✅ Si falla la eliminación del servidor, la imagen no se guarda en DB (se pierde la referencia)
 - ✅ El usuario puede seguir trabajando sin interrupciones
@@ -301,12 +317,14 @@ ImageUpload.handleRemove(image)
 ## ✅ Resultados
 
 ### Antes de la mejora
+
 - ❌ Imágenes duplicadas en UI
 - ❌ Redirección inesperada al eliminar
 - ❌ Imágenes quedaban en DO Spaces ocupando espacio
 - ❌ Experiencia de usuario confusa
 
 ### Después de la mejora
+
 - ✅ Una sola imagen por archivo (no duplicados)
 - ✅ Permaneces en el formulario al eliminar
 - ✅ Imágenes se eliminan de DO Spaces automáticamente
@@ -327,25 +345,23 @@ Crear un cron job que elimine imágenes no referenciadas:
 export async function cleanupOrphanImages() {
   // 1. Listar todos los archivos en DO Spaces
   const spacesFiles = await listAllFilesInBucket("products/");
-  
+
   // 2. Obtener todas las URLs de imágenes en la DB
-  const { data: products } = await supabase
-    .from("products")
-    .select("images");
-  
-  const usedImages = products.flatMap(p => p.images || []);
-  
+  const { data: products } = await supabase.from("products").select("images");
+
+  const usedImages = products.flatMap((p) => p.images || []);
+
   // 3. Encontrar imágenes huérfanas
-  const orphans = spacesFiles.filter(file => {
+  const orphans = spacesFiles.filter((file) => {
     const fullUrl = `https://cms-next.sfo3.digitaloceanspaces.com/${file}`;
     return !usedImages.includes(fullUrl);
   });
-  
+
   // 4. Eliminar huérfanas
   for (const orphan of orphans) {
     await deleteFromSpaces(orphan);
   }
-  
+
   return { deleted: orphans.length };
 }
 ```
@@ -360,9 +376,9 @@ const handleRemove = async (image: UploadedImage) => {
     title: "¿Eliminar imagen?",
     description: "Esta acción no se puede deshacer.",
   });
-  
+
   if (!confirmed) return;
-  
+
   // ... resto del código
 };
 ```

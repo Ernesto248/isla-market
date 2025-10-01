@@ -22,9 +22,9 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { language, cart, updateQuantity, removeFromCart, getCartTotal } =
+  const { cart, updateQuantity, removeFromCart, getCartTotal } =
     useAppStore();
-  const t = translations[language];
+  const t = translations["es"]; // Forzar español
   const total = getCartTotal();
 
   return (

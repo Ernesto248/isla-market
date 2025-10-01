@@ -15,8 +15,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { language, addToCart } = useAppStore();
-  const t = translations[language];
+  const { addToCart } = useAppStore();
+  const t = translations["es"]; // Forzar español
 
   const handleAddToCart = () => {
     addToCart(product);

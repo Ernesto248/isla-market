@@ -38,7 +38,7 @@ export const useAppStore = create<AppState>()(
 
       // Theme and Language
       theme: "light",
-      language: "en",
+      language: "es",
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
 

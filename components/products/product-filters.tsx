@@ -20,7 +20,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useAppStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { DataService } from "@/lib/data-service";
 import { Category } from "@/lib/types";
@@ -44,8 +43,7 @@ export function ProductFilters({
   onSortChange,
   isSearching = false,
 }: ProductFiltersProps) {
-  const { language } = useAppStore();
-  const t = translations[language];
+  const t = translations["es"]; // Forzar español
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
