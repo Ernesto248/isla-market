@@ -45,7 +45,8 @@ export class ApiClient {
 
   // Categories
   async getCategories() {
-    return this.request<any[]>("/categories");
+    const response = await this.request<{ categories: any[] }>("/categories");
+    return response.categories;
   }
 
   async getCategory(id: string) {

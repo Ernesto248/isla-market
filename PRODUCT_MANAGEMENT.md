@@ -9,7 +9,9 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 ### API Endpoints
 
 #### `/api/admin/products` (GET, POST)
+
 - **GET**: Listar todos los productos con filtros
+
   - Búsqueda por nombre y descripción
   - Filtro por categoría
   - Filtro por estado (activo/inactivo)
@@ -23,10 +25,13 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
   - Campos opcionales: descripción, stock, peso, dimensiones
 
 #### `/api/admin/products/[id]` (GET, PUT, DELETE)
+
 - **GET**: Obtener un producto específico
+
   - Incluye información de categoría
 
 - **PUT**: Actualizar producto existente
+
   - Actualización parcial (solo campos enviados)
   - Validación de datos
   - Actualiza timestamp `updated_at`
@@ -39,7 +44,9 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 ### Páginas de Administración
 
 #### `/admin/products` - Lista de Productos
+
 **Características:**
+
 - Tabla responsiva con información del producto
 - Imagen en miniatura (12x12px)
 - Badges de estado (activo/inactivo)
@@ -49,30 +56,36 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
   - Rojo (0 unidades): Sin stock
 
 **Filtros:**
+
 - Búsqueda en tiempo real (debounce 500ms)
 - Filtro por categoría
 - Filtro por estado
 
 **Acciones:**
+
 - Toggle activo/inactivo (icono ojo)
 - Editar producto (icono lápiz)
 - Eliminar producto (icono basura)
 - Crear nuevo producto (botón principal)
 
 #### `/admin/products/new` - Crear Producto
+
 **Formulario organizado en 4 secciones:**
 
 1. **Información Básica**
+
    - Nombre (requerido)
    - Descripción (textarea)
    - Categoría (select, requerido)
    - Estado activo/inactivo (switch)
 
 2. **Precio e Inventario**
+
    - Precio en ARS (requerido, decimal)
    - Cantidad en stock (opcional, entero)
 
 3. **Detalles Físicos**
+
    - Peso en kg (opcional, decimal)
    - Dimensiones (opcional, texto libre)
 
@@ -83,13 +96,16 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
    - Vista previa en grid
 
 **Validaciones:**
-- Campos requeridos marcados con *
+
+- Campos requeridos marcados con \*
 - Precio debe ser mayor a 0
 - Categoría debe seleccionarse
 - Notificaciones toast para errores/éxito
 
 #### `/admin/products/[id]/edit` - Editar Producto
+
 **Características:**
+
 - Misma estructura que el formulario de creación
 - Pre-carga de datos existentes
 - Imágenes existentes se muestran automáticamente
@@ -97,6 +113,7 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 - Permite agregar/eliminar imágenes
 
 **Funcionalidad:**
+
 - Carga del producto desde API
 - Actualización parcial (PUT request)
 - Redirección automática después de guardar
@@ -112,12 +129,14 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 ## 🎨 UI/UX
 
 ### Componentes Utilizados
+
 - **shadcn/ui**: Card, Table, Button, Input, Select, Badge, Switch
 - **lucide-react**: Iconos (Plus, Search, Pencil, Trash2, Eye, EyeOff, Loader2)
 - **sonner**: Toast notifications
 - **ImageUpload**: Componente custom con drag-and-drop
 
 ### Características de UX
+
 - Loading states en todas las acciones
 - Confirmación antes de eliminar (AlertDialog)
 - Feedback visual inmediato (toasts)
@@ -127,6 +146,7 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 ## 📊 Estructura de Datos
 
 ### Producto (Product)
+
 ```typescript
 {
   id: string;
@@ -148,6 +168,7 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 ## 🚀 Flujo de Trabajo
 
 ### Crear Producto
+
 1. Admin navega a `/admin/products`
 2. Click en "Nuevo Producto"
 3. Completa formulario
@@ -158,6 +179,7 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 8. Toast de confirmación
 
 ### Editar Producto
+
 1. Admin navega a `/admin/products`
 2. Click en icono de editar (lápiz)
 3. Formulario pre-cargado con datos
@@ -169,6 +191,7 @@ Se ha implementado el sistema completo de gestión de productos (CRUD) para el p
 9. Toast de confirmación
 
 ### Eliminar Producto
+
 1. Admin navega a `/admin/products`
 2. Click en icono de eliminar (basura)
 3. Aparece dialog de confirmación
@@ -194,12 +217,14 @@ Los productos utilizan el sistema de carga de imágenes implementado previamente
 Según el plan de implementación, los siguientes pasos serían:
 
 1. **Gestión de Órdenes** (Sprint 1)
+
    - Lista de órdenes
    - Detalles de orden
    - Actualización de estado
    - Filtros y búsqueda
 
 2. **Gestión de Clientes** (Sprint 1 - opcional)
+
    - Lista de clientes
    - Detalles de cliente
    - Historial de compras
@@ -224,10 +249,12 @@ Para probar la funcionalidad:
 ## 📦 Archivos Creados
 
 ### API Routes
+
 - `app/api/admin/products/route.ts` (156 líneas)
 - `app/api/admin/products/[id]/route.ts` (217 líneas)
 
 ### Páginas Admin
+
 - `app/admin/products/page.tsx` (385 líneas)
 - `app/admin/products/new/page.tsx` (356 líneas)
 - `app/admin/products/[id]/edit/page.tsx` (431 líneas)

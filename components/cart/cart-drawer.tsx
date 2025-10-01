@@ -7,6 +7,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,13 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <Badge variant="secondary">{cart.length}</Badge>
             </ClientOnly>
           </SheetTitle>
+          <SheetDescription>
+            {cart.length === 0
+              ? "Tu carrito está vacío"
+              : `Tienes ${cart.length} producto${
+                  cart.length > 1 ? "s" : ""
+                } en tu carrito`}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex flex-col h-full">

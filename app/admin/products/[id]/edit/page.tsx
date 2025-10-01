@@ -102,7 +102,11 @@ export default function EditProductPage({
         const response = await fetch("/api/categories");
         if (response.ok) {
           const data = await response.json();
+          console.log("Categories loaded:", data.categories);
           setCategories(data.categories || []);
+        } else {
+          console.error("Failed to fetch categories:", response.status);
+          toast.error("Error al cargar las categorías");
         }
       } catch (error) {
         console.error("Error loading categories:", error);
@@ -286,18 +290,38 @@ export default function EditProductPage({
                   handleSelectChange("category_id", value)
                 }
                 required
+                disabled={categories.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una categoría" />
+                  <SelectValue
+                    placeholder={
+                      categories.length === 0
+                        ? "Cargando categorías..."
+                        : "Selecciona una categoría"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
+                  {categories.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      No hay categorías disponibles
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
+              {categories.length > 0 && formData.category_id && (
+                <p className="text-xs text-muted-foreground">
+                  Categoría actual:{" "}
+                  {categories.find((c) => c.id === formData.category_id)
+                    ?.name || "No encontrada"}
+                </p>
+              )}
             </div>
 
             {/* Estado */}
