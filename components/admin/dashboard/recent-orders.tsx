@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -32,7 +38,10 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
-const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+const statusVariants: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   pending: "outline",
   processing: "default",
   shipped: "secondary",
@@ -62,7 +71,10 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
           <TableBody>
             {orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-muted-foreground"
+                >
                   No hay órdenes recientes
                 </TableCell>
               </TableRow>

@@ -7,6 +7,7 @@
 Primero, necesitas marcar tu usuario como administrador en la base de datos de Supabase.
 
 #### Opción A: Usando Supabase Dashboard
+
 1. Ve a https://app.supabase.com
 2. Selecciona tu proyecto
 3. Ve a **Table Editor** → **users**
@@ -15,21 +16,23 @@ Primero, necesitas marcar tu usuario como administrador en la base de datos de S
 6. Guarda los cambios
 
 #### Opción B: Usando SQL Editor
+
 ```sql
 -- Reemplaza 'tu-email@ejemplo.com' con tu email
-UPDATE users 
-SET role = 'admin' 
+UPDATE users
+SET role = 'admin'
 WHERE email = 'tu-email@ejemplo.com';
 
 -- Verificar que funcionó
-SELECT id, email, role, full_name 
-FROM users 
+SELECT id, email, role, full_name
+FROM users
 WHERE email = 'tu-email@ejemplo.com';
 ```
 
 ### 2. Iniciar Sesión en la Aplicación
 
 1. Inicia el servidor de desarrollo:
+
    ```bash
    pnpm dev
    ```
@@ -57,11 +60,13 @@ WHERE email = 'tu-email@ejemplo.com';
 ### ✅ Prueba 1: Acceso Autorizado (Usuario Admin)
 
 **Pasos**:
+
 1. Asegúrate de tener `role = 'admin'` en la base de datos
 2. Inicia sesión
 3. Navega a `/admin`
 
 **Resultado Esperado**:
+
 - ✅ Se muestra el dashboard completo
 - ✅ Sidebar visible en desktop
 - ✅ Hamburger menu visible en móvil
@@ -70,6 +75,7 @@ WHERE email = 'tu-email@ejemplo.com';
 ### ❌ Prueba 2: Acceso Denegado (Usuario No Admin)
 
 **Pasos**:
+
 1. Crea otro usuario o cambia tu rol a `customer`:
    ```sql
    UPDATE users SET role = 'customer' WHERE email = 'tu-email@ejemplo.com';
@@ -78,6 +84,7 @@ WHERE email = 'tu-email@ejemplo.com';
 3. Intenta navegar a `/admin`
 
 **Resultado Esperado**:
+
 - ❌ Redirige a la página principal (`/`)
 - ❌ Muestra notificación: "No tienes permisos de administrador"
 - ❌ No se carga el contenido del admin
@@ -85,6 +92,7 @@ WHERE email = 'tu-email@ejemplo.com';
 ### 📊 Prueba 3: Verificar API de Estadísticas
 
 **Usando el navegador**:
+
 1. Con tu usuario admin autenticado, abre la consola del navegador (F12)
 2. Ve a la pestaña **Network**
 3. Navega a `/admin`
@@ -92,6 +100,7 @@ WHERE email = 'tu-email@ejemplo.com';
 5. Haz clic en ella y ve a **Response**
 
 **Resultado Esperado**:
+
 ```json
 {
   "sales": {
@@ -110,6 +119,7 @@ WHERE email = 'tu-email@ejemplo.com';
 ```
 
 **Usando curl** (en terminal separada):
+
 ```bash
 # Reemplaza {tu-token} con el token de autenticación
 curl -H "Authorization: Bearer {tu-token}" \
@@ -119,17 +129,20 @@ curl -H "Authorization: Bearer {tu-token}" \
 ### 📱 Prueba 4: Responsive Design
 
 **Desktop (>768px)**:
+
 - ✅ Sidebar visible a la izquierda (ancho fijo 256px)
 - ✅ 4 columnas en las tarjetas de métricas
 - ✅ 2 columnas en las gráficas
 - ✅ Tabla completa de órdenes
 
 **Tablet (768px - 1024px)**:
+
 - ✅ Sidebar visible
 - ✅ 2 columnas en métricas
 - ✅ 1-2 columnas en gráficas
 
 **Móvil (<768px)**:
+
 - ✅ Sidebar oculto, hamburger menu visible
 - ✅ 1 columna en métricas
 - ✅ 1 columna en gráficas
@@ -138,11 +151,13 @@ curl -H "Authorization: Bearer {tu-token}" \
 ### 🎨 Prueba 5: Dark Mode
 
 **Pasos**:
+
 1. Navega a `/admin`
 2. Cambia el tema usando el selector de tema (si está implementado en el header)
    - O cambia las preferencias del sistema
 
 **Resultado Esperado**:
+
 - ✅ Todos los componentes se adaptan al tema oscuro
 - ✅ Gráficas mantienen buena visibilidad
 - ✅ Contraste adecuado en todos los elementos
@@ -154,24 +169,26 @@ curl -H "Authorization: Bearer {tu-token}" \
 Si tu base de datos está vacía y quieres ver el dashboard con datos reales:
 
 ### Insertar Productos de Prueba
+
 ```sql
 INSERT INTO products (name, description, price, stock, category_id, images, is_active)
-VALUES 
+VALUES
   ('Producto 1', 'Descripción del producto 1', 1500, 25, 'uuid-categoria', '["https://via.placeholder.com/400"]', true),
   ('Producto 2', 'Descripción del producto 2', 2500, 8, 'uuid-categoria', '["https://via.placeholder.com/400"]', true),
   ('Producto 3', 'Descripción del producto 3', 3000, 50, 'uuid-categoria', '["https://via.placeholder.com/400"]', true);
 ```
 
 ### Insertar Órdenes de Prueba
+
 ```sql
 -- Primero crea una orden
 INSERT INTO orders (user_id, total, status, shipping_address, billing_address)
-VALUES 
+VALUES
   ('tu-user-id', 3000, 'delivered', '{"street": "Calle 123", "city": "Ciudad"}', '{"street": "Calle 123", "city": "Ciudad"}');
 
 -- Luego agrega items a la orden
 INSERT INTO order_items (order_id, product_id, quantity, price_at_time)
-VALUES 
+VALUES
   ('order-id-generado', 'product-id', 2, 1500);
 ```
 
@@ -182,11 +199,13 @@ VALUES
 ### Problema: "Loading..." infinito en el dashboard
 
 **Causas posibles**:
+
 1. Error en la API de stats
 2. Usuario no autenticado correctamente
 3. Error en el backend de Supabase
 
 **Soluciones**:
+
 ```bash
 # 1. Verifica la consola del navegador (F12)
 # Busca errores en rojo
@@ -208,6 +227,7 @@ SUPABASE_SERVICE_ROLE_KEY=...  # Importante para el admin
 ### Problema: Gráficas no se muestran
 
 **Solución**:
+
 ```bash
 # Verifica que recharts esté instalado
 pnpm list recharts
@@ -224,11 +244,13 @@ pnpm dev
 ### Problema: 401 Unauthorized en API
 
 **Causas**:
+
 - Token de autenticación expirado
 - Usuario no tiene rol admin
 - Service role key incorrecta
 
 **Solución**:
+
 ```sql
 -- 1. Verifica tu rol
 SELECT email, role FROM users WHERE email = 'tu-email@ejemplo.com';
@@ -242,6 +264,7 @@ UPDATE users SET role = 'admin' WHERE email = 'tu-email@ejemplo.com';
 ### Problema: Sidebar no responde en móvil
 
 **Solución**:
+
 1. Limpia el caché del navegador
 2. Verifica que `vaul` esté instalado (para el drawer):
    ```bash
@@ -280,6 +303,7 @@ Antes de dar por completada la Fase 1, verifica:
 ## 🔍 Logs y Debugging
 
 ### Ver logs del servidor Next.js
+
 ```bash
 # La terminal donde corriste `pnpm dev` mostrará:
 - Rutas accedidas
@@ -288,7 +312,9 @@ Antes de dar por completada la Fase 1, verifica:
 ```
 
 ### Ver logs de la API
+
 Agrega console.log en `app/api/admin/stats/route.ts`:
+
 ```typescript
 export async function GET(request: Request) {
   console.log("📊 Stats API called");
@@ -299,7 +325,9 @@ export async function GET(request: Request) {
 ```
 
 ### Ver logs de autenticación
+
 En `lib/admin-auth.ts`:
+
 ```typescript
 export async function requireAdmin(request: Request) {
   console.log("🔒 Checking admin access...");
@@ -314,6 +342,7 @@ export async function requireAdmin(request: Request) {
 ## 📸 Capturas Esperadas
 
 ### Dashboard Desktop
+
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ Sidebar      │  Dashboard Header                          │
@@ -327,6 +356,7 @@ export async function requireAdmin(request: Request) {
 ```
 
 ### Dashboard Móvil
+
 ```
 ┌──────────────────────────┐
 │ ☰ Panel Admin            │

@@ -52,11 +52,11 @@ export default function AdminDashboard() {
     async function fetchStats() {
       try {
         const response = await fetch("/api/admin/stats?period=30");
-        
+
         if (!response.ok) {
           throw new Error("Error al cargar las estadísticas");
         }
-        
+
         const data = await response.json();
         setStats(data);
       } catch (err) {
@@ -74,9 +74,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Vista general de tu tienda
-          </p>
+          <p className="text-muted-foreground">Vista general de tu tienda</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -112,9 +110,7 @@ export default function AdminDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Vista general de tu tienda
-          </p>
+          <p className="text-muted-foreground">Vista general de tu tienda</p>
         </div>
 
         <Alert variant="destructive">
@@ -172,8 +168,8 @@ export default function AdminDashboard() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Productos con bajo inventario</AlertTitle>
           <AlertDescription>
-            Hay {stats.products.lowStock} producto(s) con menos de 10 unidades en
-            stock. Considera reabastecer pronto.
+            Hay {stats.products.lowStock} producto(s) con menos de 10 unidades
+            en stock. Considera reabastecer pronto.
           </AlertDescription>
         </Alert>
       )}

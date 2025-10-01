@@ -41,23 +41,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Función helper para enriquecer el usuario con datos de la BD
   const enrichUserData = async (
-    supabaseUser: SupabaseUser | null
+    supabaseUser: SupabaseUser | null,
+    currentSession: Session | null
   ): Promise<ExtendedUser | null> => {
-    if (!supabaseUser) return null;
+    if (!supabaseUser || !currentSession) return null;
 
     try {
-      // Obtener información adicional del usuario desde la tabla users
-      const { data: userData, error } = await supabase
-        .from("users")
-        .select("role, full_name")
-        .eq("id", supabaseUser.id)
-        .single();
+      // Obtener información adicional del usuario desde la API
+      // que usa Service Role para evitar problemas con RLS
+      const response = await fetch("/api/auth/user-profile", {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      });
 
-      if (error) {
-        console.error("Error fetching user data:", error);
+      if (!response.ok) {
+        console.error("Error fetching user profile:", response.statusText);
         // Retornar usuario básico si hay error
         return { ...supabaseUser, role: "customer" };
       }
+
+      const userData = await response.json();
 
       // Combinar datos de autenticación con datos de la tabla users
       return {
@@ -86,7 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error getting session:", error);
       } else {
         setSession(session);
-        const enrichedUser = await enrichUserData(session?.user ?? null);
+        const enrichedUser = await enrichUserData(
+          session?.user ?? null,
+          session
+        );
         setUser(enrichedUser);
       }
 
@@ -102,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth state changed:", event, session?.user?.email);
 
       setSession(session);
-      const enrichedUser = await enrichUserData(session?.user ?? null);
+      const enrichedUser = await enrichUserData(session?.user ?? null, session);
       setUser(enrichedUser);
       setLoading(false);
 

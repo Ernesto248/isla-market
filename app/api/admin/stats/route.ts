@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     // Verificar que el usuario sea admin
     const adminCheck = await requireAdmin(request);
-    
+
     if (!adminCheck.isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized: Admin access required" },
@@ -71,10 +71,11 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split("T")[0];
 
       const daySales = ordersInPeriod
-        .filter(
-          (order) => order.created_at.split("T")[0] === dateStr
-        )
-        .reduce((sum, order) => sum + parseFloat(order.total_amount.toString()), 0);
+        .filter((order) => order.created_at.split("T")[0] === dateStr)
+        .reduce(
+          (sum, order) => sum + parseFloat(order.total_amount.toString()),
+          0
+        );
 
       return {
         date: dateStr,

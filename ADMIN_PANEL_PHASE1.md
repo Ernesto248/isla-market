@@ -9,23 +9,25 @@ Se ha completado exitosamente la **Fase 1 del Panel de Administración**, establ
 ## 📊 Dashboard Implementado
 
 ### URL de Acceso
+
 - **Desarrollo**: `http://localhost:3000/admin`
 - **Producción**: `https://tu-dominio.com/admin`
 
 ### Características Principales
 
 #### 1. **Métricas Clave** (Stats Cards)
+
 - 💰 **Ventas Totales**: Monto total de ventas en los últimos 30 días
 - 🛒 **Órdenes**: Número total de órdenes procesadas
 - 📦 **Productos Activos**: Productos disponibles vs total
 - 📈 **Ticket Promedio**: Valor promedio por orden
 
 #### 2. **Visualizaciones** (Charts)
+
 - **Gráfica de Ventas**: Evolución diaria de ventas (últimos 30 días)
   - Visualización tipo área con gradiente
   - Formato de moneda en tooltips
   - Fechas en español
-  
 - **Gráfica de Órdenes**: Distribución por estado
   - Visualización tipo barra
   - Colores diferenciados por estado:
@@ -36,6 +38,7 @@ Se ha completado exitosamente la **Fase 1 del Panel de Administración**, establ
     - 🔴 Cancelado
 
 #### 3. **Tabla de Órdenes Recientes**
+
 - Lista de las últimas 10 órdenes
 - Información por orden:
   - Nombre del cliente
@@ -45,6 +48,7 @@ Se ha completado exitosamente la **Fase 1 del Panel de Administración**, establ
 - Links directos a detalles de orden (preparado para Fase 2)
 
 #### 4. **Alertas Inteligentes**
+
 - ⚠️ Alerta de productos con bajo inventario (<10 unidades)
 - Actualización en tiempo real
 
@@ -55,6 +59,7 @@ Se ha completado exitosamente la **Fase 1 del Panel de Administración**, establ
 ### Protección de Rutas
 
 #### Backend (API Routes)
+
 **Archivo**: `lib/admin-auth.ts`
 
 ```typescript
@@ -65,6 +70,7 @@ Se ha completado exitosamente la **Fase 1 del Panel de Administración**, establ
 ```
 
 **Uso en API Routes**:
+
 ```typescript
 import { requireAdmin } from "@/lib/admin-auth";
 
@@ -75,6 +81,7 @@ export async function GET(request: Request) {
 ```
 
 #### Frontend (Components)
+
 **Componente**: `components/admin/admin-guard.tsx`
 
 ```typescript
@@ -85,6 +92,7 @@ export async function GET(request: Request) {
 ```
 
 **Características**:
+
 - ✅ Verifica `user.role === "admin"` del contexto de autenticación
 - ⏳ Muestra spinner de carga durante verificación
 - 🚫 Redirecciona a "/" si el usuario no es admin
@@ -95,6 +103,7 @@ export async function GET(request: Request) {
 **Archivo**: `contexts/auth-context.tsx`
 
 **Mejoras Implementadas**:
+
 ```typescript
 interface ExtendedUser extends User {
   role?: "admin" | "customer";
@@ -102,10 +111,11 @@ interface ExtendedUser extends User {
 }
 
 // Función que enriquece el usuario con datos de la tabla users
-async function enrichUserData(user: User): Promise<ExtendedUser>
+async function enrichUserData(user: User): Promise<ExtendedUser>;
 ```
 
 **Flujo**:
+
 1. Usuario inicia sesión con Supabase Auth
 2. Sistema consulta tabla `users` para obtener `role` y `full_name`
 3. Información se almacena en el contexto global
@@ -143,12 +153,15 @@ lib/
 ## 📡 API de Estadísticas
 
 ### Endpoint
+
 `GET /api/admin/stats?period=30`
 
 ### Parámetros
+
 - `period` (opcional): Número de días a consultar (default: 30)
 
 ### Respuesta
+
 ```json
 {
   "sales": {
@@ -191,6 +204,7 @@ lib/
 ```
 
 ### Consultas SQL Realizadas
+
 1. **Ventas totales y promedio** (tabla `orders`)
 2. **Órdenes por estado** (agregación con GROUP BY)
 3. **Ventas diarias** (últimos N días con DATE_TRUNC)
@@ -203,18 +217,20 @@ lib/
 ## 🎨 Navegación del Admin Panel
 
 ### Sidebar Desktop
+
 - **Ancho fijo**: 256px (w-64)
 - **Sticky**: Permanece visible al hacer scroll
 - **Navegación**:
   - 📊 Dashboard (`/admin`)
-  - 📦 Productos (`/admin/products`) *
-  - 🛒 Órdenes (`/admin/orders`) *
-  - 👥 Clientes (`/admin/customers`) *
+  - 📦 Productos (`/admin/products`) \*
+  - 🛒 Órdenes (`/admin/orders`) \*
+  - 👥 Clientes (`/admin/customers`) \*
 - **Footer**: Botón para volver a la tienda
 
-*Rutas preparadas pero pendientes de implementación en Fase 2*
+_Rutas preparadas pero pendientes de implementación en Fase 2_
 
 ### Mobile Menu
+
 - **Hamburger menu**: Botón con ícono de menú
 - **Drawer lateral**: Desliza desde la izquierda
 - **Mismo contenido**: Igual navegación que desktop
@@ -225,18 +241,21 @@ lib/
 ## 🎨 Diseño y UX
 
 ### Tema
+
 - ✅ Soporte completo de light/dark mode
 - ✅ Variables CSS de Tailwind
 - ✅ Componentes shadcn/ui
 - ✅ Animaciones suaves con Framer Motion
 
 ### Responsive
+
 - ✅ Mobile-first approach
 - ✅ Breakpoints: sm, md, lg, xl
 - ✅ Grid adaptativo (1 → 2 → 4 columnas)
 - ✅ Sidebar oculto en móvil con drawer
 
 ### Localización
+
 - ✅ Todo el texto en español
 - ✅ Fechas formateadas con `date-fns/locale/es`
 - ✅ Formato de moneda en pesos mexicanos ($)
@@ -246,6 +265,7 @@ lib/
 ## 🔧 Tecnologías Utilizadas
 
 ### Frontend
+
 - **Next.js 13.5.1**: App Router
 - **React 18**: Server & Client Components
 - **TypeScript 5.2.2**: Tipado estático
@@ -256,6 +276,7 @@ lib/
 - **Lucide React**: Íconos
 
 ### Backend
+
 - **Supabase**: PostgreSQL + Auth
 - **Supabase Admin Client**: Consultas privilegiadas
 - **RLS (Row Level Security)**: Seguridad a nivel de fila
@@ -266,6 +287,7 @@ lib/
 ## ✅ Checklist de Implementación
 
 ### Fase 1: Dashboard y Fundación ✅
+
 - [x] Crear utilidades de autenticación admin
 - [x] Extender contexto de auth con role
 - [x] Crear componente AdminGuard
@@ -285,6 +307,7 @@ lib/
 ## 🚀 Próximos Pasos (Fase 2)
 
 ### 1. Configurar Digital Ocean Spaces
+
 - [ ] Crear bucket en DO Spaces
 - [ ] Configurar credenciales (Access Key, Secret Key)
 - [ ] Instalar AWS SDK (`@aws-sdk/client-s3`)
@@ -292,6 +315,7 @@ lib/
 - [ ] Configurar CORS en el bucket
 
 ### 2. Gestión de Productos
+
 - [ ] Crear página de lista de productos (`/admin/products`)
 - [ ] Implementar tabla con `@tanstack/react-table`
 - [ ] Agregar filtros (categoría, estado, stock)
@@ -303,6 +327,7 @@ lib/
 - [ ] Implementar eliminación de productos
 
 ### 3. Gestión de Órdenes
+
 - [ ] Crear página de lista de órdenes (`/admin/orders`)
 - [ ] Implementar tabla con filtros por estado
 - [ ] Agregar búsqueda por cliente/ID
@@ -313,6 +338,7 @@ lib/
 - [ ] Agregar notas del administrador
 
 ### 4. Gestión de Clientes (Opcional)
+
 - [ ] Crear página de lista de clientes
 - [ ] Mostrar historial de órdenes por cliente
 - [ ] Implementar búsqueda y filtros
@@ -325,13 +351,15 @@ lib/
 ### Requisitos para Usar el Admin Panel
 
 1. **Usuario Admin en Base de Datos**:
+
    ```sql
-   UPDATE users 
-   SET role = 'admin' 
+   UPDATE users
+   SET role = 'admin'
    WHERE email = 'tu-email@ejemplo.com';
    ```
 
 2. **Variables de Entorno** (verificar en `.env.local`):
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-project-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -345,12 +373,14 @@ lib/
 ### Seguridad
 
 ✅ **Implementado**:
+
 - Middleware de verificación admin en todas las rutas API
 - Protección de componentes con AdminGuard
 - Tokens JWT validados en cada request
 - Service Role Key solo en server-side
 
 ⚠️ **Pendiente** (próximas fases):
+
 - Rate limiting en APIs de admin
 - Logs de actividad de administradores
 - Autenticación de dos factores (2FA)
@@ -360,16 +390,21 @@ lib/
 ## 🐛 Troubleshooting
 
 ### Error: "No tienes permisos de administrador"
+
 **Solución**: Verifica que tu usuario tenga `role = 'admin'` en la tabla `users`
 
 ### Error: "Error al cargar las estadísticas"
-**Solución**: 
+
+**Solución**:
+
 1. Verifica que `SUPABASE_SERVICE_ROLE_KEY` esté en `.env.local`
 2. Confirma que existen datos en las tablas `orders`, `products`, etc.
 3. Revisa la consola del navegador para errores específicos
 
 ### Gráficas no se muestran
-**Solución**: 
+
+**Solución**:
+
 1. Verifica que `recharts` esté instalado: `pnpm list recharts`
 2. Limpia el caché: `rm -rf .next && pnpm build`
 3. Revisa que los datos tengan el formato correcto
