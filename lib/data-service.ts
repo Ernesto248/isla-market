@@ -70,7 +70,7 @@ export class DataService {
   // Obtener un producto por ID
   static async getProductById(id: string): Promise<Product | null> {
     try {
-      const dbProduct = await apiClient.getProductById(id);
+      const dbProduct = await apiClient.getProduct(id);
       return dbProduct ? this.adaptProduct(dbProduct) : null;
     } catch (error) {
       console.error("Error fetching product:", error);

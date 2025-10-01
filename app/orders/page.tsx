@@ -202,28 +202,35 @@ function OrdersContent() {
                     <h4 className="font-medium mb-3">Artículos</h4>
                     <div className="space-y-3">
                       {order.items && order.items.length > 0 ? (
-                        order.items.map((item) => (
-                          <div
-                            key={item.product.id}
-                            className="flex items-center space-x-4"
-                          >
-                            <img
-                              src={item.product.image}
-                              alt={item.product.name}
-                              className="w-12 h-12 object-cover rounded-md"
-                            />
-                            <div className="flex-1">
-                              <p className="font-medium">{item.product.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {t.quantity}: {item.quantity} × $
-                                {item.product.price.toFixed(2)}
+                        order.items
+                          .filter((item) => item.product)
+                          .map((item) => (
+                            <div
+                              key={item.product!.id}
+                              className="flex items-center space-x-4"
+                            >
+                              <img
+                                src={item.product!.image}
+                                alt={item.product!.name}
+                                className="w-12 h-12 object-cover rounded-md"
+                              />
+                              <div className="flex-1">
+                                <p className="font-medium">
+                                  {item.product!.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {t.quantity}: {item.quantity} × $
+                                  {item.product!.price.toFixed(2)}
+                                </p>
+                              </div>
+                              <p className="font-medium">
+                                $
+                                {(item.product!.price * item.quantity).toFixed(
+                                  2
+                                )}
                               </p>
                             </div>
-                            <p className="font-medium">
-                              ${(item.product.price * item.quantity).toFixed(2)}
-                            </p>
-                          </div>
-                        ))
+                          ))
                       ) : (
                         <p className="text-sm text-muted-foreground">
                           Cargando artículos...

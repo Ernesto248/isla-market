@@ -109,7 +109,7 @@ export const translations = {
 
     // Categories
     electronics: "Electronics",
-    home: "Home & Garden",
+    homeGarden: "Home & Garden",
     food: "Food & Beverages",
 
     // Checkout Success
@@ -238,7 +238,7 @@ export const translations = {
 
     // Categories
     electronics: "Electrónicos",
-    home: "Hogar y Jardín",
+    homeGarden: "Hogar y Jardín",
     food: "Alimentos y Bebidas",
 
     // Checkout Success

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/products/product-card";
+import { AuthModal } from "@/components/auth/auth-modal";
 import { useAppStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { DataService } from "@/lib/data-service";
@@ -15,13 +16,16 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
-  const { setAuthModalOpen } = useAppStore();
   const { user } = useAuth();
   const t = translations["es"]; // Solo español
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<
+    "login" | "signup" | "forgot-password"
+  >("login");
 
   useEffect(() => {
     const loadData = async () => {
@@ -274,6 +278,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </div>
   );
 }

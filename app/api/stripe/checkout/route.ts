@@ -46,9 +46,6 @@ export async function POST(request: NextRequest) {
       cancel_url:
         cancel_url || `${request.headers.get("origin")}/checkout/cancel`,
       customer_email,
-      phone_number_collection: {
-        enabled: false,
-      },
       metadata: {
         ...metadata,
         // Solo enviamos los datos esenciales del carrito (Stripe limita a 500 chars por valor)
