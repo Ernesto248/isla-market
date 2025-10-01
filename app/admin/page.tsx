@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 import { StatsCard } from "@/components/admin/dashboard/stats-card";
 import { SalesChart } from "@/components/admin/dashboard/sales-chart";
 import { OrdersChart } from "@/components/admin/dashboard/orders-chart";
@@ -44,6 +45,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const { session } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +53,22 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch("/api/admin/stats?period=30");
+        // Esperar a que haya una sesión válida
+        if (!session?.access_token) {
+          setError("No se encontró una sesión válida");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch("/api/admin/stats?period=30", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
         if (!response.ok) {
-          throw new Error("Error al cargar las estadísticas");
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Error al cargar las estadísticas");
         }
 
         const data = await response.json();
@@ -66,8 +80,11 @@ export default function AdminDashboard() {
       }
     }
 
-    fetchStats();
-  }, []);
+    // Solo hacer la llamada cuando tengamos una sesión
+    if (session) {
+      fetchStats();
+    }
+  }, [session]);
 
   if (loading) {
     return (

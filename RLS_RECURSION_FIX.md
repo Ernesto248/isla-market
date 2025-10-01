@@ -22,16 +22,17 @@ La política RLS `users_view_own_or_admin_view_all` en Supabase contenía una **
 CREATE POLICY users_view_own_or_admin_view_all ON users
   FOR SELECT
   USING (
-    (auth.uid() = id) 
-    OR 
+    (auth.uid() = id)
+    OR
     (auth.uid() IN (
-      SELECT users_1.id FROM users users_1 
+      SELECT users_1.id FROM users users_1
       WHERE users_1.role = 'admin'
     ))
   );
 ```
 
 **¿Por qué es recursiva?**
+
 - Para verificar si un usuario es admin, la política consulta la tabla `users`
 - Esa consulta activa la misma política
 - La política vuelve a consultar `users` para verificar si es admin
@@ -50,7 +51,8 @@ CREATE POLICY users_view_own_profile ON users
   USING (auth.uid() = id);
 ```
 
-**Cambio clave**: 
+**Cambio clave**:
+
 - Los usuarios **solo** pueden ver su propio perfil
 - No hay verificación de admin en la política
 - Sin subqueries = sin recursión
@@ -63,18 +65,20 @@ CREATE POLICY users_view_own_profile ON users
 export async function GET(request: Request) {
   // Verificar token JWT del usuario
   const token = request.headers.get("authorization")?.substring(7);
-  
+
   // Usar Service Role (bypassa RLS)
   const adminClient = createSupabaseAdmin();
-  const { data: { user } } = await adminClient.auth.getUser(token);
-  
+  const {
+    data: { user },
+  } = await adminClient.auth.getUser(token);
+
   // Consultar tabla users sin restricciones RLS
   const { data: userData } = await adminClient
     .from("users")
     .select("role, full_name")
     .eq("id", user.id)
     .single();
-  
+
   return NextResponse.json({
     role: userData?.role || "customer",
     full_name: userData?.full_name || "",
@@ -83,6 +87,7 @@ export async function GET(request: Request) {
 ```
 
 **Ventajas**:
+
 - ✅ Service Role bypassa RLS (no recursión)
 - ✅ Token JWT verificado (seguro)
 - ✅ Solo retorna role y full_name (mínima exposición)
@@ -106,7 +111,7 @@ const enrichUserData = async (
   });
 
   const userData = await response.json();
-  
+
   return {
     ...supabaseUser,
     role: userData?.role || "customer",
@@ -116,6 +121,7 @@ const enrichUserData = async (
 ```
 
 **Cambios**:
+
 - ❌ Antes: `supabase.from("users").select(...)` → Causaba recursión
 - ✅ Ahora: `fetch("/api/auth/user-profile")` → Sin recursión
 
@@ -125,7 +131,7 @@ const enrichUserData = async (
 
 ```sql
 -- En Supabase SQL Editor
-SELECT id, email, role FROM users 
+SELECT id, email, role FROM users
 WHERE email = 'ernestoleonard8@gmail.com';
 
 -- Debería mostrar role = 'admin'
@@ -147,6 +153,7 @@ pnpm dev
 Navega a: http://localhost:3000/admin
 
 **Resultado esperado**:
+
 - ✅ Dashboard se carga correctamente
 - ✅ Sin errores en consola
 - ✅ Stats cards muestran datos
@@ -155,6 +162,7 @@ Navega a: http://localhost:3000/admin
 ### 5. Verificar en la consola del navegador (F12)
 
 **Antes del fix** (❌):
+
 ```
 Error fetching user data: {
   code: '42P17',
@@ -163,6 +171,7 @@ Error fetching user data: {
 ```
 
 **Después del fix** (✅):
+
 ```
 Auth state changed: SIGNED_IN ernestoleonard8@gmail.com
 ✅ No errors!
@@ -173,12 +182,14 @@ Auth state changed: SIGNED_IN ernestoleonard8@gmail.com
 Busca la llamada a `/api/auth/user-profile`:
 
 **Request**:
+
 ```
 GET /api/auth/user-profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "role": "admin",
@@ -191,14 +202,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### ✅ Lo que está protegido:
 
 1. **Verificación de Token JWT**:
+
    - La API verifica el token antes de retornar datos
    - Solo usuarios autenticados pueden obtener su role
 
 2. **Service Role en Backend**:
+
    - `SUPABASE_SERVICE_ROLE_KEY` solo existe en servidor
    - Nunca se expone al cliente
 
 3. **Mínima Exposición de Datos**:
+
    - Solo retorna `role` y `full_name`
    - No expone datos sensibles (email, contraseña, etc.)
 

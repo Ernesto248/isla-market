@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
+// Forzar ejecución dinámica para esta API route
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     // Obtener el token de autorización del header

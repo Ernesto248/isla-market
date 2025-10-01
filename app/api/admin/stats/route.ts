@@ -53,16 +53,16 @@ export async function GET(request: NextRequest) {
 
     const totalOrders = ordersInPeriod.length;
 
-    // 4. Órdenes por estado
-    const ordersByStatus = {
-      pending: allOrders.filter((o) => o.status === "pending").length,
-      confirmed: allOrders.filter((o) => o.status === "confirmed").length,
-      processing: allOrders.filter((o) => o.status === "processing").length,
-      shipped: allOrders.filter((o) => o.status === "shipped").length,
-      delivered: allOrders.filter((o) => o.status === "delivered").length,
-      cancelled: allOrders.filter((o) => o.status === "cancelled").length,
-      paid: allOrders.filter((o) => o.status === "paid").length,
-    };
+    // 4. Órdenes por estado (formato array para el dashboard)
+    const ordersByStatus = [
+      { status: "pending", count: allOrders.filter((o) => o.status === "pending").length },
+      { status: "confirmed", count: allOrders.filter((o) => o.status === "confirmed").length },
+      { status: "processing", count: allOrders.filter((o) => o.status === "processing").length },
+      { status: "shipped", count: allOrders.filter((o) => o.status === "shipped").length },
+      { status: "delivered", count: allOrders.filter((o) => o.status === "delivered").length },
+      { status: "cancelled", count: allOrders.filter((o) => o.status === "cancelled").length },
+      { status: "paid", count: allOrders.filter((o) => o.status === "paid").length },
+    ];
 
     // 5. Ventas por día (últimos N días)
     const salesByDay = Array.from({ length: daysAgo }, (_, i) => {
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     const totalCategories = categories?.length || 0;
 
     // 9. Órdenes recientes (últimas 10)
-    const { data: recentOrders, error: recentOrdersError } = await supabase
+    const { data: recentOrdersRaw, error: recentOrdersError } = await supabase
       .from("orders")
       .select(
         `
@@ -184,6 +184,15 @@ export async function GET(request: NextRequest) {
       console.error("Error fetching recent orders:", recentOrdersError);
     }
 
+    // Formatear órdenes recientes para el dashboard
+    const recentOrders = recentOrdersRaw?.map((order: any) => ({
+      id: order.id,
+      customer_name: order.users?.full_name || order.users?.email || "Cliente desconocido",
+      total: parseFloat(order.total_amount.toString()),
+      status: order.status,
+      created_at: order.created_at,
+    })) || [];
+
     // 10. Calcular ticket promedio
     const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
 
@@ -202,7 +211,7 @@ export async function GET(request: NextRequest) {
       orders: {
         total: totalOrders,
         byStatus: ordersByStatus,
-        recent: recentOrders || [],
+        recent: recentOrders,
       },
       products: {
         total: totalProducts,
