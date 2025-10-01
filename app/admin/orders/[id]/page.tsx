@@ -388,7 +388,8 @@ export default function OrderDetailPage({
                     <div>
                       <p className="text-sm text-muted-foreground">Dirección</p>
                       <p className="font-medium">
-                        {order.recipientInfo.street} #{order.recipientInfo.house_number}
+                        {order.recipientInfo.street} #
+                        {order.recipientInfo.house_number}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Entre: {order.recipientInfo.between_streets}
@@ -415,14 +416,14 @@ export default function OrderDetailPage({
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Cambiar Estado</CardTitle>
-              <CardDescription>
-                Actualiza el estado de la orden
-              </CardDescription>
+              <CardDescription>Actualiza el estado de la orden</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Select
                 value={newStatus}
-                onValueChange={(value) => setNewStatus(value as Order["status"])}
+                onValueChange={(value) =>
+                  setNewStatus(value as Order["status"])
+                }
               >
                 <SelectTrigger>
                   <SelectValue />

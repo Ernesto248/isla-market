@@ -16,6 +16,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface DashboardStats {
   sales: {
@@ -154,18 +156,12 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => (window.location.href = "/admin/products")}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90"
-          >
-            Gestionar Productos
-          </button>
-          <button
-            onClick={() => (window.location.href = "/admin/orders")}
-            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90"
-          >
-            Ver Órdenes
-          </button>
+          <Button asChild>
+            <Link href="/admin/products">Gestionar Productos</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/orders">Ver Órdenes</Link>
+          </Button>
         </div>
       </div>
 
