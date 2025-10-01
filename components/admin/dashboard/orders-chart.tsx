@@ -26,19 +26,13 @@ interface OrdersChartProps {
 }
 
 const statusLabels: Record<string, string> = {
-  pending: "Pendiente",
-  processing: "Procesando",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
+  paid: "Pagadas",
+  delivered: "Entregadas",
 };
 
 const statusColors: Record<string, string> = {
-  pending: "hsl(45, 93%, 47%)", // Yellow
-  processing: "hsl(217, 91%, 60%)", // Blue
-  shipped: "hsl(262, 83%, 58%)", // Purple
+  paid: "hsl(217, 91%, 60%)", // Blue
   delivered: "hsl(142, 71%, 45%)", // Green
-  cancelled: "hsl(0, 84%, 60%)", // Red
 };
 
 export function OrdersChart({ data }: OrdersChartProps) {

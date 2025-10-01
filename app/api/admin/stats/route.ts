@@ -53,35 +53,15 @@ export async function GET(request: NextRequest) {
 
     const totalOrders = ordersInPeriod.length;
 
-    // 4. Órdenes por estado (formato array para el dashboard)
+    // 4. Órdenes por estado (solo pagadas y entregadas)
     const ordersByStatus = [
       {
-        status: "pending",
-        count: allOrders.filter((o) => o.status === "pending").length,
-      },
-      {
-        status: "confirmed",
-        count: allOrders.filter((o) => o.status === "confirmed").length,
-      },
-      {
-        status: "processing",
-        count: allOrders.filter((o) => o.status === "processing").length,
-      },
-      {
-        status: "shipped",
-        count: allOrders.filter((o) => o.status === "shipped").length,
+        status: "paid",
+        count: allOrders.filter((o) => o.status === "paid").length,
       },
       {
         status: "delivered",
         count: allOrders.filter((o) => o.status === "delivered").length,
-      },
-      {
-        status: "cancelled",
-        count: allOrders.filter((o) => o.status === "cancelled").length,
-      },
-      {
-        status: "paid",
-        count: allOrders.filter((o) => o.status === "paid").length,
       },
     ];
 
