@@ -55,13 +55,34 @@ export async function GET(request: NextRequest) {
 
     // 4. Órdenes por estado (formato array para el dashboard)
     const ordersByStatus = [
-      { status: "pending", count: allOrders.filter((o) => o.status === "pending").length },
-      { status: "confirmed", count: allOrders.filter((o) => o.status === "confirmed").length },
-      { status: "processing", count: allOrders.filter((o) => o.status === "processing").length },
-      { status: "shipped", count: allOrders.filter((o) => o.status === "shipped").length },
-      { status: "delivered", count: allOrders.filter((o) => o.status === "delivered").length },
-      { status: "cancelled", count: allOrders.filter((o) => o.status === "cancelled").length },
-      { status: "paid", count: allOrders.filter((o) => o.status === "paid").length },
+      {
+        status: "pending",
+        count: allOrders.filter((o) => o.status === "pending").length,
+      },
+      {
+        status: "confirmed",
+        count: allOrders.filter((o) => o.status === "confirmed").length,
+      },
+      {
+        status: "processing",
+        count: allOrders.filter((o) => o.status === "processing").length,
+      },
+      {
+        status: "shipped",
+        count: allOrders.filter((o) => o.status === "shipped").length,
+      },
+      {
+        status: "delivered",
+        count: allOrders.filter((o) => o.status === "delivered").length,
+      },
+      {
+        status: "cancelled",
+        count: allOrders.filter((o) => o.status === "cancelled").length,
+      },
+      {
+        status: "paid",
+        count: allOrders.filter((o) => o.status === "paid").length,
+      },
     ];
 
     // 5. Ventas por día (últimos N días)
@@ -185,13 +206,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Formatear órdenes recientes para el dashboard
-    const recentOrders = recentOrdersRaw?.map((order: any) => ({
-      id: order.id,
-      customer_name: order.users?.full_name || order.users?.email || "Cliente desconocido",
-      total: parseFloat(order.total_amount.toString()),
-      status: order.status,
-      created_at: order.created_at,
-    })) || [];
+    const recentOrders =
+      recentOrdersRaw?.map((order: any) => ({
+        id: order.id,
+        customer_name:
+          order.users?.full_name || order.users?.email || "Cliente desconocido",
+        total: parseFloat(order.total_amount.toString()),
+        status: order.status,
+        created_at: order.created_at,
+      })) || [];
 
     // 10. Calcular ticket promedio
     const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;

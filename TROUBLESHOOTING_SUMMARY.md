@@ -9,12 +9,14 @@ Este documento detalla todos los problemas encontrados durante la implementació
 ## 🐛 Problema 1: Recursión Infinita en Políticas RLS
 
 ### Síntomas
+
 ```
 Error: infinite recursion detected in policy for relation "users" (42P17)
 GET /rest/v1/users?select=role,full_name&id=eq.xxx 500 (Internal Server Error)
 ```
 
 ### Causa Raíz
+
 La política RLS `users_view_own_or_admin_view_all` contenía una subquery recursiva:
 
 ```sql
@@ -22,8 +24,8 @@ La política RLS `users_view_own_or_admin_view_all` contenía una subquery recur
 CREATE POLICY users_view_own_or_admin_view_all ON users
   FOR SELECT
   USING (
-    (auth.uid() = id) 
-    OR 
+    (auth.uid() = id)
+    OR
     (auth.uid() IN (
       SELECT users_1.id FROM users users_1  -- ❌ Recursión aquí
       WHERE users_1.role = 'admin'
@@ -32,11 +34,13 @@ CREATE POLICY users_view_own_or_admin_view_all ON users
 ```
 
 ### Solución
+
 1. **Simplificar política RLS** - Eliminar la recursión
 2. **Crear API con Service Role** - Bypassa RLS de forma segura
 3. **Actualizar Auth Context** - Usar API en lugar de consulta directa
 
 **Archivos modificados:**
+
 - Política RLS en Supabase (SQL)
 - `app/api/auth/user-profile/route.ts` (nuevo)
 - `contexts/auth-context.tsx`
@@ -52,12 +56,14 @@ CREATE POLICY users_view_own_or_admin_view_all ON users
 ## 🐛 Problema 2: Error 403 Forbidden en API de Estadísticas
 
 ### Síntomas
+
 ```
 GET http://localhost:3000/api/admin/stats?period=30 403 (Forbidden)
 Error al cargar las estadísticas
 ```
 
 ### Causa Raíz
+
 El dashboard hacía `fetch("/api/admin/stats")` **sin incluir el token de autenticación** en el header, por lo que la API `requireAdmin()` rechazaba la solicitud.
 
 ```typescript
@@ -75,13 +81,13 @@ import { useAuth } from "@/contexts/auth-context";
 
 export default function AdminDashboard() {
   const { session } = useAuth();
-  
+
   useEffect(() => {
     if (!session?.access_token) {
       setError("No se encontró una sesión válida");
       return;
     }
-    
+
     const response = await fetch("/api/admin/stats?period=30", {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
@@ -94,6 +100,7 @@ export default function AdminDashboard() {
 #### 2. **API - Corregir Formato de Respuesta**
 
 El dashboard esperaba:
+
 ```typescript
 orders: {
   byStatus: Array<{ status: string; count: number }>;  // Array
@@ -102,6 +109,7 @@ orders: {
 ```
 
 Pero la API estaba retornando:
+
 ```typescript
 orders: {
   byStatus: { pending: 5, shipped: 10, ... };  // ❌ Objeto
@@ -130,6 +138,7 @@ const recentOrders = recentOrdersRaw?.map((order: any) => ({
 ```
 
 **Archivos modificados:**
+
 - `app/admin/page.tsx`
 - `app/api/admin/stats/route.ts`
 
@@ -142,12 +151,14 @@ const recentOrders = recentOrdersRaw?.map((order: any) => ({
 ## 🐛 Problema 3: Build Warning - Dynamic Server Usage
 
 ### Síntomas
+
 ```
-Error in user-profile API: [Error]: Dynamic server usage: 
+Error in user-profile API: [Error]: Dynamic server usage:
 Page couldn't be rendered statically because it used `headers`.
 ```
 
 ### Causa Raíz
+
 Next.js intenta pre-renderizar todas las rutas durante el build, pero `/api/auth/user-profile` usa `request.headers.get()`, que es una función dinámica.
 
 ### Solución
@@ -169,6 +180,7 @@ export async function GET(request: Request) {
 ```
 
 **Archivos modificados:**
+
 - `app/api/auth/user-profile/route.ts`
 
 **Estado:** ✅ Resuelto
@@ -182,12 +194,14 @@ export async function GET(request: Request) {
 ### ✅ Funcionalidades Operativas
 
 1. **Autenticación y Autorización**
+
    - ✅ Verificación de rol admin en backend (Service Role)
    - ✅ Verificación de rol admin en frontend (AdminGuard)
    - ✅ Tokens JWT validados en cada request
    - ✅ Sin problemas de RLS
 
 2. **Dashboard**
+
    - ✅ 4 tarjetas de métricas (Ventas, Órdenes, Productos, Ticket Promedio)
    - ✅ Gráfica de ventas (últimos 30 días)
    - ✅ Gráfica de órdenes por estado
@@ -196,6 +210,7 @@ export async function GET(request: Request) {
    - ✅ Responsive design (desktop y móvil)
 
 3. **API de Estadísticas**
+
    - ✅ Protegida con `requireAdmin()`
    - ✅ Consulta múltiples tablas con Service Role
    - ✅ Retorna datos en formato correcto
@@ -211,6 +226,7 @@ export async function GET(request: Request) {
 Para que el panel funcione correctamente, asegúrate de tener:
 
 1. **Variables de Entorno** (`.env.local`):
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-project-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -218,9 +234,10 @@ Para que el panel funcione correctamente, asegúrate de tener:
    ```
 
 2. **Rol Admin en Base de Datos**:
+
    ```sql
-   UPDATE users 
-   SET role = 'admin' 
+   UPDATE users
+   SET role = 'admin'
    WHERE email = 'tu-email@ejemplo.com';
    ```
 
@@ -237,27 +254,32 @@ Para que el panel funcione correctamente, asegúrate de tener:
 ## 🧪 Cómo Probar que Todo Funciona
 
 ### 1. Verificar Usuario Admin
+
 ```sql
-SELECT id, email, role FROM users 
+SELECT id, email, role FROM users
 WHERE email = 'ernestoleonard8@gmail.com';
 -- Debe mostrar: role = 'admin'
 ```
 
 ### 2. Iniciar Servidor
+
 ```bash
 pnpm dev
 ```
 
 ### 3. Iniciar Sesión
+
 - Ve a http://localhost:3000
 - Inicia sesión con tu cuenta admin
 
 ### 4. Acceder al Dashboard
+
 - Navega a http://localhost:3000/admin
 
 ### 5. Verificar en Consola del Navegador (F12)
 
 **Esperado - Sin errores:**
+
 ```
 ✅ Auth state changed: SIGNED_IN ernestoleonard8@gmail.com
 ✅ No errors related to RLS
@@ -265,6 +287,7 @@ pnpm dev
 ```
 
 **En Network Tab:**
+
 ```
 ✅ GET /api/auth/user-profile → 200 OK
     Response: { role: "admin", full_name: "" }
@@ -278,12 +301,14 @@ pnpm dev
 ## 📈 Métricas de Desarrollo
 
 ### Tiempo de Resolución
+
 - **Problema 1 (RLS)**: ~30 minutos
 - **Problema 2 (403)**: ~20 minutos
 - **Problema 3 (Build)**: ~5 minutos
 - **Total**: ~55 minutos
 
 ### Commits Realizados
+
 1. `b2433cd` - feat: Add admin panel foundation (Phase 1 - Part 1)
 2. `bb87a01` - feat: Complete admin dashboard UI (Phase 1 - Part 2)
 3. `02a7057` - docs: Add comprehensive admin panel documentation
@@ -294,6 +319,7 @@ pnpm dev
 **Total**: 6 commits, ~2,000 líneas de código
 
 ### Archivos Creados/Modificados
+
 - **Creados**: 16 archivos nuevos
 - **Modificados**: 4 archivos existentes
 - **Documentos**: 3 guías completas
@@ -303,21 +329,25 @@ pnpm dev
 ## 🎯 Lecciones Aprendidas
 
 ### 1. Políticas RLS en Supabase
+
 - ⚠️ **Nunca usar subqueries** que consulten la misma tabla en políticas RLS
 - ✅ **Mantener políticas simples**: `auth.uid() = id` es suficiente para la mayoría de casos
 - ✅ **Usar Service Role** para operaciones admin que requieren bypass de RLS
 
 ### 2. Autenticación en Next.js
+
 - ⚠️ **Siempre enviar tokens** en headers de APIs protegidas
 - ✅ **Usar contexto de auth** para acceder a `session.access_token`
 - ✅ **Esperar a que la sesión cargue** antes de hacer requests
 
 ### 3. API Routes en Next.js
+
 - ⚠️ **Rutas dinámicas** deben declararse con `export const dynamic = "force-dynamic"`
 - ✅ **Validar formato de respuesta** contra interfaces TypeScript del cliente
 - ✅ **Mapear datos** de la base de datos al formato esperado por el frontend
 
 ### 4. Debugging
+
 - ✅ **Network tab** es tu mejor amigo para debug de APIs
 - ✅ **Console logs** estratégicos en backend y frontend
 - ✅ **TypeScript interfaces** previenen muchos errores de formato

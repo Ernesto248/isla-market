@@ -68,7 +68,9 @@ export default function AdminDashboard() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Error al cargar las estadísticas");
+          throw new Error(
+            errorData.error || "Error al cargar las estadísticas"
+          );
         }
 
         const data = await response.json();
