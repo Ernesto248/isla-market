@@ -53,6 +53,8 @@ export default function EditProductPage({
 
   // Cargar producto existente
   useEffect(() => {
+    let isMounted = true; // Para evitar actualizaciones de estado si el componente se desmonta
+
     const fetchProduct = async () => {
       try {
         setLoadingProduct(true);
@@ -69,30 +71,40 @@ export default function EditProductPage({
         const data = await response.json();
         const product: Product = data.product;
 
-        setFormData({
-          name: product.name,
-          description: product.description || "",
-          price: product.price.toString(),
-          category_id: product.category_id,
-          stock_quantity: (product.stock_quantity || 0).toString(),
-          weight: product.weight ? product.weight.toString() : "",
-          dimensions: product.dimensions || "",
-          is_active: product.is_active !== false,
-        });
+        if (isMounted) {
+          setFormData({
+            name: product.name,
+            description: product.description || "",
+            price: product.price.toString(),
+            category_id: product.category_id,
+            stock_quantity: (product.stock_quantity || 0).toString(),
+            weight: product.weight ? product.weight.toString() : "",
+            dimensions: product.dimensions || "",
+            is_active: product.is_active !== false,
+          });
 
-        setUploadedImages(product.images || []);
+          setUploadedImages(product.images || []);
+        }
       } catch (error) {
         console.error("Error loading product:", error);
-        toast.error("Error al cargar el producto");
-        router.push("/admin/products");
+        if (isMounted) {
+          toast.error("Error al cargar el producto");
+          router.push("/admin/products");
+        }
       } finally {
-        setLoadingProduct(false);
+        if (isMounted) {
+          setLoadingProduct(false);
+        }
       }
     };
 
     if (session?.access_token) {
       fetchProduct();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [params.id, session?.access_token, router]);
 
   // Cargar categorías
@@ -142,7 +154,12 @@ export default function EditProductPage({
 
   // Manejar eliminación de imágenes
   const handleImageRemove = (url: string) => {
-    setUploadedImages((prev) => prev.filter((img) => img !== url));
+    console.log("Eliminando imagen:", url);
+    setUploadedImages((prev) => {
+      const newImages = prev.filter((img) => img !== url);
+      console.log("Imágenes después de eliminar:", newImages);
+      return newImages;
+    });
   };
 
   // Validar formulario

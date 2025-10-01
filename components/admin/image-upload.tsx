@@ -33,7 +33,6 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const { session } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -43,9 +42,8 @@ export function ImageUpload({
       }
 
       // Validar número máximo de archivos
-      const totalImages =
-        existingImages.length + uploadedImages.length + acceptedFiles.length;
-      if (totalImages > maxFiles) {
+      const currentImageCount = existingImages.length;
+      if (currentImageCount + acceptedFiles.length > maxFiles) {
         toast.error(`Solo puedes subir hasta ${maxFiles} imágenes`);
         return;
       }
@@ -77,18 +75,10 @@ export function ImageUpload({
 
         const results = await Promise.all(uploadPromises);
 
-        // Agregar imágenes subidas al estado
-        const newImages = results.map((result) => ({
-          url: result.url,
-          key: result.key,
-          originalName: result.originalName,
-        }));
-
-        setUploadedImages((prev) => [...prev, ...newImages]);
-
-        // Notificar al componente padre
-        newImages.forEach((img) => {
-          onUploadComplete?.(img.url);
+        // Notificar al componente padre sobre cada imagen subida
+        // El padre se encargará de agregarlas a su estado
+        results.forEach((result) => {
+          onUploadComplete?.(result.url);
         });
 
         toast.success(
@@ -110,7 +100,6 @@ export function ImageUpload({
       folder,
       maxFiles,
       existingImages.length,
-      uploadedImages.length,
       onUploadComplete,
       onUploadError,
     ]
@@ -136,8 +125,18 @@ export function ImageUpload({
         return;
       }
 
+      // Primero, notificar al componente padre para actualizar UI inmediatamente
+      onRemoveImage?.(image.url);
+
+      // Luego, eliminar del servidor (Digital Ocean Spaces) en segundo plano
+      // Extraer el key del archivo desde la URL
+      // URL: https://cms-next.sfo3.digitaloceanspaces.com/products/file-123.jpg
+      // Key: products/file-123.jpg
+      const urlParts = image.url.split(".digitaloceanspaces.com/");
+      const fileKey = urlParts.length > 1 ? urlParts[1] : image.key;
+
       const response = await fetch(
-        `/api/admin/upload?key=${encodeURIComponent(image.key)}`,
+        `/api/admin/upload?key=${encodeURIComponent(fileKey)}`,
         {
           method: "DELETE",
           headers: {
@@ -147,25 +146,34 @@ export function ImageUpload({
       );
 
       if (!response.ok) {
-        throw new Error("Error al eliminar imagen");
+        const error = await response.json();
+        console.error("Error al eliminar imagen del servidor:", error);
+        // No lanzamos error aquí para no afectar la UI
+        // La imagen ya se removió del estado y no se guardará en la DB
+        toast.warning(
+          "La imagen se removió de la lista pero puede quedar en el servidor"
+        );
+      } else {
+        toast.success("Imagen eliminada correctamente");
       }
-
-      setUploadedImages((prev) => prev.filter((img) => img.key !== image.key));
-      onRemoveImage?.(image.url);
-      toast.success("Imagen eliminada correctamente");
     } catch (error) {
-      toast.error("Error al eliminar imagen");
+      const errorMessage =
+        error instanceof Error ? error.message : "Error al eliminar imagen";
+      console.error("Error deleting image:", error);
+      // La imagen ya se removió del estado, así que solo mostramos warning
+      toast.warning(
+        "La imagen se removió de la lista pero puede quedar en el servidor"
+      );
     }
   };
 
-  const allImages = [
-    ...existingImages.map((url) => ({
-      url,
-      key: url,
-      originalName: "Existente",
-    })),
-    ...uploadedImages,
-  ];
+  // Mostrar solo las imágenes que vienen del padre (existingImages)
+  // El padre maneja todo el estado de las imágenes
+  const allImages = existingImages.map((url) => ({
+    url,
+    key: url,
+    originalName: "Existente",
+  }));
 
   return (
     <div className="space-y-4">
@@ -221,16 +229,15 @@ export function ImageUpload({
                 />
                 {/* Overlay con botón de eliminar */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {!existingImages.includes(image.url) && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleRemove(image)}
-                      className="h-8 w-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleRemove(image)}
+                    className="h-8 w-8"
+                    title="Eliminar imagen"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               <div className="p-2 bg-muted">
