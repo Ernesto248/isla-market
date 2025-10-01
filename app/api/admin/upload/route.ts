@@ -29,17 +29,16 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validar tipo de archivo
     if (!isValidMimeType(file.type)) {
       return NextResponse.json(
         {
-          error: `Invalid file type. Allowed types: ${SPACES_CONFIG.allowedMimeTypes.join(", ")}`,
+          error: `Invalid file type. Allowed types: ${SPACES_CONFIG.allowedMimeTypes.join(
+            ", "
+          )}`,
         },
         { status: 400 }
       );
@@ -49,14 +48,16 @@ export async function POST(request: NextRequest) {
     if (!isValidFileSize(file.size)) {
       return NextResponse.json(
         {
-          error: `File too large. Maximum size: ${SPACES_CONFIG.maxFileSize / 1024 / 1024}MB`,
+          error: `File too large. Maximum size: ${
+            SPACES_CONFIG.maxFileSize / 1024 / 1024
+          }MB`,
         },
         { status: 400 }
       );
     }
 
     // Generar nombre único para el archivo
-    const folder = formData.get("folder") as string || "products";
+    const folder = (formData.get("folder") as string) || "products";
     const uniqueFileName = generateUniqueFileName(file.name);
     const key = `${folder}/${uniqueFileName}`;
 

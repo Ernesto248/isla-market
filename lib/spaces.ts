@@ -13,7 +13,9 @@ const validateEnv = () => {
 
   if (missing.length > 0) {
     throw new Error(
-      `Missing Digital Ocean Spaces environment variables: ${missing.join(", ")}`
+      `Missing Digital Ocean Spaces environment variables: ${missing.join(
+        ", "
+      )}`
     );
   }
 };

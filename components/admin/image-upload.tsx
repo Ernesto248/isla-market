@@ -43,7 +43,8 @@ export function ImageUpload({
       }
 
       // Validar número máximo de archivos
-      const totalImages = existingImages.length + uploadedImages.length + acceptedFiles.length;
+      const totalImages =
+        existingImages.length + uploadedImages.length + acceptedFiles.length;
       if (totalImages > maxFiles) {
         toast.error(`Solo puedes subir hasta ${maxFiles} imágenes`);
         return;
@@ -104,7 +105,15 @@ export function ImageUpload({
         setUploading(false);
       }
     },
-    [session, folder, maxFiles, existingImages.length, uploadedImages.length, onUploadComplete, onUploadError]
+    [
+      session,
+      folder,
+      maxFiles,
+      existingImages.length,
+      uploadedImages.length,
+      onUploadComplete,
+      onUploadError,
+    ]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -150,7 +159,11 @@ export function ImageUpload({
   };
 
   const allImages = [
-    ...existingImages.map((url) => ({ url, key: url, originalName: "Existente" })),
+    ...existingImages.map((url) => ({
+      url,
+      key: url,
+      originalName: "Existente",
+    })),
     ...uploadedImages,
   ];
 
@@ -170,7 +183,9 @@ export function ImageUpload({
           {uploading ? (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Subiendo imágenes...</p>
+              <p className="text-sm text-muted-foreground">
+                Subiendo imágenes...
+              </p>
             </>
           ) : (
             <>
