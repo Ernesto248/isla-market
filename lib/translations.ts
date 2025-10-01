@@ -40,7 +40,8 @@ export const translations = {
     inStock: "In Stock",
     clearFilters: "Clear Filters",
     filters: "Filters",
-    filtersDescription: "Filter and sort products by category, price, and other criteria.",
+    filtersDescription:
+      "Filter and sort products by category, price, and other criteria.",
     search: "Search",
     sort: "Sort",
 
@@ -177,7 +178,8 @@ export const translations = {
     inStock: "En Stock",
     clearFilters: "Limpiar Filtros",
     filters: "Filtros",
-    filtersDescription: "Filtra y ordena productos por categoría, precio y otros criterios.",
+    filtersDescription:
+      "Filtra y ordena productos por categoría, precio y otros criterios.",
     search: "Buscar",
     sort: "Ordenar",
 

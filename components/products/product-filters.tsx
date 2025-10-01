@@ -195,9 +195,7 @@ export function ProductFilters({
             <SheetContent side="right">
               <SheetHeader>
                 <SheetTitle>{t.filters}</SheetTitle>
-                <SheetDescription>
-                  {t.filtersDescription}
-                </SheetDescription>
+                <SheetDescription>{t.filtersDescription}</SheetDescription>
               </SheetHeader>
               <div className="mt-6">{FilterContent}</div>
             </SheetContent>
@@ -212,7 +210,9 @@ export function ProductFilters({
                 variant="secondary"
                 className="flex items-center space-x-1"
               >
-                <span>{t.search}: {searchQuery}</span>
+                <span>
+                  {t.search}: {searchQuery}
+                </span>
                 <button
                   onClick={() => onSearchChange("")}
                   aria-label={t.clearFilters}
@@ -243,7 +243,9 @@ export function ProductFilters({
                 variant="secondary"
                 className="flex items-center space-x-1"
               >
-                <span>{t.sort}: {sortBy}</span>
+                <span>
+                  {t.sort}: {sortBy}
+                </span>
                 <button
                   onClick={() => onSortChange("name")}
                   aria-label={t.clearFilters}
