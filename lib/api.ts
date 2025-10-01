@@ -3,10 +3,17 @@ export class ApiClient {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://your-domain.com"
+    // En producción, usar rutas relativas o detectar automáticamente
+    // En desarrollo, usar localhost
+    if (typeof window !== 'undefined') {
+      // Cliente side: usar el origen actual
+      this.baseUrl = window.location.origin;
+    } else {
+      // Server side: usar rutas relativas o localhost en dev
+      this.baseUrl = process.env.NODE_ENV === "production"
+        ? "" // Rutas relativas en producción
         : "http://localhost:3000";
+    }
   }
 
   private async request<T>(
