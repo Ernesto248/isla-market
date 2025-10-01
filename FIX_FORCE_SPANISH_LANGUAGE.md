@@ -3,6 +3,7 @@
 ## 🐛 Problema
 
 La aplicación estaba detectando el idioma del navegador/sistema operativo, causando que:
+
 - En local (español) → se mostraba en español ✅
 - En Vercel (inglés) → se mostraba en inglés ❌
 
@@ -45,6 +46,7 @@ Cambiamos todos los componentes para que usen español directamente, sin depende
 **Archivos modificados:**
 
 #### `components/products/product-filters.tsx`
+
 ```typescript
 // ❌ ANTES
 const { language } = useAppStore();
@@ -56,9 +58,11 @@ const t = translations["es"]; // Forzar español
 ```
 
 #### `components/cart/cart-drawer.tsx`
+
 ```typescript
 // ❌ ANTES
-const { language, cart, updateQuantity, removeFromCart, getCartTotal } = useAppStore();
+const { language, cart, updateQuantity, removeFromCart, getCartTotal } =
+  useAppStore();
 const t = translations[language];
 
 // ✅ DESPUÉS
@@ -67,6 +71,7 @@ const t = translations["es"]; // Forzar español
 ```
 
 #### `components/products/product-card.tsx`
+
 ```typescript
 // ❌ ANTES
 const { language, addToCart } = useAppStore();
@@ -80,6 +85,7 @@ const t = translations["es"]; // Forzar español
 ### 3. Verificar que todos los demás archivos ya usen español
 
 Estos archivos ya estaban correctos:
+
 - ✅ `app/page.tsx` - `translations["es"]`
 - ✅ `app/products/page.tsx` - `translations["es"]`
 - ✅ `app/orders/page.tsx` - `translations["es"]`
@@ -94,6 +100,7 @@ Estos archivos ya estaban correctos:
 ## 🎯 Resultado
 
 Ahora **toda la aplicación está en español**, independientemente de:
+
 - ✅ El idioma del navegador
 - ✅ La configuración del sistema operativo
 - ✅ La ubicación geográfica
@@ -101,26 +108,27 @@ Ahora **toda la aplicación está en español**, independientemente de:
 
 ### Textos afectados (ahora en español)
 
-| Texto en Inglés | Texto en Español |
-|-----------------|------------------|
-| Search products... | Buscar productos... |
-| Filter by Category | Filtrar por Categoría |
-| All Categories | Todas las Categorías |
-| Sort By | Ordenar Por |
-| Name | Nombre |
+| Texto en Inglés     | Texto en Español       |
+| ------------------- | ---------------------- |
+| Search products...  | Buscar productos...    |
+| Filter by Category  | Filtrar por Categoría  |
+| All Categories      | Todas las Categorías   |
+| Sort By             | Ordenar Por            |
+| Name                | Nombre                 |
 | Price (Low to High) | Precio (Menor a Mayor) |
 | Price (High to Low) | Precio (Mayor a Menor) |
-| Newest | Más Recientes |
-| Clear Filters | Limpiar Filtros |
-| Add to Cart | Agregar al Carrito |
-| Out of Stock | Agotado |
-| In Stock | En Stock |
+| Newest              | Más Recientes          |
+| Clear Filters       | Limpiar Filtros        |
+| Add to Cart         | Agregar al Carrito     |
+| Out of Stock        | Agotado                |
+| In Stock            | En Stock               |
 
 ## 🚀 Deploy
 
 Una vez desplegado en Vercel, los usuarios verán:
 
 **ANTES:**
+
 ```
 Search products...
 Filter by Category: All Categories
@@ -128,6 +136,7 @@ Sort By: Name
 ```
 
 **DESPUÉS:**
+
 ```
 Buscar productos...
 Filtrar por Categoría: Todas las Categorías
@@ -146,6 +155,7 @@ Ordenar Por: Nombre
 ### ¿Qué pasa con el sistema de traducciones?
 
 El sistema de traducciones (`lib/translations.ts`) sigue existiendo con ambos idiomas (inglés y español) porque:
+
 - ✅ Permite agregar más idiomas fácilmente en el futuro
 - ✅ Mantiene el código organizado
 - ✅ Facilita testing con diferentes idiomas
@@ -157,6 +167,7 @@ Simplemente **forzamos español** en todos los componentes por ahora.
 Si en el futuro quieres agregar soporte para múltiples idiomas:
 
 1. **Crear selector de idioma en el Header:**
+
 ```typescript
 <Select value={language} onValueChange={setLanguage}>
   <SelectItem value="es">🇪🇸 Español</SelectItem>
@@ -165,17 +176,25 @@ Si en el futuro quieres agregar soporte para múltiples idiomas:
 ```
 
 2. **Revertir componentes para usar el store:**
+
 ```typescript
 const { language } = useAppStore();
 const t = translations[language];
 ```
 
 3. **Agregar más idiomas en `translations.ts`:**
+
 ```typescript
 export const translations = {
-  es: { /* español */ },
-  en: { /* inglés */ },
-  fr: { /* francés */ },
+  es: {
+    /* español */
+  },
+  en: {
+    /* inglés */
+  },
+  fr: {
+    /* francés */
+  },
   // etc...
 };
 ```

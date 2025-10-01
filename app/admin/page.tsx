@@ -146,11 +146,27 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Vista general de tu tienda - Últimos 30 días
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Vista general de tu tienda - Últimos 30 días
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => (window.location.href = "/admin/products")}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90"
+          >
+            Gestionar Productos
+          </button>
+          <button
+            onClick={() => (window.location.href = "/admin/orders")}
+            className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90"
+          >
+            Ver Órdenes
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

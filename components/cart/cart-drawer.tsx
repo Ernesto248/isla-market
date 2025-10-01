@@ -22,8 +22,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { cart, updateQuantity, removeFromCart, getCartTotal } =
-    useAppStore();
+  const { cart, updateQuantity, removeFromCart, getCartTotal } = useAppStore();
   const t = translations["es"]; // Forzar español
   const total = getCartTotal();
 
