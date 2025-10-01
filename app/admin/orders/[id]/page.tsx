@@ -123,6 +123,31 @@ export default function OrderDetailPage({
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState<Order["status"] | "">("");
 
+  // Transformar datos de la API al formato esperado
+  const transformOrderData = (rawData: any): Order => {
+    return {
+      ...rawData,
+      // Mapear order_items a items
+      items:
+        rawData.order_items?.map((item: any) => ({
+          ...item,
+          // Mapear el objeto products a product
+          product: item.products
+            ? {
+                ...item.products,
+                // Asegurar que tenga la propiedad image (primera imagen del array)
+                image: item.products.images?.[0] || null,
+              }
+            : null,
+        })) || [],
+      // Extraer información del usuario
+      full_name: rawData.users?.full_name || null,
+      email: rawData.users?.email || null,
+      // Mapear shipping_addresses a recipientInfo (tomar la primera dirección)
+      recipientInfo: rawData.shipping_addresses?.[0] || null,
+    };
+  };
+
   // Cargar orden
   useEffect(() => {
     const fetchOrder = async () => {
@@ -143,9 +168,15 @@ export default function OrderDetailPage({
           throw new Error("Error al cargar la orden");
         }
 
-        const data = await response.json();
-        setOrder(data);
-        setNewStatus(data.status);
+        const rawData = await response.json();
+        console.log("📦 Raw order data from API:", rawData);
+
+        // Transformar los datos al formato esperado
+        const transformedOrder = transformOrderData(rawData);
+        console.log("✨ Transformed order data:", transformedOrder);
+
+        setOrder(transformedOrder);
+        setNewStatus(transformedOrder.status);
       } catch (error) {
         console.error("Error loading order:", error);
         toast.error("Error al cargar la orden");
