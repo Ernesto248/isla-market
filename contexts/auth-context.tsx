@@ -1,11 +1,21 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, Session, AuthError } from "@supabase/supabase-js";
+import {
+  User as SupabaseUser,
+  Session,
+  AuthError,
+} from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
+// Extender el tipo User para incluir información adicional
+export interface ExtendedUser extends SupabaseUser {
+  role?: "admin" | "customer";
+  full_name?: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: ExtendedUser | null;
   session: Session | null;
   loading: boolean;
   signUp: (
@@ -24,10 +34,42 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
+
+  // Función helper para enriquecer el usuario con datos de la BD
+  const enrichUserData = async (
+    supabaseUser: SupabaseUser | null
+  ): Promise<ExtendedUser | null> => {
+    if (!supabaseUser) return null;
+
+    try {
+      // Obtener información adicional del usuario desde la tabla users
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("role, full_name")
+        .eq("id", supabaseUser.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        // Retornar usuario básico si hay error
+        return { ...supabaseUser, role: "customer" };
+      }
+
+      // Combinar datos de autenticación con datos de la tabla users
+      return {
+        ...supabaseUser,
+        role: userData?.role || "customer",
+        full_name: userData?.full_name || "",
+      };
+    } catch (error) {
+      console.error("Error enriching user data:", error);
+      return { ...supabaseUser, role: "customer" };
+    }
+  };
 
   useEffect(() => {
     // Marcar como hidratado en el cliente
@@ -44,7 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error getting session:", error);
       } else {
         setSession(session);
-        setUser(session?.user ?? null);
+        const enrichedUser = await enrichUserData(session?.user ?? null);
+        setUser(enrichedUser);
       }
 
       setLoading(false);
@@ -59,7 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth state changed:", event, session?.user?.email);
 
       setSession(session);
-      setUser(session?.user ?? null);
+      const enrichedUser = await enrichUserData(session?.user ?? null);
+      setUser(enrichedUser);
       setLoading(false);
 
       // Manejar eventos específicos
