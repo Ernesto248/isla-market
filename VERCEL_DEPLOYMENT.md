@@ -108,21 +108,24 @@ Después de configurar todo:
 Este error ocurre cuando la aplicación intenta hacer fetch a una URL incorrecta.
 
 **Síntomas:**
+
 ```
-Access to fetch at 'https://your-domain.com/api/products' from origin 'https://isla-market.vercel.app' 
+Access to fetch at 'https://your-domain.com/api/products' from origin 'https://isla-market.vercel.app'
 has been blocked by CORS policy
 ```
 
-**Causa:** 
+**Causa:**
 El archivo `lib/api.ts` tenía configurada una URL hardcodeada `"https://your-domain.com"` en lugar de usar el dominio real de Vercel.
 
 **Solución:**
+
 - ✅ Este problema ya está resuelto en la versión actual del código
 - ✅ La aplicación ahora detecta automáticamente el dominio correcto
 - ✅ Si ves este error, asegúrate de tener la última versión del código desde GitHub
 - ✅ Re-despliega la aplicación en Vercel
 
 **Para verificar:**
+
 1. Abre las DevTools del navegador (F12)
 2. Ve a la pestaña Network
 3. Verifica que las peticiones sean a `https://tu-dominio.vercel.app/api/...`
@@ -137,6 +140,7 @@ El archivo `lib/api.ts` tenía configurada una URL hardcodeada `"https://your-do
 ### Error: 404 en las rutas API
 
 **Síntomas:**
+
 ```
 Failed to load resource: the server responded with a status of 404 ()
 ```
@@ -144,10 +148,12 @@ Failed to load resource: the server responded with a status of 404 ()
 **Posibles causas y soluciones:**
 
 1. **Variables de entorno no configuradas:**
+
    - Verifica que todas las variables de entorno estén configuradas en Vercel
    - Re-despliega después de agregar las variables
 
 2. **Base de datos vacía:**
+
    - Si es la primera vez que despliegas, la base de datos puede estar vacía
    - Usa el endpoint `/api/migrate` para crear datos de prueba (ver sección "Migración de Datos")
 
@@ -165,10 +171,12 @@ Failed to load resource: the server responded with a status of 404 ()
 
 **Posibles causas:**
 
-1. **Base de datos vacía:** 
+1. **Base de datos vacía:**
+
    - Solución: Ejecuta la migración de datos (ver sección abajo)
 
 2. **Políticas RLS de Supabase muy restrictivas:**
+
    - Ve a Supabase Dashboard > Authentication > Policies
    - Asegúrate de que las políticas permitan lectura pública para `products` y `categories`
 

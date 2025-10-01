@@ -28,13 +28,21 @@ export const translations = {
     // Products
     searchProducts: "Search products...",
     filterByCategory: "Filter by Category",
+    allCategories: "All Categories",
     sortBy: "Sort By",
     sortByName: "Name",
     sortByPrice: "Price",
+    sortByPriceLowToHigh: "Price (Low to High)",
+    sortByPriceHighToLow: "Price (High to Low)",
     sortByNewest: "Newest",
     addToCart: "Add to Cart",
     outOfStock: "Out of Stock",
     inStock: "In Stock",
+    clearFilters: "Clear Filters",
+    filters: "Filters",
+    filtersDescription: "Filter and sort products by category, price, and other criteria.",
+    search: "Search",
+    sort: "Sort",
 
     // Cart
     cartEmpty: "Your cart is empty",
@@ -157,13 +165,21 @@ export const translations = {
     // Products
     searchProducts: "Buscar productos...",
     filterByCategory: "Filtrar por Categoría",
+    allCategories: "Todas las Categorías",
     sortBy: "Ordenar Por",
     sortByName: "Nombre",
     sortByPrice: "Precio",
+    sortByPriceLowToHigh: "Precio (Menor a Mayor)",
+    sortByPriceHighToLow: "Precio (Mayor a Menor)",
     sortByNewest: "Más Recientes",
     addToCart: "Agregar al Carrito",
     outOfStock: "Agotado",
     inStock: "En Stock",
+    clearFilters: "Limpiar Filtros",
+    filters: "Filtros",
+    filtersDescription: "Filtra y ordena productos por categoría, precio y otros criterios.",
+    search: "Buscar",
+    sort: "Ordenar",
 
     // Cart
     cartEmpty: "Tu carrito está vacío",

@@ -105,7 +105,7 @@ export function ProductFilters({
               <SelectValue placeholder={t.filterByCategory} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t.allCategories}</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -125,10 +125,10 @@ export function ProductFilters({
             <SelectContent>
               <SelectItem value="name">{t.sortByName}</SelectItem>
               <SelectItem value="price-low">
-                {t.sortByPrice} (Low to High)
+                {t.sortByPriceLowToHigh}
               </SelectItem>
               <SelectItem value="price-high">
-                {t.sortByPrice} (High to Low)
+                {t.sortByPriceHighToLow}
               </SelectItem>
               <SelectItem value="newest">{t.sortByNewest}</SelectItem>
             </SelectContent>
@@ -139,7 +139,7 @@ export function ProductFilters({
         {hasActiveFilters && (
           <Button variant="outline" onClick={clearFilters} className="w-full">
             <X className="h-4 w-4 mr-2" />
-            Clear Filters
+            {t.clearFilters}
           </Button>
         )}
       </div>
@@ -194,10 +194,9 @@ export function ProductFilters({
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
+                <SheetTitle>{t.filters}</SheetTitle>
                 <SheetDescription>
-                  Filter and sort products by category, price, and other
-                  criteria.
+                  {t.filtersDescription}
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6">{FilterContent}</div>
@@ -213,10 +212,10 @@ export function ProductFilters({
                 variant="secondary"
                 className="flex items-center space-x-1"
               >
-                <span>Search: {searchQuery}</span>
+                <span>{t.search}: {searchQuery}</span>
                 <button
                   onClick={() => onSearchChange("")}
-                  aria-label="Clear search"
+                  aria-label={t.clearFilters}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -228,12 +227,12 @@ export function ProductFilters({
                 className="flex items-center space-x-1"
               >
                 <span>
-                  Category:{" "}
+                  {t.filterByCategory}:{" "}
                   {categories.find((c) => c.id === selectedCategory)?.name}
                 </span>
                 <button
                   onClick={() => onCategoryChange("all")}
-                  aria-label="Clear category filter"
+                  aria-label={t.clearFilters}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -244,10 +243,10 @@ export function ProductFilters({
                 variant="secondary"
                 className="flex items-center space-x-1"
               >
-                <span>Sort: {sortBy}</span>
+                <span>{t.sort}: {sortBy}</span>
                 <button
                   onClick={() => onSortChange("name")}
-                  aria-label="Clear sort filter"
+                  aria-label={t.clearFilters}
                 >
                   <X className="h-3 w-3" />
                 </button>
