@@ -125,6 +125,28 @@ export default function OrderDetailPage({
 
   // Transformar datos de la API al formato esperado
   const transformOrderData = (rawData: any): Order => {
+    console.log("🔍 Raw data structure:", {
+      hasUsers: !!rawData.users,
+      usersType: Array.isArray(rawData.users) ? "array" : typeof rawData.users,
+      users: rawData.users,
+      userFullName: rawData.users?.full_name,
+      userEmail: rawData.users?.email,
+      customerId: rawData.customer_id,
+      customerName: rawData.customer_name,
+      hasShippingAddresses: !!rawData.shipping_addresses,
+      shippingAddressesType: Array.isArray(rawData.shipping_addresses)
+        ? "array"
+        : typeof rawData.shipping_addresses,
+      shippingAddresses: rawData.shipping_addresses,
+    });
+
+    // Intentar obtener el nombre del cliente de múltiples fuentes
+    const fullName =
+      rawData.users?.full_name || // De la tabla users
+      rawData.customer_name || // Del campo customer_name de la orden
+      rawData.users?.email?.split("@")[0] || // Del email como fallback
+      null;
+
     return {
       ...rawData,
       // Mapear order_items a items
@@ -141,10 +163,14 @@ export default function OrderDetailPage({
             : null,
         })) || [],
       // Extraer información del usuario
-      full_name: rawData.users?.full_name || null,
+      // users es un OBJETO, no un array (porque usamos .single() en el query)
+      full_name: fullName,
       email: rawData.users?.email || null,
-      // Mapear shipping_addresses a recipientInfo (tomar la primera dirección)
-      recipientInfo: rawData.shipping_addresses?.[0] || null,
+      // Mapear shipping_addresses a recipientInfo
+      // shipping_addresses es un ARRAY de direcciones
+      recipientInfo: Array.isArray(rawData.shipping_addresses)
+        ? rawData.shipping_addresses[0] || null
+        : rawData.shipping_addresses || null,
     };
   };
 

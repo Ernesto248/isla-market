@@ -371,7 +371,9 @@ export default function OrdersPage() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {order.full_name || "N/A"}
+                            {order.full_name ||
+                              order.email?.split("@")[0] ||
+                              "Cliente"}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {order.email}
