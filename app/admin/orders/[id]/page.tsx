@@ -242,8 +242,14 @@ export default function OrderDetailPage({
         throw new Error("Error al actualizar la orden");
       }
 
-      const updatedOrder = await response.json();
-      setOrder(updatedOrder);
+      const rawData = await response.json();
+      console.log("📦 Raw updated order data:", rawData);
+
+      // Transformar los datos igual que en la carga inicial
+      const transformedOrder = transformOrderData(rawData);
+      console.log("✨ Transformed updated order:", transformedOrder);
+
+      setOrder(transformedOrder);
       toast.success(`Estado actualizado a: ${getStatusText(newStatus)}`);
     } catch (error) {
       console.error("Error updating order:", error);
