@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // Datos mock adaptados para la base de datos
 const mockCategories = [

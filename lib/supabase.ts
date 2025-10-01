@@ -1,24 +1,46 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Cliente para el frontend (con anon key)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Lazy initialization para evitar errores durante el build
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
+// Cliente para el frontend (con anon key)
+export const supabase = (() => {
+  if (supabaseInstance) return supabaseInstance;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Durante el build, retornar un objeto mock para evitar errores
+    if (
+      typeof window === "undefined" &&
+      process.env.NODE_ENV !== "production"
+    ) {
+      console.warn("Supabase credentials not found during build");
+    }
+    // Retornar un cliente mock que no hará nada
+    return createClient("https://placeholder.supabase.co", "placeholder-key");
+  }
+
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
     },
-  },
-});
+  });
+
+  return supabaseInstance;
+})();
 
 // Cliente para el backend (con service role key) - SOLO para uso en servidor
 export function createSupabaseAdmin() {
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseServiceRoleKey) {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY is required for admin operations"
+      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for admin operations"
     );
   }
 
