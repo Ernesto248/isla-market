@@ -14,6 +14,7 @@ import {
   Users,
   Menu,
   X,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,11 @@ const navigation = [
     name: "Productos",
     href: "/admin/products",
     icon: Package,
+  },
+  {
+    name: "Categorías",
+    href: "/admin/categories",
+    icon: FolderOpen,
   },
   {
     name: "Órdenes",

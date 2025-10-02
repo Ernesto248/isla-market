@@ -148,19 +148,22 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
             Vista general de tu tienda - Últimos 30 días
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/admin/products">Gestionar Productos</Link>
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/categories">Categorías</Link>
           </Button>
-          <Button asChild>
-            <Link href="/admin/orders">Ver Órdenes</Link>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/products">Productos</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/admin/orders">Órdenes</Link>
           </Button>
         </div>
       </div>

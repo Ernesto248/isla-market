@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,33 +40,80 @@ function ProfileContent() {
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: user?.user_metadata?.first_name || "",
-      lastName: user?.user_metadata?.last_name || "",
-      email: user?.email || "",
+      firstName: "",
+      lastName: "",
+      email: "",
     },
   });
+
+  // Actualizar los valores del formulario cuando el usuario se carga
+  useEffect(() => {
+    if (user) {
+      // Extraer first_name y last_name del full_name o del user_metadata
+      const fullName = user.user_metadata?.full_name || "";
+      const nameParts = fullName.split(" ");
+      const firstName =
+        user.user_metadata?.first_name ||
+        (nameParts.length > 0 ? nameParts[0] : "");
+      const lastName =
+        user.user_metadata?.last_name ||
+        (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "");
+
+      form.reset({
+        firstName: firstName,
+        lastName: lastName,
+        email: user.email || "",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Solo re-ejecutar cuando cambie el ID del usuario
 
   const handleSave = async (data: ProfileForm) => {
     setIsLoading(true);
 
     try {
-      // Actualizar metadata del usuario en Supabase Auth
-      const { error } = await supabase.auth.updateUser({
-        data: {
+      // Obtener el token de sesión
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error("No hay sesión activa");
+      }
+
+      // Actualizar el perfil usando la API
+      const response = await fetch("/api/users/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           first_name: data.firstName,
           last_name: data.lastName,
-        },
+        }),
       });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al actualizar el perfil");
       }
+
+      const result = await response.json();
+
+      // Refrescar la sesión para obtener los datos actualizados
+      await supabase.auth.refreshSession();
 
       toast.success("Perfil actualizado exitosamente");
       setIsEditing(false);
+
+      // Recargar la página para mostrar los datos actualizados
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error("Error al actualizar el perfil: " + error.message);
+      toast.error(error.message || "Error al actualizar el perfil");
     } finally {
       setIsLoading(false);
     }
@@ -176,9 +223,29 @@ function ProfileContent() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setIsEditing(false);
-                          form.reset();
+                          // Restaurar valores originales
+                          if (user) {
+                            const fullName =
+                              user.user_metadata?.full_name || "";
+                            const nameParts = fullName.split(" ");
+                            const firstName =
+                              user.user_metadata?.first_name ||
+                              (nameParts.length > 0 ? nameParts[0] : "");
+                            const lastName =
+                              user.user_metadata?.last_name ||
+                              (nameParts.length > 1
+                                ? nameParts.slice(1).join(" ")
+                                : "");
+                            form.reset({
+                              firstName,
+                              lastName,
+                              email: user.email || "",
+                            });
+                          }
                         }}
                         disabled={isLoading}
                       >
@@ -186,7 +253,14 @@ function ProfileContent() {
                       </Button>
                     </>
                   ) : (
-                    <Button type="button" onClick={() => setIsEditing(true)}>
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsEditing(true);
+                      }}
+                    >
                       Editar
                     </Button>
                   )}

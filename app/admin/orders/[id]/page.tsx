@@ -19,6 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -109,6 +120,24 @@ const getStatusIcon = (status: Order["status"]) => {
     default:
       return null;
   }
+};
+
+// Lógica de estados permitidos según el flujo del negocio
+// Flujo simplificado: pending → paid → delivered
+const getAllowedNextStates = (
+  currentStatus: Order["status"]
+): Order["status"][] => {
+  const allowedTransitions: Record<Order["status"], Order["status"][]> = {
+    pending: ["paid"], // Pendiente solo puede pasar a Pagado
+    paid: ["delivered"], // Pagado solo puede pasar a Entregado
+    confirmed: ["delivered"], // Si existe, puede pasar a Entregado
+    processing: ["delivered"], // Si existe, puede pasar a Entregado
+    shipped: ["delivered"], // Si existe, puede pasar a Entregado
+    delivered: [], // Estado final, no se puede cambiar
+    cancelled: [], // Estado final, no se puede cambiar
+  };
+
+  return allowedTransitions[currentStatus] || [];
 };
 
 export default function OrderDetailPage({
@@ -482,39 +511,85 @@ export default function OrderDetailPage({
               <CardDescription>Actualiza el estado de la orden</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Select
-                value={newStatus}
-                onValueChange={(value) =>
-                  setNewStatus(value as Order["status"])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="paid">Pagado</SelectItem>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="processing">Procesando</SelectItem>
-                  <SelectItem value="shipped">Enviado</SelectItem>
-                  <SelectItem value="delivered">Entregado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleStatusUpdate}
-                disabled={updating || newStatus === order.status}
-                className="w-full"
-              >
-                {updating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Actualizando...
-                  </>
-                ) : (
-                  "Actualizar Estado"
-                )}
-              </Button>
+              {getAllowedNextStates(order.status).length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">
+                    Esta orden está en estado final y no se puede modificar.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <Select
+                    value={newStatus}
+                    onValueChange={(value) =>
+                      setNewStatus(value as Order["status"])
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Mostrar el estado actual primero */}
+                      <SelectItem value={order.status}>
+                        {getStatusText(order.status)} (actual)
+                      </SelectItem>
+                      {/* Luego mostrar los estados permitidos */}
+                      {getAllowedNextStates(order.status).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {getStatusText(status)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        disabled={
+                          updating || newStatus === order.status || !newStatus
+                        }
+                        className="w-full"
+                      >
+                        {updating ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Actualizando...
+                          </>
+                        ) : (
+                          "Actualizar Estado"
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          ¿Confirmar cambio de estado?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Estás a punto de cambiar el estado de la orden de{" "}
+                          <span className="font-semibold text-foreground">
+                            {getStatusText(order.status)}
+                          </span>{" "}
+                          a{" "}
+                          <span className="font-semibold text-foreground">
+                            {newStatus &&
+                              getStatusText(newStatus as Order["status"])}
+                          </span>
+                          .
+                          <br />
+                          Esta acción quedará registrada en el historial de la
+                          orden.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleStatusUpdate}>
+                          Confirmar cambio
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </CardContent>
           </Card>
 
