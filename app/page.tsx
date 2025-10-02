@@ -58,9 +58,11 @@ export default function HomePage() {
     <div className="space-y-16">
       {/* Hero Section - Diseño Premium */}
       <section className="relative overflow-hidden min-h-[90vh] flex items-center">
-        {/* Background Image con Overlay */}
+        {/* Background Image con Overlay - Responsive */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30 z-10" />
+
+          {/* Imagen para móvil (sm y menor) */}
           <motion.img
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
@@ -69,9 +71,23 @@ export default function HomePage() {
               repeat: Infinity,
               repeatType: "reverse",
             }}
-            src="https://images.pexels.com/photos/6214383/pexels-photo-6214383.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            src="https://cms-next.sfo3.cdn.digitaloceanspaces.com/hero-sm.png"
+            alt="Shopping Background Mobile"
+            className="sm:hidden w-full h-full object-cover object-center"
+          />
+
+          {/* Imagen para tablets y desktop (sm y mayor) */}
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            src="https://cms-next.sfo3.cdn.digitaloceanspaces.com/hero.jpg"
             alt="Shopping Background"
-            className="w-full h-full object-cover object-bottom"
+            className="hidden sm:block w-full h-full object-cover object-center"
           />
         </div>
 
