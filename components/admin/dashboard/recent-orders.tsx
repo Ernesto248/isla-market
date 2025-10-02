@@ -32,6 +32,8 @@ interface RecentOrdersProps {
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",
+  paid: "Pagado",
+  confirmed: "Confirmado",
   processing: "Procesando",
   shipped: "Enviado",
   delivered: "Entregado",
@@ -43,6 +45,8 @@ const statusVariants: Record<
   "default" | "secondary" | "destructive" | "outline"
 > = {
   pending: "outline",
+  paid: "default",
+  confirmed: "default",
   processing: "default",
   shipped: "secondary",
   delivered: "default",
