@@ -46,7 +46,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-[calc(100vh-8rem)] mt-6">
           <ClientOnly
             fallback={
               <div className="flex-1 flex items-center justify-center">
@@ -72,85 +72,144 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </div>
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto py-6">
-                  <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto py-2 -mx-1 px-1">
+                  <div className="space-y-3">
                     {cart.map((item) => (
                       <motion.div
                         key={item.product.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="flex items-center space-x-4 p-4 border rounded-lg"
+                        className="relative flex flex-col gap-3 p-3 border rounded-lg bg-card"
                       >
-                        <img
-                          src={item.product.image}
-                          alt={item.product.name}
-                          className="w-16 h-16 object-cover rounded-md"
-                        />
-
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">
-                            {item.product.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            ${item.product.price.toFixed(2)}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              updateQuantity(item.product.id, item.quantity - 1)
-                            }
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-
-                          <span className="w-8 text-center text-sm font-medium">
-                            {item.quantity}
-                          </span>
-
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() =>
-                              updateQuantity(item.product.id, item.quantity + 1)
-                            }
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-
+                        {/* Botón de eliminar en la esquina superior derecha */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-500 hover:text-red-700"
+                          className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-red-500"
                           onClick={() => removeFromCart(item.product.id)}
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-4 w-4" />
                         </Button>
+
+                        {/* Contenedor principal con imagen y detalles */}
+                        <div className="flex gap-3 pr-6">
+                          <img
+                            src={item.product.image}
+                            alt={item.product.name}
+                            className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+                          />
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm line-clamp-2 leading-tight mb-1">
+                              {item.product.name}
+                            </h3>
+                            <p className="text-base font-semibold text-primary">
+                              ${item.product.price.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Controles de cantidad */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Cantidad:
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                updateQuantity(
+                                  item.product.id,
+                                  item.quantity - 1
+                                )
+                              }
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+
+                            <span className="min-w-[2rem] text-center text-sm font-semibold">
+                              {item.quantity}
+                            </span>
+
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-full"
+                              onClick={() =>
+                                updateQuantity(
+                                  item.product.id,
+                                  item.quantity + 1
+                                )
+                              }
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Subtotal del producto */}
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-sm text-muted-foreground">
+                            Subtotal:
+                          </span>
+                          <span className="text-sm font-semibold">
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
                       </motion.div>
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t pt-4 space-y-4">
-                  <div className="flex justify-between items-center text-lg font-semibold">
-                    <span>{t.total}:</span>
-                    <span>${total.toFixed(2)}</span>
+                {/* Footer fijo en la parte inferior */}
+                <div className="flex-shrink-0 border-t bg-background pt-4 pb-4 space-y-3">
+                  {/* Resumen de items */}
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <span>
+                      {cart.length} producto{cart.length !== 1 ? "s" : ""}
+                    </span>
+                    <span>
+                      {cart.reduce((sum, item) => sum + item.quantity, 0)}{" "}
+                      unidad
+                      {cart.reduce((sum, item) => sum + item.quantity, 0) !== 1
+                        ? "es"
+                        : ""}
+                    </span>
                   </div>
 
+                  {/* Total */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-semibold">{t.total}:</span>
+                    <span className="text-2xl font-bold text-primary">
+                      ${total.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Botón de checkout */}
                   <Button
                     className="w-full"
                     size="lg"
                     asChild
                     onClick={onClose}
                   >
-                    <Link href="/checkout">{t.checkout}</Link>
+                    <Link href="/checkout">
+                      <ShoppingBag className="h-5 w-5 mr-2" />
+                      {t.checkout}
+                    </Link>
+                  </Button>
+
+                  {/* Botón de continuar comprando */}
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    asChild
+                    onClick={onClose}
+                  >
+                    <Link href="/products">{t.continueShopping}</Link>
                   </Button>
                 </div>
               </>
