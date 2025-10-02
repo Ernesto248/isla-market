@@ -16,28 +16,28 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://isla-market.vercel.app"
   ),
-  title: "Isla Market - Send Love to Cuba",
+  title: "Isla Market - Envía Amor a Cuba",
   description:
-    "Shop electronics, home goods, and food products to send to your loved ones in Cuba",
+    "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
   icons: {
     icon: "/island.svg",
     shortcut: "/island.svg",
     apple: "/island.svg",
   },
   openGraph: {
-    title: "Isla Market - Send Love to Cuba",
+    title: "Isla Market - Envía Amor a Cuba",
     description:
-      "Shop electronics, home goods, and food products to send to your loved ones in Cuba",
-    url: "https://isla-market.com",
+      "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
+    url: "https://isla-market.vercel.app",
     siteName: "Isla Market",
     images: [
       {
-        url: "/island.svg",
-        width: 800,
-        height: 600,
-        alt: "Isla Market Logo",
+        url: "/island.png", // Usaremos PNG en lugar de SVG
+        width: 1200,
+        height: 630,
+        alt: "Isla Market - Envía Amor a Cuba",
       },
     ],
     locale: "es_ES",
@@ -45,10 +45,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Isla Market - Send Love to Cuba",
+    title: "Isla Market - Envía Amor a Cuba",
     description:
-      "Shop electronics, home goods, and food products to send to your loved ones in Cuba",
-    images: ["/island.svg"],
+      "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
+    images: ["/island.png"],
   },
 };
 
@@ -58,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={inter.className}>
         <AuthProvider>
           <ThemeProvider>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generate OG Image</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        background: #f5f5f5;
+      }
+
+      .canvas-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #ogCanvas {
+        border: 1px solid #ddd;
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .controls {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        padding: 10px 20px;
+        background: #0070f3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:hover {
+        background: #0051cc;
+      }
+
+      .info {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f0f9ff;
+        border-left: 4px solid #0070f3;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas-container">
+      <h1>Generador de Imagen Open Graph - Isla Market</h1>
+      <canvas id="ogCanvas" width="1200" height="630"></canvas>
+      <div class="controls">
+        <button id="downloadBtn">Descargar og-image.png</button>
+        <button id="regenerateBtn">Regenerar</button>
+      </div>
+      <div class="info">
+        <strong>Instrucciones:</strong>
+        <ol>
+          <li>Haz clic en "Descargar og-image.png"</li>
+          <li>
+            Guarda la imagen en la carpeta <code>public/</code> de tu proyecto
+          </li>
+          <li>Haz commit y push de los cambios</li>
+          <li>
+            Después de desplegar, limpia el caché de WhatsApp compartiendo el
+            link de nuevo
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("ogCanvas");
+      const ctx = canvas.getContext("2d");
+
+      function drawOGImage() {
+        // Fondo gradiente
+        const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+        gradient.addColorStop(0, "#0ea5e9");
+        gradient.addColorStop(1, "#0284c7");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1200, 630);
+
+        // Patrón de puntos decorativo
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+        for (let i = 0; i < 30; i++) {
+          const x = Math.random() * 1200;
+          const y = Math.random() * 630;
+          const size = Math.random() * 3 + 1;
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Dibujar isla simple (representación del logo)
+        ctx.save();
+        ctx.translate(300, 315);
+
+        // Isla base
+        ctx.fillStyle = "#fbbf24";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 100, 60, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Palmera - tronco
+        ctx.fillStyle = "#92400e";
+        ctx.fillRect(-8, -80, 16, 80);
+
+        // Palmera - hojas
+        ctx.fillStyle = "#16a34a";
+        for (let i = 0; i < 6; i++) {
+          ctx.save();
+          ctx.rotate(((Math.PI * 2) / 6) * i);
+          ctx.beginPath();
+          ctx.ellipse(0, -85, 15, 40, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        ctx.restore();
+
+        // Texto principal
+        ctx.fillStyle = "white";
+        ctx.font = "bold 80px Inter, system-ui, sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Isla Market", 450, 280);
+
+        // Subtítulo
+        ctx.font = "40px Inter, system-ui, sans-serif";
+        ctx.fillText("Envía Amor a Cuba", 450, 350);
+
+        // Descripción
+        ctx.font = "28px Inter, system-ui, sans-serif";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.fillText("Electrónicos, artículos para el hogar", 450, 410);
+        ctx.fillText("y alimentos para tus seres queridos", 450, 450);
+
+        // Borde decorativo
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(20, 20, 1160, 590);
+      }
+
+      drawOGImage();
+
+      document
+        .getElementById("downloadBtn")
+        .addEventListener("click", function () {
+          canvas.toBlob(function (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "og-image.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, "image/png");
+        });
+
+      document
+        .getElementById("regenerateBtn")
+        .addEventListener("click", function () {
+          ctx.clearRect(0, 0, 1200, 630);
+          drawOGImage();
+        });
+    </script>
+  </body>
+</html>
