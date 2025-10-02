@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   description:
     "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
   icons: {
-    icon: "/island.svg",
-    shortcut: "/island.svg",
-    apple: "/island.svg",
+    icon: "/icono.png",
+    shortcut: "/icono.png",
+    apple: "/icono.png",
   },
   openGraph: {
     title: "Isla Market - Envía Amor a Cuba",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "Isla Market",
     images: [
       {
-        url: "/island.png", // Usaremos PNG en lugar de SVG
+        url: "//icono.png", // Usaremos PNG en lugar de SVG
         width: 1200,
         height: 630,
         alt: "Isla Market - Envía Amor a Cuba",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     title: "Isla Market - Envía Amor a Cuba",
     description:
       "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
-    images: ["/island.png"],
+    images: ["/icono.png"],
   },
 };
 
