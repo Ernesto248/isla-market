@@ -68,7 +68,7 @@ export default function HomePage() {
             >
               <div className="space-y-4">
                 <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  🇨🇺 Connecting Families
+                  🇨🇺 Conectando familias
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
