@@ -56,77 +56,184 @@ export default function HomePage() {
 
   return (
     <div className="space-y-16">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950 dark:via-background dark:to-purple-950">
-        <div className="container mx-auto px-4 py-20 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-8"
-            >
-              <div className="space-y-4">
-                <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                  🇨🇺 Conectando familias
-                </Badge>
-                <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {t.heroTitle}
-                  </span>
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-lg">
-                  {t.heroSubtitle}
-                </p>
-              </div>
+      {/* Hero Section - Diseño Premium */}
+      <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+        {/* Background Image con Overlay */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/30 z-10" />
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            src="https://images.pexels.com/photos/6214383/pexels-photo-6214383.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt="Shopping Background"
+            className="w-full h-full object-cover object-bottom"
+          />
+        </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+        {/* Partículas Flotantes */}
+        <div className="absolute inset-0 z-10 pointer-events-none">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-white/20 rounded-full"
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+              }}
+              animate={{
+                y: [null, Math.random() * -100 - 50],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: Math.random() * 3 + 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Contenido */}
+        <div className="container mx-auto px-4 py-20 relative z-20">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            {/* Título Principal con Gradiente Animado - Tamaño Reducido */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="space-y-4"
+            >
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight">
+                <motion.span
+                  className="inline-block bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent"
+                  animate={{
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  }}
+                  transition={{ duration: 5, repeat: Infinity }}
+                  style={{
+                    backgroundSize: "200% auto",
+                  }}
+                >
+                  Envía Amor
+                </motion.span>
+                <br />
+                <motion.span
+                  className="inline-block text-white"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                >
+                  Más Allá de las
+                </motion.span>
+                <br />
+                <motion.span
+                  className="inline-block bg-gradient-to-r from-amber-300 via-orange-400 to-pink-400 bg-clip-text text-transparent"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                >
+                  Fronteras
+                </motion.span>
+              </h1>
+
+              {/* Subtítulo Elegante - Tamaño Reducido */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.8 }}
+                className="text-lg sm:text-xl md:text-2xl text-gray-200 font-light max-w-2xl mx-auto leading-relaxed px-4"
+              >
+                Miles de productos seleccionados especialmente&nbsp;
+                <br className="hidden sm:block" />
+                <span className="text-cyan-300 font-medium">
+                  para tus seres queridos en Cuba
+                </span>
+              </motion.p>
+            </motion.div>
+
+            {/* Botones CTA con Animaciones */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold px-8 py-5 text-base shadow-2xl shadow-cyan-500/50 border-0 rounded-full font-aleo"
                   asChild
                 >
                   <Link href="/products">
-                    {t.shopNow}
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="flex items-center"
+                    >
+                      Explorar Productos
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </motion.span>
                   </Link>
                 </Button>
+              </motion.div>
 
-                {user ? (
-                  // Si el usuario está autenticado, mostrar botón de categorías
-                  <Button variant="outline" size="lg" asChild>
-                    <Link href="/products">{t.categories}</Link>
-                  </Button>
-                ) : (
-                  // Si no está autenticado, mostrar botón de iniciar sesión
+              {user ? (
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Button
                     variant="outline"
                     size="lg"
+                    className="border-2 border-white bg-white/90 text-gray-900 hover:bg-white hover:text-black backdrop-blur-sm font-semibold px-8 py-5 text-base rounded-full shadow-xl font-aleo"
+                    asChild
+                  >
+                    <Link href="/products">Ver Categorías</Link>
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-2 border-white bg-white/90 text-gray-900 hover:bg-white hover:text-black backdrop-blur-sm font-semibold px-8 py-5 text-base rounded-full shadow-xl font-aleo"
                     onClick={() => setAuthModalOpen(true)}
                   >
-                    {t.login}
+                    Iniciar Sesión
                   </Button>
-                )}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative z-10">
-                <img
-                  src="https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=800"
-                  alt="Family connection"
-                  className="rounded-2xl shadow-2xl"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-2xl blur-3xl transform scale-110" />
+                </motion.div>
+              )}
             </motion.div>
           </div>
         </div>
+
+        {/* Scroll Indicator - Posicionado al fondo del hero */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 2 }}
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-white/70 text-sm flex flex-col items-center gap-2"
+          >
+            <span className="text-xs tracking-wider">Desliza para ver más</span>
+            <ChevronRight className="h-6 w-6 transform rotate-90" />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Categories Section */}

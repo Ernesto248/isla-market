@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ShoppingCart, User, Menu, X, Sun, Moon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,43 +68,63 @@ export function Header() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-3">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                transition={{ duration: 0.2 }}
+                className="flex items-center space-x-3"
               >
-                Isla Market
+                {/* Logo Image - Redondeado */}
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-xl overflow-hidden shadow-md">
+                  <Image
+                    src="/icono.png"
+                    alt="Isla Market Logo"
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
+                </div>
+
+                {/* Brand Text - Gradiente como el Hero */}
+                <span className="text-xl sm:text-2xl font-bold font-aleo bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+                  Isla Market
+                </span>
               </motion.div>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
+            <nav className="hidden md:flex items-center space-x-1">
               <Link
                 href="/"
-                className="text-sm font-medium hover:text-primary transition-colors"
+                className="relative text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 group"
               >
-                {t.home}
+                <span className="relative z-10">{t.home}</span>
+                <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-cyan-500/5 group-hover:via-blue-500/5 group-hover:to-purple-500/5 transition-all duration-200" />
               </Link>
               <Link
                 href="/products"
-                className="text-sm font-medium hover:text-primary transition-colors"
+                className="relative text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 group"
               >
-                {t.products}
+                <span className="relative z-10">{t.products}</span>
+                <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-cyan-500/5 group-hover:via-blue-500/5 group-hover:to-purple-500/5 transition-all duration-200" />
               </Link>
               {user && (
                 <Link
                   href="/orders"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  className="relative text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 group"
                 >
-                  {t.myOrders}
+                  <span className="relative z-10">{t.myOrders}</span>
+                  <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-cyan-500/5 group-hover:via-blue-500/5 group-hover:to-purple-500/5 transition-all duration-200" />
                 </Link>
               )}
               {user?.role === "admin" && (
                 <Link
                   href="/admin"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  className="relative text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 group"
                 >
-                  {t.admin}
+                  <span className="relative z-10">{t.admin}</span>
+                  <span className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-cyan-500/5 group-hover:via-blue-500/5 group-hover:to-purple-500/5 transition-all duration-200" />
                 </Link>
               )}
             </nav>
@@ -229,17 +250,17 @@ export function Header() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-t py-4"
             >
-              <nav className="flex flex-col space-y-4">
+              <nav className="flex flex-col space-y-2">
                 <Link
                   href="/"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  className="text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t.home}
                 </Link>
                 <Link
                   href="/products"
-                  className="text-sm font-medium hover:text-primary transition-colors"
+                  className="text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {t.products}
@@ -247,7 +268,7 @@ export function Header() {
                 {user && (
                   <Link
                     href="/orders"
-                    className="text-sm font-medium hover:text-primary transition-colors"
+                    className="text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {t.myOrders}
@@ -256,7 +277,7 @@ export function Header() {
                 {user?.role === "admin" && (
                   <Link
                     href="/admin"
-                    className="text-sm font-medium hover:text-primary transition-colors"
+                    className="text-sm font-medium px-4 py-3 rounded-lg transition-all duration-200 hover:bg-gradient-to-r hover:from-cyan-500/10 hover:via-blue-500/10 hover:to-purple-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {t.admin}

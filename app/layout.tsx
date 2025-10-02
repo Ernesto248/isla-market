@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Aleo } from "next/font/google";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,6 +12,13 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   fallback: ["system-ui", "arial"],
+});
+
+const aleo = Aleo({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-aleo",
+  weight: ["300", "400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -59,7 +66,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${aleo.variable}`}>
         <AuthProvider>
           <ThemeProvider>
             <div className="min-h-screen flex flex-col">
