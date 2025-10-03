@@ -254,57 +254,68 @@ Cambios realizados:
 
 ---
 
-## 🗑️ Fase 4: Limpieza de Código (EN PROGRESO)
+## 🗑️ Fase 4: Limpieza de Código ✅ COMPLETADA
 
-### Paso 4.1: Eliminar Archivos de Stripe
+### Paso 4.1: ✅ Eliminar Archivos de Stripe COMPLETADO
+
+Archivos eliminados:
 
 ```
-❌ /app/api/stripe/ (toda la carpeta)
-❌ /lib/stripe.ts
-❌ STRIPE_SETUP.md
+✅ /app/api/stripe/ (carpeta completa con 4 archivos)
+   - checkout/route.ts
+   - webhook/route.ts
+   - webhook-no-verify/route.ts
+   - webhook-test/route.ts
+✅ /lib/stripe.ts
+✅ STRIPE_SETUP.md
 ```
 
-### Paso 4.2: Actualizar Tipos en Supabase
+**Resultado:**
 
-**Archivo:** `/lib/supabase.ts`
+- Build exitoso sin rutas `/api/stripe/*`
+- Código más limpio y mantenible
+- Sin referencias a Stripe en el codebase
 
-Cambios:
+### Paso 4.2: ✅ Limpiar Dependencias COMPLETADO
 
-- Marcar `stripe_payment_intent_id` y `stripe_session_id` como opcionales
-- O eliminar completamente si elegiste Opción B en BD
-
-### Paso 4.3: Limpiar Dependencias
-
-**Archivo:** `package.json`
-
-Eliminar:
-
-```json
-"stripe": "^x.x.x",
-"@stripe/stripe-js": "^x.x.x"
-```
-
-Comando:
+**Comando ejecutado:**
 
 ```bash
 pnpm remove stripe @stripe/stripe-js
 ```
 
-### Paso 4.4: Limpiar Variables de Entorno
+**Dependencias eliminadas:**
 
-**Archivo:** `.env.local`
+- `stripe 18.5.0`
+- `@stripe/stripe-js 7.9.0`
 
-Eliminar:
+**Resultado:**
+
+- Menos dependencias en `node_modules`
+- Bundle size potencialmente reducido
+- Instalaciones más rápidas
+
+### Paso 4.3: ✅ Limpiar Variables de Entorno COMPLETADO
+
+**Variables comentadas/eliminadas:**
 
 ```env
-STRIPE_SECRET_KEY=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-STRIPE_WEBHOOK_SECRET=
+# stripe - ELIMINADO (ya no se usa Stripe, se maneja pago directo por email)
+# Las siguientes variables ya no son necesarias:
+# STRIPE_SECRET_KEY
+# NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+# STRIPE_WEBHOOK_SECRET
 ```
+
+**Resultado:**
+
+- Variables de Stripe documentadas como obsoletas
+- Sistema ya no depende de credenciales de Stripe
+- Configuración más clara y enfocada
 
 ---
 
-## 📝 Fase 5: Testing
+## 📝 Fase 5: Testing y Validación
 
 ### Checklist de Pruebas:
 
