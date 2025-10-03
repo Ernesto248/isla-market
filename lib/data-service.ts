@@ -92,19 +92,4 @@ export class DataService {
       return [];
     }
   }
-
-  // Obtener orden por session_id de Stripe
-  static async getOrderBySessionId(sessionId: string): Promise<Order | null> {
-    try {
-      const response = await fetch(`/api/orders?sessionId=${sessionId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.orders?.[0] || null;
-    } catch (error) {
-      console.error("Error fetching order by session ID:", error);
-      return null;
-    }
-  }
 }

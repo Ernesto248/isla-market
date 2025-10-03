@@ -65,8 +65,6 @@ export interface Order {
     | "cancelled"
     | "paid";
   total_amount: number;
-  stripe_payment_intent_id?: string | null;
-  stripe_session_id?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;

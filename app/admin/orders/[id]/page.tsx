@@ -48,7 +48,6 @@ import {
   Phone,
   Mail,
   Package,
-  CreditCard,
   Calendar,
   FileText,
   Clock,
@@ -590,30 +589,6 @@ export default function OrderDetailPage({
                   </AlertDialog>
                 </>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Información de Pago */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Información de Pago
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">ID de Sesión Stripe</p>
-                <p className="font-mono text-xs break-all">
-                  {order.stripe_session_id || "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Payment Intent ID</p>
-                <p className="font-mono text-xs break-all">
-                  {order.stripe_payment_intent_id || "N/A"}
-                </p>
-              </div>
             </CardContent>
           </Card>
 
