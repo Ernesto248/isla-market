@@ -17,7 +17,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { useAppStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { toast } from "sonner";
-import { loadStripe } from "@stripe/stripe-js";
 
 const checkoutSchema = z.object({
   // Customer Information
@@ -65,50 +64,51 @@ function CheckoutContent() {
     setIsLoading(true);
 
     try {
-      // Crear checkout session con Stripe
-      const response = await fetch("/api/stripe/checkout", {
+      // Crear orden directamente (sin Stripe)
+      const response = await fetch("/api/orders/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items: cart,
-          customer_email: data.email,
-          metadata: {
-            customer_name: `${data.firstName} ${data.lastName}`,
-            customer_phone: data.phone,
+          userId: user?.id,
+          items: cart.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+            price_at_time: item.product.price,
+          })),
+          shippingAddress: {
             recipient_name: `${data.recipientFirstName} ${data.recipientLastName}`,
-            recipient_address: `${data.street} #${data.houseNumber}, ${data.betweenStreets}, ${data.neighborhood}, ${data.province}`,
+            street: data.street,
+            house_number: data.houseNumber,
+            between_streets: data.betweenStreets,
+            neighborhood: data.neighborhood,
+            city: data.province, // Usando provincia como ciudad
+            province: data.province,
+            country: "Cuba",
+            phone: data.phone,
           },
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create checkout session");
+        throw new Error(error.error || "Error al crear la orden");
       }
 
-      const { sessionId } = await response.json();
+      const result = await response.json();
 
-      // Redirigir a Stripe Checkout
-      const stripe = await loadStripe(
-        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-      );
+      // Limpiar el carrito
+      clearCart();
 
-      if (!stripe) {
-        throw new Error("Failed to load Stripe");
-      }
+      // Mostrar mensaje de éxito
+      toast.success("¡Orden creada exitosamente! Revisa tu email.");
 
-      const { error } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
+      // Redirigir a la página de éxito con el order ID
+      router.push(`/checkout/success?orderId=${result.order.id}`);
     } catch (error: any) {
       console.error("Checkout error:", error);
-      toast.error(`Error al procesar el pago: ${error.message}`);
+      toast.error(`Error al crear la orden: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -367,9 +367,9 @@ function CheckoutContent() {
                   className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
                 />
               ) : (
-                <CreditCard className="h-5 w-5 mr-2" />
+                <ShoppingBag className="h-5 w-5 mr-2" />
               )}
-              {isLoading ? "Procesando..." : t.placeOrder}
+              {isLoading ? "Creando orden..." : "Confirmar Pedido"}
             </Button>
           </form>
         </div>
