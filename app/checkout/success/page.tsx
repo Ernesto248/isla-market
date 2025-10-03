@@ -26,22 +26,26 @@ export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const { clearCart } = useAppStore();
   const t = translations["es"];
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session_id = searchParams.get("session_id");
-    setSessionId(session_id);
+    const order_id = searchParams.get("orderId");
+    setOrderId(order_id);
 
-    // Limpiar el carrito después de una compra exitosa
-    if (session_id) {
+    // Limpiar el carrito después de crear la orden exitosamente
+    if (order_id) {
       clearCart();
 
       // Obtener los detalles de la orden
       const fetchOrder = async () => {
         try {
-          const orderData = await DataService.getOrderBySessionId(session_id);
+          const response = await fetch(`/api/orders/${order_id}`);
+          if (!response.ok) {
+            throw new Error("Error al obtener la orden");
+          }
+          const orderData = await response.json();
           setOrder(orderData);
         } catch (error) {
           console.error("Error fetching order details:", error);
@@ -87,21 +91,21 @@ export default function CheckoutSuccessPage() {
         className="space-y-8"
       >
         {/* Encabezado de éxito */}
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-cyan-200 bg-cyan-50">
           <CardHeader className="text-center pb-4">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4"
+              className="mx-auto w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-4"
             >
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-cyan-600" />
             </motion.div>
-            <CardTitle className="text-2xl text-green-800">
-              {t.paymentSuccessful}
+            <CardTitle className="text-2xl text-cyan-800">
+              ¡Orden Creada Exitosamente!
             </CardTitle>
-            <p className="text-lg text-green-700">
-              {t.orderProcessedSuccessfully}
+            <p className="text-lg text-cyan-700">
+              Tu pedido ha sido recibido y está pendiente de confirmación
             </p>
           </CardHeader>
         </Card>
@@ -253,15 +257,15 @@ export default function CheckoutSuccessPage() {
               </CardContent>
             </Card>
           </motion.div>
-        ) : sessionId ? (
+        ) : orderId ? (
           <Card>
             <CardContent className="py-8 text-center">
               <div className="bg-white p-4 rounded-lg border">
                 <p className="text-sm font-medium text-gray-600 mb-2">
-                  {t.transactionId}
+                  Número de Orden
                 </p>
                 <p className="font-mono text-sm text-gray-800 break-all">
-                  {sessionId}
+                  #{orderId.substring(0, 8).toUpperCase()}
                 </p>
               </div>
             </CardContent>
@@ -269,14 +273,23 @@ export default function CheckoutSuccessPage() {
         ) : null}
 
         {/* Información adicional */}
-        <Card>
+        <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="py-6">
-            <div className="space-y-2 text-sm text-green-600 text-center">
-              <p className="flex items-center justify-center gap-2">
-                <Package className="w-4 h-4" />
-                {t.confirmationEmailSoon}
-              </p>
-              <p>{t.orderWillBeShipped}</p>
+            <div className="space-y-3 text-sm text-center">
+              <div className="flex items-center justify-center gap-2 text-yellow-800 font-medium">
+                <Package className="w-5 h-5" />
+                <span>Estado: Pendiente de Confirmación</span>
+              </div>
+              <div className="space-y-2 text-yellow-700">
+                <p className="flex items-center justify-center gap-2">
+                  ✉️ Hemos enviado un email de confirmación a tu correo
+                </p>
+                <p>📋 Recibirás instrucciones de pago en las próximas horas</p>
+                <p>
+                  🚀 Una vez confirmado el pago, procesaremos tu pedido para
+                  envío a Cuba
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
