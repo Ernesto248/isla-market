@@ -4,8 +4,6 @@ import {
   Body,
   Container,
   Section,
-  Row,
-  Column,
   Text,
   Heading,
   Button,
@@ -22,6 +20,7 @@ interface OrderConfirmationCustomerEmailProps {
     quantity: number;
     price: string;
     image: string;
+    total: string;
   }>;
   recipientName: string;
   recipientAddress: string;
@@ -40,15 +39,8 @@ export const OrderConfirmationCustomerEmail = ({
     <Head />
     <Body style={main}>
       <Container style={container}>
-        {/* Header con Logo */}
+        {/* Header - Sin imagen, solo texto */}
         <Section style={header}>
-          <Img
-            src="https://cms-next.sfo3.digitaloceanspaces.com/icono.png"
-            width="60"
-            height="60"
-            alt="Isla Market"
-            style={logo}
-          />
           <Heading style={heading}>Isla Market 🇨🇺</Heading>
         </Section>
 
@@ -69,20 +61,24 @@ export const OrderConfirmationCustomerEmail = ({
           <Heading as="h3" style={sectionTitle}>
             📦 Detalles del Pedido
           </Heading>
-          <Row style={detailRow}>
-            <Column style={detailLabel}>Pedido #:</Column>
-            <Column style={detailValue}>{orderId}</Column>
-          </Row>
-          <Row style={detailRow}>
-            <Column style={detailLabel}>Fecha:</Column>
-            <Column style={detailValue}>{orderDate}</Column>
-          </Row>
-          <Row style={detailRow}>
-            <Column style={detailLabel}>Total:</Column>
-            <Column style={detailValue}>
-              <strong>{totalAmount}</strong>
-            </Column>
-          </Row>
+          <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
+            <tbody>
+              <tr style={detailRow}>
+                <td style={detailLabel}>Pedido #:</td>
+                <td style={detailValue}>{orderId}</td>
+              </tr>
+              <tr style={detailRow}>
+                <td style={detailLabel}>Fecha:</td>
+                <td style={detailValue}>{orderDate}</td>
+              </tr>
+              <tr style={detailRow}>
+                <td style={detailLabel}>Total:</td>
+                <td style={detailValue}>
+                  <strong>{totalAmount}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Section>
 
         {/* Productos */}
@@ -91,23 +87,34 @@ export const OrderConfirmationCustomerEmail = ({
             🛍️ Productos
           </Heading>
           {items.map((item, index) => (
-            <Row key={index} style={productRow}>
-              <Column style={productImageCell}>
-                <Img
-                  src={item.image}
-                  width="60"
-                  height="60"
-                  alt={item.name}
-                  style={productImage}
-                />
-              </Column>
-              <Column style={productInfo}>
-                <Text style={productName}>{item.name}</Text>
-                <Text style={productDetails}>
-                  {item.quantity} × {item.price}
-                </Text>
-              </Column>
-            </Row>
+            <Section key={index} style={productRow}>
+              <table
+                style={{ width: "100%", borderCollapse: "collapse" as const }}
+              >
+                <tbody>
+                  <tr>
+                    <td style={productImageCell}>
+                      <Img
+                        src={item.image}
+                        width="80"
+                        height="80"
+                        alt={item.name}
+                        style={productImage}
+                      />
+                    </td>
+                    <td style={productInfo}>
+                      <Text style={productName}>{item.name}</Text>
+                      <Text style={productDetails}>
+                        Cantidad: {item.quantity} × {item.price}
+                      </Text>
+                      <Text style={productTotal}>
+                        Subtotal: <strong>{item.total}</strong>
+                      </Text>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </Section>
           ))}
         </Section>
 
@@ -127,9 +134,7 @@ export const OrderConfirmationCustomerEmail = ({
           <Heading as="h3" style={sectionTitle}>
             💳 Estado del Pago
           </Heading>
-          <Text style={text}>
-            <span style={statusBadge}>⏳ Pendiente de confirmación</span>
-          </Text>
+          <Text style={statusBadgeText}>⏳ Pendiente de confirmación</Text>
           <Text style={text}>
             Te notificaremos cuando se confirme el pago y se procese tu pedido.
           </Text>
@@ -184,11 +189,6 @@ const header = {
   backgroundColor: "#0ea5e9",
 };
 
-const logo = {
-  margin: "0 auto 16px",
-  borderRadius: "12px",
-};
-
 const heading = {
   color: "#ffffff",
   fontSize: "28px",
@@ -229,19 +229,23 @@ const sectionTitle = {
 };
 
 const detailRow = {
-  marginBottom: "12px",
+  marginBottom: "0",
 };
 
 const detailLabel = {
   color: "#64748b",
   fontSize: "14px",
-  width: "40%",
+  width: "35%",
+  padding: "8px 0",
+  verticalAlign: "top" as const,
 };
 
 const detailValue = {
   color: "#1e293b",
   fontSize: "14px",
   fontWeight: "500",
+  padding: "8px 0",
+  verticalAlign: "top" as const,
 };
 
 const productsSection = {
@@ -249,36 +253,47 @@ const productsSection = {
 };
 
 const productRow = {
-  marginBottom: "16px",
-  borderBottom: "1px solid #e2e8f0",
-  paddingBottom: "16px",
+  marginBottom: "20px",
+  borderBottom: "2px solid #e2e8f0",
+  paddingBottom: "20px",
 };
 
 const productImageCell = {
-  width: "80px",
-  paddingRight: "16px",
+  width: "100px",
+  paddingRight: "20px",
+  verticalAlign: "top" as const,
 };
 
 const productImage = {
   borderRadius: "8px",
   objectFit: "cover" as const,
+  border: "2px solid #e2e8f0",
+  display: "block",
 };
 
 const productInfo = {
-  verticalAlign: "middle" as const,
+  verticalAlign: "top" as const,
+  paddingLeft: "8px",
 };
 
 const productName = {
   color: "#1e293b",
-  fontSize: "16px",
-  fontWeight: "500",
+  fontSize: "17px",
+  fontWeight: "600",
   margin: "0 0 8px",
 };
 
 const productDetails = {
   color: "#64748b",
   fontSize: "14px",
-  margin: "0",
+  margin: "4px 0",
+};
+
+const productTotal = {
+  color: "#059669",
+  fontSize: "15px",
+  margin: "8px 0 0",
+  fontWeight: "600",
 };
 
 const recipientSection = {
@@ -298,13 +313,15 @@ const paymentSection = {
   padding: "24px 32px",
 };
 
-const statusBadge = {
+const statusBadgeText = {
   backgroundColor: "#fef3c7",
   color: "#92400e",
   padding: "8px 16px",
   borderRadius: "20px",
   fontSize: "14px",
   fontWeight: "600",
+  display: "inline-block",
+  margin: "0 0 16px",
 };
 
 const buttonSection = {

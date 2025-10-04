@@ -83,9 +83,9 @@ export async function POST(req: NextRequest) {
       shippingAddressId = newAddress.id;
     }
 
-    // 5. Calcular total
+    // 5. Calcular total (usando price_at_time que viene del checkout)
     const totalAmount = items.reduce(
-      (sum: number, item: any) => sum + item.product.price * item.quantity,
+      (sum: number, item: any) => sum + item.price_at_time * item.quantity,
       0
     );
 
@@ -110,13 +110,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7. Crear items de la orden
+    // 7. Crear items de la orden (usando datos del checkout)
     const orderItems = items.map((item: any) => ({
       order_id: order.id,
-      product_id: item.product.id,
+      product_id: item.product_id,
       quantity: item.quantity,
-      unit_price: item.product.price,
-      total_price: item.product.price * item.quantity,
+      unit_price: item.price_at_time,
+      total_price: item.price_at_time * item.quantity,
     }));
 
     const { error: itemsError } = await supabase
@@ -132,6 +132,61 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+
+    // 7.5. Reducir stock de productos
+    console.log("🔄 Iniciando reducción de stock...");
+    for (const item of items) {
+      console.log(
+        `📦 Procesando producto ${item.product_id}, cantidad: ${item.quantity}`
+      );
+
+      // Primero obtener el stock actual
+      const { data: product, error: productError } = await supabase
+        .from("products")
+        .select("stock_quantity")
+        .eq("id", item.product_id)
+        .single();
+
+      if (productError) {
+        console.error(
+          `❌ Error obteniendo producto ${item.product_id}:`,
+          productError
+        );
+        continue;
+      }
+
+      if (product) {
+        console.log(
+          `📊 Stock actual del producto ${item.product_id}: ${product.stock_quantity}`
+        );
+        const newStock = product.stock_quantity - item.quantity;
+
+        // Actualizar el stock (no puede ser negativo)
+        if (newStock >= 0) {
+          const { error: updateError } = await supabase
+            .from("products")
+            .update({ stock_quantity: newStock })
+            .eq("id", item.product_id);
+
+          if (updateError) {
+            console.error(
+              `❌ Error actualizando stock del producto ${item.product_id}:`,
+              updateError
+            );
+          } else {
+            console.log(
+              `✅ Stock actualizado para producto ${item.product_id}: ${product.stock_quantity} → ${newStock}`
+            );
+          }
+        } else {
+          console.warn(
+            `⚠️ Stock insuficiente para producto ${item.product_id}. Stock actual: ${product.stock_quantity}, solicitado: ${item.quantity}`
+          );
+          // No fallar la orden, solo advertir
+        }
+      }
+    }
+    console.log("✅ Reducción de stock completada");
 
     // 8. Obtener orden completa con items y productos
     const { data: fullOrder, error: fullOrderError } = await supabase

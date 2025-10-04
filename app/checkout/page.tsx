@@ -40,6 +40,7 @@ type CheckoutForm = z.infer<typeof checkoutSchema>;
 function CheckoutContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const { user } = useAuth();
   const { cart, getCartTotal, clearCart } = useAppStore();
   const t = translations["es"];
@@ -55,16 +56,25 @@ function CheckoutContent() {
   });
 
   useEffect(() => {
-    if (cart.length === 0) {
+    console.log(
+      `🔍 [useEffect] Verificando carrito - Longitud: ${cart.length}, isProcessingOrder: ${isProcessingOrder}`
+    );
+    // Solo redirigir si el carrito está vacío Y no estamos procesando una orden
+    if (cart.length === 0 && !isProcessingOrder) {
+      console.log("🔀 [useEffect] Redirigiendo a /products (carrito vacío)");
       router.push("/products");
     }
-  }, [cart, router]);
+  }, [cart, router, isProcessingOrder]);
 
   const onSubmit = async (data: CheckoutForm) => {
+    console.log("🚀 [CHECKOUT] Iniciando proceso de orden...");
     setIsLoading(true);
+    setIsProcessingOrder(true); // Activar bandera para evitar redirección automática
+    console.log("✅ [CHECKOUT] Bandera isProcessingOrder activada");
 
     try {
       // Crear orden directamente (sin Stripe)
+      console.log("📤 [CHECKOUT] Enviando solicitud a API...");
       const response = await fetch("/api/orders/create", {
         method: "POST",
         headers: {
@@ -78,7 +88,8 @@ function CheckoutContent() {
             price_at_time: item.product.price,
           })),
           shippingAddress: {
-            recipient_name: `${data.recipientFirstName} ${data.recipientLastName}`,
+            first_name: data.recipientFirstName,
+            last_name: data.recipientLastName,
             street: data.street,
             house_number: data.houseNumber,
             between_streets: data.betweenStreets,
@@ -92,29 +103,49 @@ function CheckoutContent() {
       });
 
       if (!response.ok) {
+        console.error("❌ [CHECKOUT] Error en respuesta:", response.status);
         const error = await response.json();
         throw new Error(error.error || "Error al crear la orden");
       }
 
       const result = await response.json();
-
-      // Limpiar el carrito
-      clearCart();
+      console.log("✅ [CHECKOUT] Orden creada:", result.order.id);
 
       // Mostrar mensaje de éxito
       toast.success("¡Orden creada exitosamente! Revisa tu email.");
+      console.log("🎉 [CHECKOUT] Toast mostrado");
 
-      // Redirigir a la página de éxito con el order ID
+      // Limpiar el carrito y navegar a página de éxito
+      console.log("🧹 [CHECKOUT] Limpiando carrito...");
+      clearCart();
+      console.log("✅ [CHECKOUT] Carrito limpiado");
+
+      console.log(
+        `🔀 [CHECKOUT] Navegando a: /checkout/success?orderId=${result.order.id}`
+      );
       router.push(`/checkout/success?orderId=${result.order.id}`);
+      console.log("✅ [CHECKOUT] router.push ejecutado");
+      console.log(
+        "ℹ️ [CHECKOUT] Bandera permanece activa hasta que el componente se desmonte"
+      );
+
+      // No necesitamos desactivar la bandera porque:
+      // 1. El componente se desmontará al navegar
+      // 2. Mantenerla activa previene cualquier redirección no deseada
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      console.error("❌ [CHECKOUT] Error en checkout:", error);
       toast.error(`Error al crear la orden: ${error.message}`);
+      setIsProcessingOrder(false); // Desactivar bandera en caso de error
+      console.log("🔓 [CHECKOUT] Bandera desactivada por error");
     } finally {
       setIsLoading(false);
+      console.log("🏁 [CHECKOUT] Proceso finalizado");
     }
   };
 
-  if (cart.length === 0) {
+  // Solo retornar null si el carrito está vacío Y NO estamos procesando
+  if (cart.length === 0 && !isProcessingOrder) {
+    console.log("🚫 [RENDER] No renderizando (carrito vacío, no procesando)");
     return null;
   }
 

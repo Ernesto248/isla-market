@@ -4,8 +4,6 @@ import {
   Body,
   Container,
   Section,
-  Row,
-  Column,
   Text,
   Heading,
   Button,
@@ -47,27 +45,12 @@ export const OrderNotificationAdminEmail = ({
     <Head />
     <Body style={main}>
       <Container style={container}>
-        {/* Header */}
-        <Section style={header}>
-          <Img
-            src="https://cms-next.sfo3.digitaloceanspaces.com/icono.png"
-            width="60"
-            height="60"
-            alt="Isla Market"
-            style={logo}
-          />
-          <Heading style={heading}>Isla Market Admin</Heading>
-        </Section>
-
-        {/* Alert Principal */}
+        {/* Alert Principal - Minimalista */}
         <Section style={alertSection}>
           <Text style={alertIcon}>🔔</Text>
           <Heading as="h2" style={alertTitle}>
-            Nueva Orden Recibida
+            Nueva Orden
           </Heading>
-          <Text style={alertSubtitle}>
-            Un cliente ha realizado un nuevo pedido
-          </Text>
         </Section>
 
         {/* Información de la Orden */}
@@ -75,22 +58,26 @@ export const OrderNotificationAdminEmail = ({
           <Heading as="h3" style={sectionTitle}>
             📋 Información del Pedido
           </Heading>
-          <Row style={infoRow}>
-            <Column style={infoLabel}>ID de Orden:</Column>
-            <Column style={infoValue}>
-              <strong>#{orderId}</strong>
-            </Column>
-          </Row>
-          <Row style={infoRow}>
-            <Column style={infoLabel}>Fecha:</Column>
-            <Column style={infoValue}>{orderDate}</Column>
-          </Row>
-          <Row style={infoRow}>
-            <Column style={infoLabel}>Total:</Column>
-            <Column style={infoValue}>
-              <Text style={totalAmountStyle}>{totalAmount}</Text>
-            </Column>
-          </Row>
+          <table style={{ width: "100%", borderCollapse: "collapse" as const }}>
+            <tbody>
+              <tr style={infoRow}>
+                <td style={infoLabel}>ID de Orden:</td>
+                <td style={infoValue}>
+                  <strong>#{orderId}</strong>
+                </td>
+              </tr>
+              <tr style={infoRow}>
+                <td style={infoLabel}>Fecha:</td>
+                <td style={infoValue}>{orderDate}</td>
+              </tr>
+              <tr style={infoRow}>
+                <td style={infoLabel}>Total:</td>
+                <td style={infoValue}>
+                  <Text style={totalAmountStyle}>{totalAmount}</Text>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Section>
 
         {/* Información del Cliente */}
@@ -115,26 +102,34 @@ export const OrderNotificationAdminEmail = ({
             🛍️ Productos Ordenados
           </Heading>
           {items.map((item, index) => (
-            <Row key={index} style={productRow}>
-              <Column style={productImageCell}>
-                <Img
-                  src={item.image}
-                  width="80"
-                  height="80"
-                  alt={item.name}
-                  style={productImage}
-                />
-              </Column>
-              <Column style={productInfo}>
-                <Text style={productName}>{item.name}</Text>
-                <Text style={productDetails}>
-                  Cantidad: {item.quantity} × {item.price}
-                </Text>
-                <Text style={productTotal}>
-                  Subtotal: <strong>{item.total}</strong>
-                </Text>
-              </Column>
-            </Row>
+            <Section key={index} style={productRow}>
+              <table
+                style={{ width: "100%", borderCollapse: "collapse" as const }}
+              >
+                <tbody>
+                  <tr>
+                    <td style={productImageCell}>
+                      <Img
+                        src={item.image}
+                        width="80"
+                        height="80"
+                        alt={item.name}
+                        style={productImage}
+                      />
+                    </td>
+                    <td style={productInfo}>
+                      <Text style={productName}>{item.name}</Text>
+                      <Text style={productDetails}>
+                        Cantidad: {item.quantity} × {item.price}
+                      </Text>
+                      <Text style={productTotal}>
+                        Subtotal: <strong>{item.total}</strong>
+                      </Text>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </Section>
           ))}
         </Section>
 
@@ -203,46 +198,22 @@ const container = {
   border: "1px solid #e2e8f0",
 };
 
-const header = {
-  padding: "32px 20px",
-  textAlign: "center" as const,
-  backgroundColor: "#1e293b",
-};
-
-const logo = {
-  margin: "0 auto 16px",
-  borderRadius: "12px",
-};
-
-const heading = {
-  color: "#ffffff",
-  fontSize: "24px",
-  fontWeight: "bold",
-  margin: "0",
-};
-
 const alertSection = {
-  padding: "32px 32px 24px",
+  padding: "24px 32px",
   textAlign: "center" as const,
-  backgroundColor: "#fef3c7",
-  borderBottom: "4px solid #f59e0b",
+  backgroundColor: "#f8fafc",
+  borderBottom: "2px solid #e2e8f0",
 };
 
 const alertIcon = {
-  fontSize: "48px",
-  margin: "0 0 16px",
-};
-
-const alertTitle = {
-  color: "#92400e",
-  fontSize: "28px",
-  fontWeight: "bold",
+  fontSize: "32px",
   margin: "0 0 8px",
 };
 
-const alertSubtitle = {
-  color: "#b45309",
-  fontSize: "16px",
+const alertTitle = {
+  color: "#1e293b",
+  fontSize: "24px",
+  fontWeight: "600",
   margin: "0",
 };
 
@@ -264,19 +235,23 @@ const sectionTitle = {
 };
 
 const infoRow = {
-  marginBottom: "12px",
+  marginBottom: "0",
 };
 
 const infoLabel = {
   color: "#64748b",
   fontSize: "14px",
-  width: "40%",
+  width: "35%",
   fontWeight: "500",
+  padding: "8px 0",
+  verticalAlign: "top" as const,
 };
 
 const infoValue = {
   color: "#1e293b",
   fontSize: "16px",
+  padding: "8px 0",
+  verticalAlign: "top" as const,
 };
 
 const totalAmountStyle = {
@@ -317,16 +292,19 @@ const productRow = {
 const productImageCell = {
   width: "100px",
   paddingRight: "20px",
+  verticalAlign: "top" as const,
 };
 
 const productImage = {
   borderRadius: "8px",
   objectFit: "cover" as const,
   border: "2px solid #e2e8f0",
+  display: "block",
 };
 
 const productInfo = {
   verticalAlign: "top" as const,
+  paddingLeft: "8px",
 };
 
 const productName = {

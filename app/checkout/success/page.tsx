@@ -27,7 +27,7 @@ export default function CheckoutSuccessPage() {
   const { clearCart } = useAppStore();
   const t = translations["es"];
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<any>(null); // Usar any para evitar problemas con tipos extendidos de Supabase
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,14 +41,20 @@ export default function CheckoutSuccessPage() {
       // Obtener los detalles de la orden
       const fetchOrder = async () => {
         try {
+          console.log("📥 [SUCCESS] Obteniendo orden:", order_id);
           const response = await fetch(`/api/orders/${order_id}`);
           if (!response.ok) {
             throw new Error("Error al obtener la orden");
           }
           const orderData = await response.json();
+          console.log("✅ [SUCCESS] Orden recibida:", orderData);
+          console.log("📦 [SUCCESS] Items en orden:", {
+            order_items: orderData.order_items,
+            itemsCount: orderData.order_items?.length || 0,
+          });
           setOrder(orderData);
         } catch (error) {
-          console.error("Error fetching order details:", error);
+          console.error("❌ [SUCCESS] Error fetching order details:", error);
         } finally {
           setLoading(false);
         }
@@ -177,7 +183,7 @@ export default function CheckoutSuccessPage() {
                 <Separator />
 
                 {/* Información del destinatario */}
-                {order.recipientInfo && (
+                {order.shipping_addresses && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
@@ -185,22 +191,22 @@ export default function CheckoutSuccessPage() {
                     </h4>
                     <div className="bg-muted p-4 rounded-lg">
                       <p className="font-medium">
-                        {order.recipientInfo.first_name || "Nombre"}{" "}
-                        {order.recipientInfo.last_name || "no disponible"}
+                        {order.shipping_addresses.first_name || "Nombre"}{" "}
+                        {order.shipping_addresses.last_name || "no disponible"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {order.recipientInfo.street || "Dirección"} #
-                        {order.recipientInfo.house_number || "N/A"}
-                        {order.recipientInfo.between_streets &&
-                          `, ${order.recipientInfo.between_streets}`}
+                        {order.shipping_addresses.street || "Dirección"} #
+                        {order.shipping_addresses.house_number || "N/A"}
+                        {order.shipping_addresses.between_streets &&
+                          `, ${order.shipping_addresses.between_streets}`}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {order.recipientInfo.neighborhood || "Barrio"},{" "}
-                        {order.recipientInfo.province || "Provincia"}
+                        {order.shipping_addresses.neighborhood || "Barrio"},{" "}
+                        {order.shipping_addresses.province || "Provincia"}
                       </p>
-                      {order.recipientInfo.phone && (
+                      {order.shipping_addresses.phone && (
                         <p className="text-sm text-muted-foreground">
-                          📞 {order.recipientInfo.phone}
+                          📞 {order.shipping_addresses.phone}
                         </p>
                       )}
                     </div>
@@ -213,37 +219,30 @@ export default function CheckoutSuccessPage() {
                 <div>
                   <h4 className="font-medium mb-3">{t.itemsPurchased}</h4>
                   <div className="space-y-3">
-                    {order.items && order.items.length > 0 ? (
-                      order.items.map((item) => (
+                    {order.order_items && order.order_items.length > 0 ? (
+                      order.order_items.map((item: any) => (
                         <div
-                          key={item.product?.id || item.id}
+                          key={item.products?.id || item.id}
                           className="flex items-center space-x-4 p-3 bg-muted rounded-lg"
                         >
-                          {item.product?.image && (
+                          {item.products?.images?.[0] && (
                             <img
-                              src={item.product.image}
-                              alt={item.product.name}
+                              src={item.products.images[0]}
+                              alt={item.products.name}
                               className="w-16 h-16 object-cover rounded-md"
                             />
                           )}
                           <div className="flex-1">
                             <p className="font-medium">
-                              {item.product?.name || "Producto"}
+                              {item.products?.name || "Producto"}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {t.quantity}: {item.quantity} × $
-                              {item.product?.price?.toFixed(2) ||
-                                item.unit_price?.toFixed(2) ||
-                                "0.00"}
+                              {item.unit_price?.toFixed(2) || "0.00"}
                             </p>
                           </div>
                           <p className="font-medium">
-                            $
-                            {(
-                              item.total_price ||
-                              item.quantity *
-                                (item.product?.price || item.unit_price || 0)
-                            ).toFixed(2)}
+                            ${item.total_price?.toFixed(2) || "0.00"}
                           </p>
                         </div>
                       ))

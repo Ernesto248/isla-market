@@ -45,6 +45,12 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    console.log("📦 [API] Orden encontrada:", {
+      id: order.id,
+      itemsCount: order.order_items?.length || 0,
+      items: order.order_items,
+    });
+
     return NextResponse.json(order);
   } catch (error) {
     console.error("Unexpected error:", error);
