@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/auth-context";
+import { SessionRefresher } from "@/components/auth/session-refresher";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -69,6 +70,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${aleo.variable}`}>
         <AuthProvider>
           <ThemeProvider>
+            <SessionRefresher />
             <div className="min-h-screen flex flex-col">
               <Header />
               <main className="flex-1">{children}</main>

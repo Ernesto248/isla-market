@@ -56,6 +56,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
+        // Si el error es 401, la sesión expiró - limpiar estado
+        if (response.status === 401) {
+          console.warn("Sesión expirada, limpiando estado local...");
+          setSession(null);
+          setUser(null);
+          // Intentar refrescar la sesión
+          await supabase.auth.refreshSession();
+          return null;
+        }
+
         console.error("Error fetching user profile:", response.statusText);
         // Retornar usuario básico si hay error
         return { ...supabaseUser, role: "customer" };
@@ -109,16 +119,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth state changed:", event, session?.user?.email);
 
       setSession(session);
-      const enrichedUser = await enrichUserData(session?.user ?? null, session);
-      setUser(enrichedUser);
-      setLoading(false);
 
       // Manejar eventos específicos
       if (event === "SIGNED_IN") {
         console.log("Usuario autenticado:", session?.user?.email);
+        const enrichedUser = await enrichUserData(
+          session?.user ?? null,
+          session
+        );
+        setUser(enrichedUser);
       } else if (event === "SIGNED_OUT") {
         console.log("Usuario cerró sesión");
+        setUser(null);
+        setSession(null);
+      } else if (event === "TOKEN_REFRESHED") {
+        console.log("Token refrescado");
+        const enrichedUser = await enrichUserData(
+          session?.user ?? null,
+          session
+        );
+        setUser(enrichedUser);
+      } else if (event === "USER_UPDATED") {
+        console.log("Usuario actualizado");
+        const enrichedUser = await enrichUserData(
+          session?.user ?? null,
+          session
+        );
+        setUser(enrichedUser);
+      } else {
+        // Para otros eventos, intentar enriquecer datos si hay sesión
+        const enrichedUser = await enrichUserData(
+          session?.user ?? null,
+          session
+        );
+        setUser(enrichedUser);
       }
+
+      setLoading(false);
     });
 
     return () => {
@@ -194,9 +231,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
 
-      const { error } = await supabase.auth.signOut();
+      // Limpiar estado local primero para evitar errores de UI
+      setUser(null);
+      setSession(null);
+
+      const { error } = await supabase.auth.signOut({ scope: "local" });
 
       if (error) {
+        // Si el error es que la sesión ya no existe, no es crítico
+        if (
+          error.message?.includes("session") ||
+          error.message?.includes("Auth session missing")
+        ) {
+          console.warn("Sesión ya cerrada, limpiando estado local...");
+          // Forzar limpieza del storage local
+          localStorage.removeItem("supabase.auth.token");
+          sessionStorage.clear();
+          return { error: null };
+        }
+
         console.error("Error signing out:", error);
         return { error };
       }
@@ -205,6 +258,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null };
     } catch (error) {
       console.error("Unexpected error during sign out:", error);
+      // Aún así, limpiar estado local
+      setUser(null);
+      setSession(null);
+      localStorage.removeItem("supabase.auth.token");
+      sessionStorage.clear();
       return { error: error as AuthError };
     } finally {
       setLoading(false);
