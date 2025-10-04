@@ -102,33 +102,26 @@ export const OrderNotificationAdminEmail = ({
             🛍️ Productos Ordenados
           </Heading>
           {items.map((item, index) => (
-            <Section key={index} style={productRow}>
-              <table
-                style={{ width: "100%", borderCollapse: "collapse" as const }}
-              >
-                <tbody>
-                  <tr>
-                    <td style={productImageCell}>
-                      <Img
-                        src={item.image}
-                        width="80"
-                        height="80"
-                        alt={item.name}
-                        style={productImage}
-                      />
-                    </td>
-                    <td style={productInfo}>
-                      <Text style={productName}>{item.name}</Text>
-                      <Text style={productDetails}>
-                        Cantidad: {item.quantity} × {item.price}
-                      </Text>
-                      <Text style={productTotal}>
-                        Subtotal: <strong>{item.total}</strong>
-                      </Text>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <Section key={index} style={productCard}>
+              <Img
+                src={item.image}
+                width="100%"
+                height="auto"
+                alt={item.name}
+                style={productCardImage}
+              />
+              <Section style={productCardContent}>
+                <Text style={productCardName}>{item.name}</Text>
+                <Text style={productCardDetails}>
+                  Cantidad: <strong>{item.quantity}</strong>
+                </Text>
+                <Text style={productCardDetails}>
+                  Precio unitario: <strong>{item.price}</strong>
+                </Text>
+                <Text style={productCardTotal}>
+                  Subtotal: <strong>{item.total}</strong>
+                </Text>
+              </Section>
             </Section>
           ))}
         </Section>
@@ -280,51 +273,53 @@ const link = {
 };
 
 const productsSection = {
-  padding: "24px 32px",
+  padding: "24px 20px",
 };
 
-const productRow = {
-  marginBottom: "20px",
-  borderBottom: "2px solid #e2e8f0",
-  paddingBottom: "20px",
-};
-
-const productImageCell = {
-  width: "100px",
-  paddingRight: "20px",
-  verticalAlign: "top" as const,
-};
-
-const productImage = {
-  borderRadius: "8px",
-  objectFit: "cover" as const,
+const productCard = {
+  backgroundColor: "#ffffff",
   border: "2px solid #e2e8f0",
+  borderRadius: "12px",
+  overflow: "hidden",
+  marginBottom: "16px",
+  maxWidth: "100%",
+};
+
+const productCardImage = {
+  width: "100%",
+  height: "auto",
+  maxHeight: "200px",
+  objectFit: "cover" as const,
   display: "block",
+  borderBottom: "2px solid #e2e8f0",
 };
 
-const productInfo = {
-  verticalAlign: "top" as const,
-  paddingLeft: "8px",
+const productCardContent = {
+  padding: "16px 20px",
 };
 
-const productName = {
+const productCardName = {
   color: "#1e293b",
-  fontSize: "17px",
-  fontWeight: "600",
-  margin: "0 0 8px",
+  fontSize: "18px",
+  fontWeight: "700",
+  margin: "0 0 12px",
+  lineHeight: "1.3",
 };
 
-const productDetails = {
+const productCardDetails = {
   color: "#64748b",
-  fontSize: "14px",
-  margin: "4px 0",
+  fontSize: "15px",
+  margin: "6px 0",
+  lineHeight: "1.5",
 };
 
-const productTotal = {
+const productCardTotal = {
   color: "#059669",
-  fontSize: "15px",
-  margin: "8px 0 0",
-  fontWeight: "600",
+  fontSize: "17px",
+  margin: "12px 0 0",
+  fontWeight: "700",
+  paddingTop: "12px",
+  borderTop: "1px solid #e2e8f0",
 };
 
 const shippingSection = {

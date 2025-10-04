@@ -4,7 +4,8 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const EMAIL_FROM = process.env.EMAIL_FROM || "pedidos@isla-market.com";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "ernestoleonard8@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "lestevezcarbajales@gmail.com";
+const CC_EMAIL = process.env.CC_EMAIL || "ernestoleonard8@gmail.com";
 
 interface OrderItem {
   product: {
@@ -296,6 +297,7 @@ export async function sendOrderEmails({
     const adminEmailResult = await resend.emails.send({
       from: EMAIL_FROM,
       to: ADMIN_EMAIL,
+      cc: CC_EMAIL,
       subject: `🔔 Nueva Orden #${order.id
         .slice(0, 8)
         .toUpperCase()} - Isla Market Admin`,
