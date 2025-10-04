@@ -47,18 +47,13 @@ const getStatusColor = (
   status: Order["status"]
 ): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return "secondary";
-    case "paid":
-    case "confirmed":
+    case "pagado":
       return "default";
-    case "processing":
+    case "entregado":
       return "outline";
-    case "shipped":
-      return "default";
-    case "delivered":
-      return "default";
-    case "cancelled":
+    case "cancelado":
       return "destructive";
     default:
       return "secondary";
@@ -68,19 +63,13 @@ const getStatusColor = (
 // Función helper para obtener el texto en español del estado
 const getStatusText = (status: Order["status"]): string => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return "Pendiente";
-    case "paid":
+    case "pagado":
       return "Pagado";
-    case "confirmed":
-      return "Confirmado";
-    case "processing":
-      return "Procesando";
-    case "shipped":
-      return "Enviado";
-    case "delivered":
+    case "entregado":
       return "Entregado";
-    case "cancelled":
+    case "cancelado":
       return "Cancelado";
     default:
       return status;
@@ -90,18 +79,13 @@ const getStatusText = (status: Order["status"]): string => {
 // Función helper para obtener el icono según el estado
 const getStatusIcon = (status: Order["status"]) => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return <Clock className="h-3 w-3" />;
-    case "paid":
-    case "confirmed":
+    case "pagado":
       return <CheckCircle2 className="h-3 w-3" />;
-    case "processing":
-      return <Package className="h-3 w-3" />;
-    case "shipped":
-      return <Truck className="h-3 w-3" />;
-    case "delivered":
+    case "entregado":
       return <CheckCircle2 className="h-3 w-3" />;
-    case "cancelled":
+    case "cancelado":
       return <XCircle className="h-3 w-3" />;
     default:
       return null;
@@ -120,9 +104,10 @@ export default function OrdersPage() {
   // Estadísticas rápidas
   const [stats, setStats] = useState({
     total: 0,
-    pending: 0,
-    processing: 0,
-    delivered: 0,
+    pendiente: 0,
+    pagado: 0,
+    entregado: 0,
+    cancelado: 0,
   });
 
   // Cargar órdenes
@@ -148,12 +133,12 @@ export default function OrdersPage() {
         // Calcular estadísticas
         setStats({
           total: ordersData.length,
-          pending: ordersData.filter(
-            (o: Order) => o.status === "pending" || o.status === "paid"
-          ).length,
-          processing: ordersData.filter((o: Order) => o.status === "processing")
+          pendiente: ordersData.filter((o: Order) => o.status === "pendiente")
             .length,
-          delivered: ordersData.filter((o: Order) => o.status === "delivered")
+          pagado: ordersData.filter((o: Order) => o.status === "pagado").length,
+          entregado: ordersData.filter((o: Order) => o.status === "entregado")
+            .length,
+          cancelado: ordersData.filter((o: Order) => o.status === "cancelado")
             .length,
         });
       } catch (error) {
@@ -254,19 +239,19 @@ export default function OrdersPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Requieren atención</p>
+            <div className="text-2xl font-bold">{stats.pendiente}</div>
+            <p className="text-xs text-muted-foreground">Esperando pago</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Procesando</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Pagadas</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.processing}</div>
-            <p className="text-xs text-muted-foreground">En preparación</p>
+            <div className="text-2xl font-bold">{stats.pagado}</div>
+            <p className="text-xs text-muted-foreground">Listas para enviar</p>
           </CardContent>
         </Card>
 
@@ -276,7 +261,7 @@ export default function OrdersPage() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.delivered}</div>
+            <div className="text-2xl font-bold">{stats.entregado}</div>
             <p className="text-xs text-muted-foreground">Completadas</p>
           </CardContent>
         </Card>
@@ -311,13 +296,10 @@ export default function OrdersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="paid">Pagado</SelectItem>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="processing">Procesando</SelectItem>
-                  <SelectItem value="shipped">Enviado</SelectItem>
-                  <SelectItem value="delivered">Entregado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                  <SelectItem value="pagado">Pagado</SelectItem>
+                  <SelectItem value="entregado">Entregado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>

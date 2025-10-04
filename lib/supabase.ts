@@ -168,15 +168,7 @@ export interface Database {
           id: string;
           user_id: string;
           shipping_address_id: string;
-          status:
-            | "pending"
-            | "confirmed"
-            | "processing"
-            | "shipped"
-            | "delivered"
-            | "cancelled"
-            | "paid"
-            | null;
+          status: "pendiente" | "pagado" | "entregado" | "cancelado" | null;
           total_amount: number;
           stripe_payment_intent_id: string | null;
           stripe_session_id: string | null;
@@ -188,15 +180,7 @@ export interface Database {
           id?: string;
           user_id: string;
           shipping_address_id: string;
-          status?:
-            | "pending"
-            | "confirmed"
-            | "processing"
-            | "shipped"
-            | "delivered"
-            | "cancelled"
-            | "paid"
-            | null;
+          status?: "pendiente" | "pagado" | "entregado" | "cancelado" | null;
           total_amount: number;
           stripe_payment_intent_id?: string | null;
           stripe_session_id?: string | null;
@@ -208,15 +192,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           shipping_address_id?: string;
-          status?:
-            | "pending"
-            | "confirmed"
-            | "processing"
-            | "shipped"
-            | "delivered"
-            | "cancelled"
-            | "paid"
-            | null;
+          status?: "pendiente" | "pagado" | "entregado" | "cancelado" | null;
           total_amount?: number;
           stripe_payment_intent_id?: string | null;
           stripe_session_id?: string | null;

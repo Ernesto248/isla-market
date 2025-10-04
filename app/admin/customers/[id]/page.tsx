@@ -82,16 +82,19 @@ const getStatusColor = (
   status: string
 ): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
+    case "pendiente":
     case "pending":
       return "secondary";
+    case "pagado":
     case "paid":
     case "confirmed":
     case "processing":
       return "default";
+    case "entregado":
     case "shipped":
-      return "default";
     case "delivered":
       return "default";
+    case "cancelado":
     case "cancelled":
       return "destructive";
     default:
@@ -101,6 +104,12 @@ const getStatusColor = (
 
 const getStatusText = (status: string): string => {
   const statusMap: Record<string, string> = {
+    // Estados en español (nuevos)
+    pendiente: "Pendiente",
+    pagado: "Pagado",
+    entregado: "Entregado",
+    cancelado: "Cancelado",
+    // Estados en inglés (backward compatibility)
     pending: "Pendiente",
     paid: "Pagado",
     confirmed: "Confirmado",

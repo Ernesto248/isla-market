@@ -231,25 +231,71 @@ export async function GET(request: NextRequest) {
 
     // 5. Órdenes por Estado
     const ordersByStatus = {
-      pending: currentOrders.filter((o) => o.status === "pending").length,
-      confirmed: currentOrders.filter((o) => o.status === "confirmed").length,
-      processing: currentOrders.filter((o) => o.status === "processing").length,
-      shipped: currentOrders.filter((o) => o.status === "shipped").length,
-      delivered: currentOrders.filter((o) => o.status === "delivered").length,
-      cancelled: currentOrders.filter((o) => o.status === "cancelled").length,
-      paid: currentOrders.filter((o) => o.status === "paid").length,
+      pendiente: currentOrders.filter((o) => o.status === "pendiente").length,
+      pagado: currentOrders.filter((o) => o.status === "pagado").length,
+      entregado: currentOrders.filter((o) => o.status === "entregado").length,
+      cancelado: currentOrders.filter((o) => o.status === "cancelado").length,
     };
 
-    // 6. Métricas de Conversión
-    const totalRevenue = currentOrders.reduce(
-      (sum, order) => sum + parseFloat(order.total_amount.toString()),
-      0
-    );
+    // 5.5. Calcular ventas por día (para gráfico de líneas)
+    const salesByDayMap = new Map<
+      string,
+      { paidRevenue: number; projectedRevenue: number }
+    >();
 
-    const previousRevenue = previousOrders.reduce(
-      (sum, order) => sum + parseFloat(order.total_amount.toString()),
-      0
-    );
+    currentOrders.forEach((order) => {
+      // Excluir órdenes canceladas de la proyección
+      if (order.status === "cancelado") return;
+
+      const dateKey = order.created_at.split("T")[0]; // YYYY-MM-DD
+      const revenue = parseFloat(order.total_amount.toString());
+
+      const existing = salesByDayMap.get(dateKey);
+      if (existing) {
+        existing.projectedRevenue += revenue;
+        if (order.status === "pagado") {
+          existing.paidRevenue += revenue;
+        }
+      } else {
+        salesByDayMap.set(dateKey, {
+          paidRevenue: order.status === "pagado" ? revenue : 0,
+          projectedRevenue: revenue,
+        });
+      }
+    });
+
+    // Convertir a array y ordenar por fecha
+    const salesByDay = Array.from(salesByDayMap.entries())
+      .map(([date, data]) => ({
+        date,
+        paidRevenue: data.paidRevenue,
+        projectedRevenue: data.projectedRevenue,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // 6. Métricas de Conversión
+    // Total Revenue: solo órdenes con estado "pagado"
+    const totalRevenue = currentOrders
+      .filter((o) => o.status === "pagado")
+      .reduce(
+        (sum, order) => sum + parseFloat(order.total_amount.toString()),
+        0
+      );
+
+    // Projected Revenue: todas las órdenes EXCEPTO canceladas
+    const projectedRevenue = currentOrders
+      .filter((o) => o.status !== "cancelado")
+      .reduce(
+        (sum, order) => sum + parseFloat(order.total_amount.toString()),
+        0
+      );
+
+    const previousRevenue = previousOrders
+      .filter((o) => o.status === "pagado")
+      .reduce(
+        (sum, order) => sum + parseFloat(order.total_amount.toString()),
+        0
+      );
 
     const avgOrderValue =
       currentOrders.length > 0 ? totalRevenue / currentOrders.length : 0;
@@ -332,7 +378,7 @@ export async function GET(request: NextRequest) {
     const ordersPending48h = allOrders.filter((order) => {
       const orderDate = new Date(order.created_at);
       return (
-        order.status === "pending" &&
+        order.status === "pendiente" &&
         orderDate < twoDaysAgo &&
         orderDate >= subDays(now, 30)
       );
@@ -345,12 +391,12 @@ export async function GET(request: NextRequest) {
       .lte("stock_quantity", 10)
       .eq("is_active", true);
 
-    // Órdenes "atrasadas" (confirmed pero no processing después de 3 días)
+    // Órdenes "atrasadas" (pagado pero no entregado después de 3 días)
     const threeDaysAgo = subDays(now, 3);
     const delayedOrders = allOrders.filter((order) => {
       const orderDate = new Date(order.created_at);
       return (
-        (order.status === "confirmed" || order.status === "paid") &&
+        order.status === "pagado" &&
         orderDate < threeDaysAgo &&
         orderDate >= subDays(now, 30)
       );
@@ -373,6 +419,7 @@ export async function GET(request: NextRequest) {
       },
       summary: {
         totalRevenue,
+        projectedRevenue,
         totalOrders: currentOrders.length,
         avgOrderValue,
         uniqueCustomers: uniqueCustomers.size,
@@ -389,6 +436,7 @@ export async function GET(request: NextRequest) {
       topProducts,
       provinces: provinceData,
       ordersByStatus,
+      salesByDay,
       conversion: {
         newCustomers,
         returningCustomers,

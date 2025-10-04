@@ -26,13 +26,17 @@ interface OrdersChartProps {
 }
 
 const statusLabels: Record<string, string> = {
-  paid: "Pagadas",
-  delivered: "Entregadas",
+  pendiente: "Pendientes",
+  pagado: "Pagadas",
+  entregado: "Entregadas",
+  cancelado: "Canceladas",
 };
 
 const statusColors: Record<string, string> = {
-  paid: "hsl(217, 91%, 60%)", // Blue
-  delivered: "hsl(142, 71%, 45%)", // Green
+  pendiente: "hsl(45, 93%, 47%)", // Yellow/Amber
+  pagado: "hsl(217, 91%, 60%)", // Blue
+  entregado: "hsl(142, 71%, 45%)", // Green
+  cancelado: "hsl(0, 72%, 51%)", // Red
 };
 
 export function OrdersChart({ data }: OrdersChartProps) {

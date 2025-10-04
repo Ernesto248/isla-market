@@ -56,14 +56,7 @@ export interface Order {
   id: string;
   user_id: string;
   shipping_address_id: string;
-  status:
-    | "pending"
-    | "confirmed"
-    | "processing"
-    | "shipped"
-    | "delivered"
-    | "cancelled"
-    | "paid";
+  status: "pendiente" | "pagado" | "entregado" | "cancelado";
   total_amount: number;
   notes?: string | null;
   created_at: string;

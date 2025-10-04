@@ -69,20 +69,26 @@ export default function CheckoutSuccessPage() {
   // Función para obtener el texto del estado
   const getStatusText = (status: string) => {
     switch (status) {
+      // Estados en español (nuevos)
+      case "pendiente":
       case "pending":
         return t.pending;
+      case "pagado":
       case "paid":
         return t.paid;
+      case "entregado":
+      case "delivered":
+        return t.delivered;
+      case "cancelado":
+      case "cancelled":
+        return t.cancelled;
+      // Estados legacy en inglés
       case "confirmed":
         return t.confirmed;
       case "processing":
         return t.processing;
       case "shipped":
         return t.shipped;
-      case "delivered":
-        return t.delivered;
-      case "cancelled":
-        return t.cancelled;
       default:
         return status;
     }

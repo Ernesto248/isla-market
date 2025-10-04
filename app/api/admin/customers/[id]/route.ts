@@ -57,11 +57,12 @@ export async function GET(
       total_orders: orders?.length || 0,
       total_spent:
         orders
-          ?.filter((o) => o.status === "delivered")
+          ?.filter((o) => o.status === "entregado")
           .reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0,
-      pending_orders: orders?.filter((o) => o.status === "pending").length || 0,
+      pending_orders:
+        orders?.filter((o) => o.status === "pendiente").length || 0,
       completed_orders:
-        orders?.filter((o) => o.status === "delivered").length || 0,
+        orders?.filter((o) => o.status === "entregado").length || 0,
     };
 
     return NextResponse.json({

@@ -29,20 +29,19 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
 
 /**
  * Verifica si el usuario actual en el request tiene rol de admin
- * Utiliza el header de autorización o cookies de Supabase
+ * Utiliza el token de autorización del header
  */
 export async function verifyAdminFromRequest(
   request: Request
 ): Promise<{ isAdmin: boolean; userId?: string; error?: string }> {
   try {
-    // Obtener el token de autenticación
     const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
 
-    if (!token) {
-      return { isAdmin: false, error: "No authorization token" };
+    if (!authHeader) {
+      return { isAdmin: false, error: "No authorization header" };
     }
 
+    const token = authHeader.replace("Bearer ", "");
     const supabase = createSupabaseAdmin();
 
     // Verificar el token y obtener el usuario
@@ -52,11 +51,16 @@ export async function verifyAdminFromRequest(
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return { isAdmin: false, error: "Invalid token" };
+      console.log("Invalid token or user not found");
+      return { isAdmin: false, error: "Invalid authentication" };
     }
 
     // Verificar si es admin
     const isAdmin = await isUserAdmin(user.id);
+
+    if (!isAdmin) {
+      console.log("User is not admin:", user.email);
+    }
 
     return {
       isAdmin,

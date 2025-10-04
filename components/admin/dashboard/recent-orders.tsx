@@ -31,26 +31,20 @@ interface RecentOrdersProps {
 }
 
 const statusLabels: Record<string, string> = {
-  pending: "Pendiente",
-  paid: "Pagado",
-  confirmed: "Confirmado",
-  processing: "Procesando",
-  shipped: "Enviado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
+  pendiente: "Pendiente",
+  pagado: "Pagado",
+  entregado: "Entregado",
+  cancelado: "Cancelado",
 };
 
 const statusVariants: Record<
   string,
   "default" | "secondary" | "destructive" | "outline"
 > = {
-  pending: "outline",
-  paid: "default",
-  confirmed: "default",
-  processing: "default",
-  shipped: "secondary",
-  delivered: "default",
-  cancelled: "destructive",
+  pendiente: "secondary",
+  pagado: "default",
+  entregado: "outline",
+  cancelado: "destructive",
 };
 
 export function RecentOrders({ orders }: RecentOrdersProps) {

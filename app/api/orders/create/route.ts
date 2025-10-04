@@ -89,13 +89,13 @@ export async function POST(req: NextRequest) {
       0
     );
 
-    // 6. Crear orden con estado "pending"
+    // 6. Crear orden con estado "pendiente"
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
         shipping_address_id: shippingAddressId,
-        status: "pending",
+        status: "pendiente",
         total_amount: totalAmount,
         notes: "Orden creada directamente sin procesador de pagos",
       })

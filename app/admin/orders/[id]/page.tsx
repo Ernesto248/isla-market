@@ -57,23 +57,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Funciones helper (reutilizadas de la página principal)
+// Funciones helper
 const getStatusColor = (
   status: Order["status"]
 ): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return "secondary";
-    case "paid":
-    case "confirmed":
+    case "pagado":
       return "default";
-    case "processing":
+    case "entregado":
       return "outline";
-    case "shipped":
-      return "default";
-    case "delivered":
-      return "default";
-    case "cancelled":
+    case "cancelado":
       return "destructive";
     default:
       return "secondary";
@@ -82,19 +77,13 @@ const getStatusColor = (
 
 const getStatusText = (status: Order["status"]): string => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return "Pendiente";
-    case "paid":
+    case "pagado":
       return "Pagado";
-    case "confirmed":
-      return "Confirmado";
-    case "processing":
-      return "Procesando";
-    case "shipped":
-      return "Enviado";
-    case "delivered":
+    case "entregado":
       return "Entregado";
-    case "cancelled":
+    case "cancelado":
       return "Cancelado";
     default:
       return status;
@@ -103,18 +92,13 @@ const getStatusText = (status: Order["status"]): string => {
 
 const getStatusIcon = (status: Order["status"]) => {
   switch (status) {
-    case "pending":
+    case "pendiente":
       return <Clock className="h-4 w-4" />;
-    case "paid":
-    case "confirmed":
+    case "pagado":
       return <CheckCircle2 className="h-4 w-4" />;
-    case "processing":
-      return <Package className="h-4 w-4" />;
-    case "shipped":
-      return <Truck className="h-4 w-4" />;
-    case "delivered":
+    case "entregado":
       return <CheckCircle2 className="h-4 w-4" />;
-    case "cancelled":
+    case "cancelado":
       return <XCircle className="h-4 w-4" />;
     default:
       return null;
@@ -122,18 +106,15 @@ const getStatusIcon = (status: Order["status"]) => {
 };
 
 // Lógica de estados permitidos según el flujo del negocio
-// Flujo simplificado: pending → paid → delivered
+// Flujo simplificado: pendiente → pagado → entregado (con opción de cancelar)
 const getAllowedNextStates = (
   currentStatus: Order["status"]
 ): Order["status"][] => {
   const allowedTransitions: Record<Order["status"], Order["status"][]> = {
-    pending: ["paid"], // Pendiente solo puede pasar a Pagado
-    paid: ["delivered"], // Pagado solo puede pasar a Entregado
-    confirmed: ["delivered"], // Si existe, puede pasar a Entregado
-    processing: ["delivered"], // Si existe, puede pasar a Entregado
-    shipped: ["delivered"], // Si existe, puede pasar a Entregado
-    delivered: [], // Estado final, no se puede cambiar
-    cancelled: [], // Estado final, no se puede cambiar
+    pendiente: ["pagado", "cancelado"], // Pendiente puede pasar a Pagado o Cancelado
+    pagado: ["entregado", "cancelado"], // Pagado puede pasar a Entregado o Cancelado
+    entregado: [], // Estado final, no se puede cambiar
+    cancelado: [], // Estado final, no se puede cambiar
   };
 
   return allowedTransitions[currentStatus] || [];

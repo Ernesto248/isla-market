@@ -46,22 +46,41 @@ export async function GET(request: NextRequest) {
     );
 
     // 3. Calcular totales
-    const totalSales = ordersInPeriod.reduce(
-      (sum, order) => sum + parseFloat(order.total_amount.toString()),
-      0
-    );
+    // Total de ventas: solo órdenes con estado "pagado"
+    const totalSales = ordersInPeriod
+      .filter((order) => order.status === "pagado")
+      .reduce(
+        (sum, order) => sum + parseFloat(order.total_amount.toString()),
+        0
+      );
+
+    // Proyección: suma de todas las órdenes EXCEPTO canceladas
+    const projectedSales = ordersInPeriod
+      .filter((order) => order.status !== "cancelado")
+      .reduce(
+        (sum, order) => sum + parseFloat(order.total_amount.toString()),
+        0
+      );
 
     const totalOrders = ordersInPeriod.length;
 
-    // 4. Órdenes por estado (solo pagadas y entregadas)
+    // 4. Órdenes por estado (4 estados simplificados)
     const ordersByStatus = [
       {
-        status: "paid",
-        count: allOrders.filter((o) => o.status === "paid").length,
+        status: "pendiente",
+        count: allOrders.filter((o) => o.status === "pendiente").length,
       },
       {
-        status: "delivered",
-        count: allOrders.filter((o) => o.status === "delivered").length,
+        status: "pagado",
+        count: allOrders.filter((o) => o.status === "pagado").length,
+      },
+      {
+        status: "entregado",
+        count: allOrders.filter((o) => o.status === "entregado").length,
+      },
+      {
+        status: "cancelado",
+        count: allOrders.filter((o) => o.status === "cancelado").length,
       },
     ];
 
@@ -71,8 +90,13 @@ export async function GET(request: NextRequest) {
       date.setDate(date.getDate() - (daysAgo - 1 - i));
       const dateStr = date.toISOString().split("T")[0];
 
+      // Excluir órdenes canceladas de las ventas proyectadas por día
       const daySales = ordersInPeriod
-        .filter((order) => order.created_at.split("T")[0] === dateStr)
+        .filter(
+          (order) =>
+            order.created_at.split("T")[0] === dateStr &&
+            order.status !== "cancelado"
+        )
         .reduce(
           (sum, order) => sum + parseFloat(order.total_amount.toString()),
           0
@@ -82,7 +106,9 @@ export async function GET(request: NextRequest) {
         date: dateStr,
         sales: daySales,
         orders: ordersInPeriod.filter(
-          (order) => order.created_at.split("T")[0] === dateStr
+          (order) =>
+            order.created_at.split("T")[0] === dateStr &&
+            order.status !== "cancelado"
         ).length,
       };
     });
@@ -207,7 +233,8 @@ export async function GET(request: NextRequest) {
         endDate: new Date().toISOString(),
       },
       sales: {
-        total: Math.round(totalSales * 100) / 100,
+        total: Math.round(totalSales * 100) / 100, // Solo órdenes "pagado"
+        projected: Math.round(projectedSales * 100) / 100, // Todas las órdenes
         average: Math.round(averageOrderValue * 100) / 100,
         byDay: salesByDay,
       },

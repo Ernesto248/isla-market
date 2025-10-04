@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
           shipping_address_id: shippingAddress.id,
           total_amount,
           notes,
-          status: "pending",
+          status: "pendiente",
         },
       ])
       .select()

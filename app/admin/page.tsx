@@ -21,7 +21,8 @@ import Link from "next/link";
 
 interface DashboardStats {
   sales: {
-    total: number;
+    total: number; // Solo órdenes "pagado"
+    projected: number; // Todas las órdenes
     average: number;
     byDay: Array<{ date: string; sales: number }>;
   };
@@ -169,12 +170,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatsCard
-          title="Ventas Totales"
+          title="Ventas Confirmadas"
           value={`$${stats.sales.total.toLocaleString()}`}
-          description="en los últimos 30 días"
+          description="solo órdenes pagadas"
           icon={DollarSign}
+        />
+        <StatsCard
+          title="Proyección Total"
+          value={`$${stats.sales.projected.toLocaleString()}`}
+          description="todas las órdenes"
+          icon={TrendingUp}
         />
         <StatsCard
           title="Órdenes"
@@ -185,7 +192,7 @@ export default function AdminDashboard() {
         <StatsCard
           title="Productos Activos"
           value={stats.products.active}
-          description={`${stats.products.total} productos totales`}
+          description={`${stats.products.total} totales`}
           icon={Package}
         />
         <StatsCard
