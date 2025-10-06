@@ -178,10 +178,10 @@ export default function ProductDetailPage() {
   const isOutOfStock = stock === 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* Breadcrumbs */}
       <Breadcrumbs
-        className="mb-6"
+        className="mb-4 sm:mb-6"
         items={[
           { label: t.products, href: "/products" },
           ...(product.categories ? [{ label: product.categories.name }] : []),
@@ -190,13 +190,17 @@ export default function ProductDetailPage() {
       />
 
       {/* Botón volver */}
-      <Button variant="ghost" className="mb-6" onClick={() => router.back()}>
+      <Button
+        variant="ghost"
+        className="mb-4 sm:mb-6"
+        onClick={() => router.back()}
+      >
         <ArrowLeft className="h-4 w-4 mr-2" />
         {t.backToProducts}
       </Button>
 
       {/* Grid principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 mb-12 sm:mb-16">
         {/* Columna izquierda: Imágenes */}
         <div className="group">
           <ImageCarousel
@@ -206,7 +210,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Columna derecha: Información */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Brand/Category badge */}
           {product.categories && (
             <Badge variant="secondary" className="text-xs font-medium">
@@ -224,13 +228,13 @@ export default function ProductDetailPage() {
           </div> */}
 
           {/* Nombre del producto */}
-          <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
             {product.name}
           </h1>
 
           {/* Precio */}
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold">
+            <span className="text-2xl sm:text-3xl font-bold">
               ${product.price.toFixed(2)}
             </span>
           </div>
@@ -244,38 +248,42 @@ export default function ProductDetailPage() {
 
           {/* Selector de cantidad */}
           {!isOutOfStock && (
-            <div className="space-y-3 pt-4 border-t">
+            <div className="space-y-3 pt-3 sm:pt-4 border-t">
               <label className="text-sm font-semibold">Cantidad</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                >
-                  -
-                </Button>
-                <input
-                  type="number"
-                  min="1"
-                  max={stock}
-                  value={quantity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 1;
-                    setQuantity(Math.min(Math.max(1, value), stock));
-                  }}
-                  className="w-20 text-center border rounded-md py-2 font-medium bg-background text-foreground"
-                  aria-label="Cantidad"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                  disabled={quantity >= stock}
-                >
-                  +
-                </Button>
-                <span className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                  >
+                    -
+                  </Button>
+                  <input
+                    type="number"
+                    min="1"
+                    max={stock}
+                    value={quantity}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setQuantity(Math.min(Math.max(1, value), stock));
+                    }}
+                    className="w-16 sm:w-20 text-center border rounded-md py-2 font-medium bg-background text-foreground"
+                    aria-label="Cantidad"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10"
+                    onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                    disabled={quantity >= stock}
+                  >
+                    +
+                  </Button>
+                </div>
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   {stock} disponibles
                 </span>
               </div>
@@ -283,24 +291,24 @@ export default function ProductDetailPage() {
           )}
 
           {/* Botones de acción */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
             <Button
               size="lg"
               variant="outline"
-              className="flex-1 border-2 hover:bg-background"
+              className="w-full sm:flex-1 border-2 hover:bg-background text-sm sm:text-base"
               onClick={handleAddToCart}
               disabled={isOutOfStock}
             >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              Agregar al Carrito
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              <span className="truncate">Agregar al Carrito</span>
             </Button>
             <Button
               size="lg"
-              className="flex-1 bg-foreground text-background hover:bg-foreground/90"
+              className="w-full sm:flex-1 bg-foreground text-background hover:bg-foreground/90 text-sm sm:text-base"
               onClick={handleBuyNow}
               disabled={isOutOfStock}
             >
-              Comprar Ahora
+              <span className="truncate">Comprar Ahora</span>
             </Button>
           </div>
 
