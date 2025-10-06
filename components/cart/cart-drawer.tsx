@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import {
   Sheet,
@@ -94,11 +95,19 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         {/* Contenedor principal con imagen y detalles */}
                         <div className="flex gap-3 pr-6">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="w-20 h-20 object-cover rounded-md flex-shrink-0"
-                          />
+                          <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                            <Image
+                              src={
+                                item.product.image ||
+                                item.product.images?.[0] ||
+                                "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=200"
+                              }
+                              alt={item.product.name}
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                            />
+                          </div>
 
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium text-sm line-clamp-2 leading-tight mb-1">

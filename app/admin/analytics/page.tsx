@@ -617,7 +617,9 @@ export default function AnalyticsPage() {
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => {
-                  const date = new Date(value);
+                  // Parse como fecha local en lugar de UTC
+                  const [year, month, day] = value.split("-").map(Number);
+                  const date = new Date(year, month - 1, day);
                   return format(date, "dd MMM", { locale: es });
                 }}
               />
@@ -635,7 +637,9 @@ export default function AnalyticsPage() {
                 }}
                 labelStyle={{ color: "hsl(var(--foreground))" }}
                 labelFormatter={(value) => {
-                  const date = new Date(value);
+                  // Parse como fecha local en lugar de UTC
+                  const [year, month, day] = value.split("-").map(Number);
+                  const date = new Date(year, month - 1, day);
                   return format(date, "dd MMMM yyyy", { locale: es });
                 }}
                 formatter={(value: number, name: string) => {

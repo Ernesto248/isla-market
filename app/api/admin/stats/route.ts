@@ -23,9 +23,23 @@ export async function GET(request: NextRequest) {
     const period = searchParams.get("period") || "30"; // días por defecto
     const daysAgo = parseInt(period);
 
-    // Calcular fecha de inicio
-    const startDate = new Date();
+    // Calcular fecha de inicio y fin
+    // IMPORTANTE: Usar la fecha de inicio del día para incluir todo el período
+    const now = new Date();
+    const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - daysAgo);
+    startDate.setHours(0, 0, 0, 0);
+
+    // Fecha de fin: inicio del día siguiente para incluir TODO el día de hoy
+    const endDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      0,
+      0
+    );
 
     // 1. Estadísticas generales de órdenes
     const { data: allOrders, error: ordersError } = await supabase
@@ -41,9 +55,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Órdenes del período seleccionado
-    const ordersInPeriod = allOrders.filter(
-      (order) => new Date(order.created_at) >= startDate
-    );
+    const ordersInPeriod = allOrders.filter((order) => {
+      const orderDate = new Date(order.created_at);
+      return orderDate >= startDate && orderDate < endDate;
+    });
 
     // 3. Calcular totales
     // Total de ventas: solo órdenes con estado "pagado"
@@ -84,19 +99,25 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    // 5. Ventas por día (últimos N días)
-    const salesByDay = Array.from({ length: daysAgo }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (daysAgo - 1 - i));
-      const dateStr = date.toISOString().split("T")[0];
+    // 5. Ventas por día (últimos N días hasta hoy inclusive)
+    const salesByDay = Array.from({ length: daysAgo + 1 }, (_, i) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (daysAgo - i));
+      date.setHours(0, 0, 0, 0);
+      // Usar la fecha local en lugar de UTC
+      const dateStr = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
       // Excluir órdenes canceladas de las ventas proyectadas por día
       const daySales = ordersInPeriod
-        .filter(
-          (order) =>
-            order.created_at.split("T")[0] === dateStr &&
-            order.status !== "cancelado"
-        )
+        .filter((order) => {
+          const orderDate = new Date(order.created_at);
+          const orderDateStr = `${orderDate.getFullYear()}-${String(
+            orderDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
+          return orderDateStr === dateStr && order.status !== "cancelado";
+        })
         .reduce(
           (sum, order) => sum + parseFloat(order.total_amount.toString()),
           0
@@ -105,13 +126,23 @@ export async function GET(request: NextRequest) {
       return {
         date: dateStr,
         sales: daySales,
-        orders: ordersInPeriod.filter(
-          (order) =>
-            order.created_at.split("T")[0] === dateStr &&
-            order.status !== "cancelado"
-        ).length,
+        orders: ordersInPeriod.filter((order) => {
+          const orderDate = new Date(order.created_at);
+          const orderDateStr = `${orderDate.getFullYear()}-${String(
+            orderDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
+          return orderDateStr === dateStr && order.status !== "cancelado";
+        }).length,
       };
     });
+
+    // DEBUG: Log para verificar las fechas generadas
+    console.log("[Stats] Period days:", daysAgo);
+    console.log("[Stats] StartDate:", startDate.toISOString());
+    console.log("[Stats] EndDate:", endDate.toISOString());
+    console.log("[Stats] Days generated:", salesByDay.length);
+    console.log("[Stats] First day:", salesByDay[0]?.date);
+    console.log("[Stats] Last day:", salesByDay[salesByDay.length - 1]?.date);
 
     // 6. Productos más vendidos
     const { data: orderItems, error: itemsError } = await supabase

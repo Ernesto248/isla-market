@@ -27,10 +27,15 @@ interface SalesChartProps {
 }
 
 export function SalesChart({ data }: SalesChartProps) {
-  const formattedData = data.map((item) => ({
-    ...item,
-    date: format(new Date(item.date), "dd MMM", { locale: es }),
-  }));
+  const formattedData = data.map((item) => {
+    // Parse como fecha local en lugar de UTC para evitar problemas de zona horaria
+    const [year, month, day] = item.date.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    return {
+      ...item,
+      date: format(date, "dd MMM", { locale: es }),
+    };
+  });
 
   return (
     <Card>

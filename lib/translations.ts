@@ -174,10 +174,19 @@ export const translations = {
     sortByPriceHighToLow: "Precio (Mayor a Menor)",
     sortByNewest: "Más Recientes",
     addToCart: "Agregar al Carrito",
+    loginToAddCart: "Inicia sesión para agregar productos",
+    loginButton: "Iniciar Sesión",
     outOfStock: "Agotado",
     inStock: "En Stock",
     clearFilters: "Limpiar Filtros",
     filters: "Filtros",
+
+    // Product Details
+    productDetails: "Detalles del Producto",
+    relatedProducts: "Productos Relacionados",
+    selectQuantity: "Seleccionar Cantidad",
+    addQuantityToCart: "Agregar al Carrito",
+    backToProducts: "Volver a Productos",
     filtersDescription:
       "Filtra y ordena productos por categoría, precio y otros criterios.",
     search: "Buscar",

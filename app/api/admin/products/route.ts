@@ -104,9 +104,8 @@ export async function POST(request: NextRequest) {
       category_id,
       images,
       stock_quantity,
-      weight,
-      dimensions,
       is_active,
+      featured,
     } = body;
 
     // Validaciones
@@ -124,7 +123,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Crear producto
+    // Crear producto (slug se genera automáticamente por trigger)
     const { data: product, error } = await supabaseAdmin
       .from("products")
       .insert({
@@ -134,9 +133,8 @@ export async function POST(request: NextRequest) {
         category_id,
         images: images || [],
         stock_quantity: stock_quantity || 0,
-        weight: weight || null,
-        dimensions: dimensions || null,
         is_active: is_active !== undefined ? is_active : true,
+        featured: featured !== undefined ? featured : false,
       })
       .select(
         `

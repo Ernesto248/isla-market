@@ -1,14 +1,14 @@
 export interface Product {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   price: number;
   category_id: string;
   images: string[] | null;
   stock_quantity: number | null;
   is_active: boolean | null;
-  weight: number | null;
-  dimensions: string | null;
+  featured: boolean | null;
   created_at: string | null;
   updated_at: string | null;
   // Relaciones
@@ -17,7 +17,6 @@ export interface Product {
   image?: string;
   category?: string;
   stock?: number;
-  featured?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -90,9 +90,8 @@ export async function PUT(
       category_id,
       images,
       stock_quantity,
-      weight,
-      dimensions,
       is_active,
+      featured,
     } = body;
 
     // Validaciones
@@ -113,9 +112,8 @@ export async function PUT(
         ...(category_id !== undefined && { category_id }),
         ...(images !== undefined && { images }),
         ...(stock_quantity !== undefined && { stock_quantity }),
-        ...(weight !== undefined && { weight }),
-        ...(dimensions !== undefined && { dimensions }),
         ...(is_active !== undefined && { is_active }),
+        ...(featured !== undefined && { featured }),
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)

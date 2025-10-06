@@ -2,14 +2,27 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/products/product-card";
 import { ProductFilters } from "@/components/products/product-filters";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAppStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { DataService } from "@/lib/data-service";
-import { Product } from "@/lib/types";
+import { Product, Category } from "@/lib/types";
 import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 
 export default function ProductsPage() {
   const t = translations["es"]; // Solo español
@@ -17,10 +30,12 @@ export default function ProductsPage() {
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("name");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Aplicar debounce a la búsqueda (300ms de retraso)
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -46,18 +61,22 @@ export default function ProductsPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
-        const productsData = await DataService.getProducts();
+        const [productsData, categoriesData] = await Promise.all([
+          DataService.getProducts(),
+          DataService.getCategories(),
+        ]);
         setProducts(productsData);
+        setCategories(categoriesData);
       } catch (error) {
-        console.error("Error loading products:", error);
+        console.error("Error loading data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProducts();
+    loadData();
   }, []);
 
   // Función para actualizar la URL con los filtros actuales
@@ -66,7 +85,7 @@ export default function ProductsPage() {
     search?: string;
     sort?: string;
   }) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
 
     if (newParams.category !== undefined) {
       if (newParams.category === "all") {
@@ -101,7 +120,8 @@ export default function ProductsPage() {
     if (searchQuery !== "" || searchParams.get("search")) {
       updateURL({ search: debouncedSearchQuery });
     }
-  }, [debouncedSearchQuery, searchQuery, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, searchQuery]);
 
   // Funciones para manejar cambios en los filtros
   const handleCategoryChange = (category: string) => {
@@ -175,65 +195,197 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-3xl lg:text-4xl font-bold mb-4">{t.products}</h1>
-          <p className="text-xl text-muted-foreground">
-            {`Descubre ${products.length} productos para enviar a tus seres queridos en Cuba`}
-          </p>
-        </motion.div>
-      </div>
-
-      <div className="grid lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-24">
-            <ProductFilters
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-              isSearching={isSearching}
+    <div className="min-h-screen bg-background">
+      {/* Header fijo con buscador */}
+      <div className="sticky top-16 z-40 bg-background border-b">
+        <div className="container mx-auto px-4 py-4">
+          {/* Buscador */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar productos..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 pr-4 h-11 bg-muted/50"
             />
           </div>
-        </div>
 
-        {/* Products Grid */}
-        <div className="lg:col-span-3">
-          <div className="mb-6 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {`Mostrando ${filteredAndSortedProducts.length} productos`}
-            </p>
-          </div>
-
-          {filteredAndSortedProducts.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
+          {/* Categorías con imágenes circulares scrolleables */}
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {/* Categoría "Todos" */}
+            <button
+              onClick={() => handleCategoryChange("all")}
+              className="flex flex-col items-center gap-2 flex-shrink-0 group"
             >
-              <p className="text-lg text-muted-foreground mb-4">
-                No se encontraron productos que coincidan con tus criterios
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Intenta ajustar tus filtros o términos de búsqueda
-              </p>
-            </motion.div>
-          ) : (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredAndSortedProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
-              ))}
-            </div>
-          )}
+              <div
+                className={cn(
+                  "w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all",
+                  selectedCategory === "all"
+                    ? "border-primary bg-primary/10"
+                    : "border-muted-foreground/20 hover:border-primary/50"
+                )}
+              >
+                <Search className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <span
+                className={cn(
+                  "text-xs text-center transition-colors",
+                  selectedCategory === "all"
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                Todos
+              </span>
+            </button>
+
+            {/* Categorías con imágenes */}
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
+                className="flex flex-col items-center gap-2 flex-shrink-0 group"
+              >
+                <div
+                  className={cn(
+                    "w-16 h-16 rounded-full border-2 overflow-hidden transition-all relative bg-muted",
+                    selectedCategory === category.id
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-muted-foreground/20 hover:border-primary/50"
+                  )}
+                >
+                  <Image
+                    src={
+                      category.image_url ||
+                      category.image ||
+                      "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=200"
+                    }
+                    alt={category.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-xs text-center max-w-[64px] line-clamp-2 transition-colors",
+                    selectedCategory === category.id
+                      ? "font-semibold text-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {category.name}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="container mx-auto px-4 py-4">
+        {/* Barra de filtros y resultados */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-muted-foreground">
+            {filteredAndSortedProducts.length} productos
+          </p>
+
+          {/* Botón de filtros/ordenamiento */}
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Ordenar
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-auto rounded-t-xl">
+              <SheetHeader>
+                <SheetTitle>Ordenar por</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-2">
+                <button
+                  onClick={() => {
+                    handleSortChange("name");
+                    setIsFilterOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-lg transition-colors",
+                    sortBy === "name"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  Nombre (A-Z)
+                </button>
+                <button
+                  onClick={() => {
+                    handleSortChange("price-low");
+                    setIsFilterOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-lg transition-colors",
+                    sortBy === "price-low"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  Precio: Menor a Mayor
+                </button>
+                <button
+                  onClick={() => {
+                    handleSortChange("price-high");
+                    setIsFilterOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-lg transition-colors",
+                    sortBy === "price-high"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  Precio: Mayor a Menor
+                </button>
+                <button
+                  onClick={() => {
+                    handleSortChange("newest");
+                    setIsFilterOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-lg transition-colors",
+                    sortBy === "newest"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  Más Recientes
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Grid de productos - 2 columnas en móvil, más en desktop */}
+        {filteredAndSortedProducts.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <p className="text-lg text-muted-foreground mb-4">
+              No se encontraron productos
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Intenta ajustar tus filtros o términos de búsqueda
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filteredAndSortedProducts.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

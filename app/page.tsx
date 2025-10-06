@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Truck, Shield, Star, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -210,9 +211,18 @@ export default function HomePage() {
                     variant="outline"
                     size="lg"
                     className="border-2 border-white bg-white/90 text-gray-900 hover:bg-white hover:text-black backdrop-blur-sm font-semibold px-8 py-5 text-base rounded-full shadow-xl font-aleo"
-                    asChild
+                    onClick={() => {
+                      const categoriesSection =
+                        document.getElementById("categories");
+                      if (categoriesSection) {
+                        categoriesSection.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                    }}
                   >
-                    <Link href="/products">Ver Categorías</Link>
+                    Ver Categorías
                   </Button>
                 </motion.div>
               ) : (
@@ -253,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* Categories Section */}
-      <section className="container mx-auto px-4">
+      <section id="categories" className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -279,15 +289,17 @@ export default function HomePage() {
             >
               <Link href={`/products?category=${category.id}`}>
                 <Card className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 shadow-md">
-                  <div className="relative overflow-hidden">
-                    <img
+                  <div className="relative overflow-hidden h-48">
+                    <Image
                       src={
                         category.image_url ||
                         category.image ||
                         "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=500"
                       }
                       alt={category.name}
-                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4 text-white">

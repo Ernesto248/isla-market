@@ -1,4 +1,5 @@
 import { apiClient } from "./api";
+import { supabase } from "./supabase";
 import { Product, Category } from "./types";
 import { Order } from "./types";
 
@@ -12,7 +13,7 @@ export class DataService {
       image: dbProduct.images?.[0] || "",
       category: dbProduct.category_id,
       stock: dbProduct.stock_quantity || 0,
-      featured: false, // Por ahora todos false, se puede agregar lógica
+      featured: dbProduct.featured || false,
       createdAt: new Date(dbProduct.created_at),
       updatedAt: new Date(dbProduct.updated_at),
     };
@@ -59,8 +60,25 @@ export class DataService {
   // Obtener productos destacados
   static async getFeaturedProducts(): Promise<Product[]> {
     try {
-      const products = await this.getProducts({ limit: 4 });
-      return products.map((product) => ({ ...product, featured: true }));
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          `
+          *,
+          categories (
+            id,
+            name,
+            slug
+          )
+        `
+        )
+        .eq("is_active", true)
+        .eq("featured", true)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      return (data || []).map((product) => this.adaptProduct(product));
     } catch (error) {
       console.error("Error fetching featured products:", error);
       return [];

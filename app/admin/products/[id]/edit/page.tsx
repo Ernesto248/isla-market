@@ -46,9 +46,8 @@ export default function EditProductPage({
     price: "",
     category_id: "",
     stock_quantity: "",
-    weight: "",
-    dimensions: "",
     is_active: true,
+    featured: false,
   });
 
   // Cargar producto existente
@@ -78,9 +77,8 @@ export default function EditProductPage({
             price: product.price.toString(),
             category_id: product.category_id,
             stock_quantity: (product.stock_quantity || 0).toString(),
-            weight: product.weight ? product.weight.toString() : "",
-            dimensions: product.dimensions || "",
             is_active: product.is_active !== false,
+            featured: product.featured !== false,
           });
 
           setUploadedImages(product.images || []);
@@ -143,8 +141,8 @@ export default function EditProductPage({
   };
 
   // Manejar cambio en el switch
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, is_active: checked }));
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   // Manejar carga de imágenes
@@ -208,9 +206,8 @@ export default function EditProductPage({
           stock_quantity: formData.stock_quantity
             ? parseInt(formData.stock_quantity)
             : 0,
-          weight: formData.weight ? parseFloat(formData.weight) : null,
-          dimensions: formData.dimensions || null,
           is_active: formData.is_active,
+          featured: formData.featured,
         }),
       });
 
@@ -351,7 +348,25 @@ export default function EditProductPage({
               </div>
               <Switch
                 checked={formData.is_active}
-                onCheckedChange={handleSwitchChange}
+                onCheckedChange={(checked) =>
+                  handleSwitchChange("is_active", checked)
+                }
+              />
+            </div>
+
+            {/* Destacado */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Destacado</Label>
+                <p className="text-sm text-muted-foreground">
+                  Marcar este producto como destacado en la página principal
+                </p>
+              </div>
+              <Switch
+                checked={formData.featured}
+                onCheckedChange={(checked) =>
+                  handleSwitchChange("featured", checked)
+                }
               />
             </div>
           </CardContent>
@@ -394,46 +409,6 @@ export default function EditProductPage({
                   value={formData.stock_quantity}
                   onChange={handleChange}
                   placeholder="0"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Detalles físicos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles Físicos</CardTitle>
-            <CardDescription>
-              Información sobre el peso y dimensiones
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Peso */}
-              <div className="space-y-2">
-                <Label htmlFor="weight">Peso (kg)</Label>
-                <Input
-                  id="weight"
-                  name="weight"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.weight}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                />
-              </div>
-
-              {/* Dimensiones */}
-              <div className="space-y-2">
-                <Label htmlFor="dimensions">Dimensiones</Label>
-                <Input
-                  id="dimensions"
-                  name="dimensions"
-                  value={formData.dimensions}
-                  onChange={handleChange}
-                  placeholder="Ej: 10x20x5 cm"
                 />
               </div>
             </div>

@@ -5,7 +5,20 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ["images.pexels.com", "via.placeholder.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
+    ],
   },
   webpack: (config, { isServer }) => {
     // Suprimir advertencias específicas de Supabase Realtime

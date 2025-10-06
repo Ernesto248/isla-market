@@ -34,42 +34,52 @@ export async function GET(request: NextRequest) {
     const customEndDate = searchParams.get("endDate");
 
     // Calcular fechas según el período
+    // IMPORTANTE: Agregar 1 día al endDate para incluir TODO el día de hoy
+    const now = new Date();
     let startDate: Date;
-    let endDate: Date = endOfDay(new Date());
+    let endDate: Date = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      0,
+      0
+    );
     let previousStartDate: Date;
     let previousEndDate: Date;
 
     switch (periodType) {
       case "today":
-        startDate = startOfDay(new Date());
-        previousStartDate = startOfDay(subDays(new Date(), 1));
-        previousEndDate = endOfDay(subDays(new Date(), 1));
+        startDate = startOfDay(now);
+        previousStartDate = startOfDay(subDays(now, 1));
+        previousEndDate = endOfDay(subDays(now, 1));
         break;
       case "yesterday":
-        startDate = startOfDay(subDays(new Date(), 1));
-        endDate = endOfDay(subDays(new Date(), 1));
-        previousStartDate = startOfDay(subDays(new Date(), 2));
-        previousEndDate = endOfDay(subDays(new Date(), 2));
+        startDate = startOfDay(subDays(now, 1));
+        endDate = endOfDay(subDays(now, 1));
+        previousStartDate = startOfDay(subDays(now, 2));
+        previousEndDate = endOfDay(subDays(now, 2));
         break;
       case "7days":
-        startDate = startOfDay(subDays(new Date(), 6));
-        previousStartDate = startOfDay(subDays(new Date(), 13));
-        previousEndDate = endOfDay(subDays(new Date(), 7));
+        startDate = startOfDay(subDays(now, 6));
+        previousStartDate = startOfDay(subDays(now, 13));
+        previousEndDate = endOfDay(subDays(now, 7));
         break;
       case "30days":
-        startDate = startOfDay(subDays(new Date(), 29));
-        previousStartDate = startOfDay(subDays(new Date(), 59));
-        previousEndDate = endOfDay(subDays(new Date(), 30));
+        startDate = startOfDay(subDays(now, 29));
+        previousStartDate = startOfDay(subDays(now, 59));
+        previousEndDate = endOfDay(subDays(now, 30));
         break;
       case "3months":
-        startDate = startOfDay(subMonths(new Date(), 3));
-        previousStartDate = startOfDay(subMonths(new Date(), 6));
-        previousEndDate = endOfDay(subMonths(new Date(), 3));
+        startDate = startOfDay(subMonths(now, 3));
+        previousStartDate = startOfDay(subMonths(now, 6));
+        previousEndDate = endOfDay(subMonths(now, 3));
         break;
       case "year":
-        startDate = startOfYear(new Date());
-        previousStartDate = startOfYear(subYears(new Date(), 1));
-        previousEndDate = endOfYear(subYears(new Date(), 1));
+        startDate = startOfYear(now);
+        previousStartDate = startOfYear(subYears(now, 1));
+        previousEndDate = endOfYear(subYears(now, 1));
         break;
       case "custom":
         if (!customStartDate || !customEndDate) {
@@ -87,9 +97,9 @@ export async function GET(request: NextRequest) {
         previousEndDate = subDays(endDate, daysDiff);
         break;
       default:
-        startDate = startOfDay(subDays(new Date(), 29));
-        previousStartDate = startOfDay(subDays(new Date(), 59));
-        previousEndDate = endOfDay(subDays(new Date(), 30));
+        startDate = startOfDay(subDays(now, 29));
+        previousStartDate = startOfDay(subDays(now, 59));
+        previousEndDate = endOfDay(subDays(now, 30));
     }
 
     // 1. Obtener todas las órdenes
@@ -238,16 +248,40 @@ export async function GET(request: NextRequest) {
     };
 
     // 5.5. Calcular ventas por día (para gráfico de líneas)
+    // Primero, generar TODOS los días del rango, incluso si no tienen ventas
     const salesByDayMap = new Map<
       string,
       { paidRevenue: number; projectedRevenue: number }
     >();
 
+    // Calcular cuántos días hay entre startDate y endDate
+    const daysDiff = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Generar todos los días del rango con valores en 0
+    for (let i = 0; i < daysDiff; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dateKey = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      salesByDayMap.set(dateKey, {
+        paidRevenue: 0,
+        projectedRevenue: 0,
+      });
+    }
+
+    // Ahora agregar las ventas reales a cada día
     currentOrders.forEach((order) => {
       // Excluir órdenes canceladas de la proyección
       if (order.status === "cancelado") return;
 
-      const dateKey = order.created_at.split("T")[0]; // YYYY-MM-DD
+      // Convertir la fecha a la zona horaria local y extraer solo la fecha (YYYY-MM-DD)
+      const orderDate = new Date(order.created_at);
+      const dateKey = `${orderDate.getFullYear()}-${String(
+        orderDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
       const revenue = parseFloat(order.total_amount.toString());
 
       const existing = salesByDayMap.get(dateKey);
@@ -256,11 +290,6 @@ export async function GET(request: NextRequest) {
         if (order.status === "pagado") {
           existing.paidRevenue += revenue;
         }
-      } else {
-        salesByDayMap.set(dateKey, {
-          paidRevenue: order.status === "pagado" ? revenue : 0,
-          projectedRevenue: revenue,
-        });
       }
     });
 
@@ -372,15 +401,15 @@ export async function GET(request: NextRequest) {
         : 0;
 
     // 7. Acciones Requeridas
-    const now = new Date();
-    const twoDaysAgo = subDays(now, 2);
+    const currentDate = new Date();
+    const twoDaysAgo = subDays(currentDate, 2);
 
     const ordersPending48h = allOrders.filter((order) => {
       const orderDate = new Date(order.created_at);
       return (
         order.status === "pendiente" &&
         orderDate < twoDaysAgo &&
-        orderDate >= subDays(now, 30)
+        orderDate >= subDays(currentDate, 30)
       );
     }).length;
 
@@ -392,13 +421,13 @@ export async function GET(request: NextRequest) {
       .eq("is_active", true);
 
     // Órdenes "atrasadas" (pagado pero no entregado después de 3 días)
-    const threeDaysAgo = subDays(now, 3);
+    const threeDaysAgo = subDays(currentDate, 3);
     const delayedOrders = allOrders.filter((order) => {
       const orderDate = new Date(order.created_at);
       return (
         order.status === "pagado" &&
         orderDate < threeDaysAgo &&
-        orderDate >= subDays(now, 30)
+        orderDate >= subDays(currentDate, 30)
       );
     }).length;
 

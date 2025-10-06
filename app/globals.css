@@ -93,4 +93,14 @@
     white-space: nowrap;
     border-width: 0;
   }
+
+  /* Ocultar scrollbar manteniendo funcionalidad */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

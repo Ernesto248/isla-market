@@ -5,7 +5,10 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/auth-context";
+import { AuthModalProvider } from "@/contexts/auth-modal-context";
+import { GlobalAuthModal } from "@/components/auth/global-auth-modal";
 import { SessionRefresher } from "@/components/auth/session-refresher";
+import { CartGuard } from "@/components/cart/cart-guard";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -69,15 +72,19 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.className} ${aleo.variable}`}>
         <AuthProvider>
-          <ThemeProvider>
-            <SessionRefresher />
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
-          </ThemeProvider>
+          <AuthModalProvider>
+            <ThemeProvider>
+              <SessionRefresher />
+              <CartGuard />
+              <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+              <GlobalAuthModal />
+              <Toaster />
+            </ThemeProvider>
+          </AuthModalProvider>
         </AuthProvider>
         <Analytics />
       </body>

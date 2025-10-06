@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,10 +42,20 @@ function CheckoutContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+  const [buyNowMode, setBuyNowMode] = useState(false);
+  const [buyNowItems, setBuyNowItems] = useState<any[]>([]);
   const { user } = useAuth();
   const { cart, getCartTotal, clearCart } = useAppStore();
   const t = translations["es"];
-  const total = getCartTotal();
+
+  // Determinar qué items mostrar: buyNow o carrito
+  const displayItems = buyNowMode ? buyNowItems : cart;
+  const total = buyNowMode
+    ? buyNowItems.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0
+      )
+    : getCartTotal();
 
   const form = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
@@ -55,16 +66,34 @@ function CheckoutContent() {
     },
   });
 
+  // Verificar si es modo "Comprar Ahora"
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isBuyNow = searchParams.get("buyNow") === "true";
+
+    if (isBuyNow) {
+      const buyNowData = sessionStorage.getItem("buyNowProduct");
+      if (buyNowData) {
+        const { product, quantity } = JSON.parse(buyNowData);
+        setBuyNowMode(true);
+        setBuyNowItems([{ product, quantity }]);
+      } else {
+        // Si no hay datos de buyNow, redirigir a productos
+        router.push("/products");
+      }
+    }
+  }, [router]);
+
   useEffect(() => {
     console.log(
-      `🔍 [useEffect] Verificando carrito - Longitud: ${cart.length}, isProcessingOrder: ${isProcessingOrder}`
+      `🔍 [useEffect] Verificando carrito - Longitud: ${cart.length}, isProcessingOrder: ${isProcessingOrder}, buyNowMode: ${buyNowMode}`
     );
-    // Solo redirigir si el carrito está vacío Y no estamos procesando una orden
-    if (cart.length === 0 && !isProcessingOrder) {
-      console.log("🔀 [useEffect] Redirigiendo a /products (carrito vacío)");
+    // Solo redirigir si no hay items Y no estamos procesando una orden Y no es modo buyNow
+    if (displayItems.length === 0 && !isProcessingOrder && !buyNowMode) {
+      console.log("🔀 [useEffect] Redirigiendo a /products (sin items)");
       router.push("/products");
     }
-  }, [cart, router, isProcessingOrder]);
+  }, [cart, displayItems, router, isProcessingOrder, buyNowMode]);
 
   const onSubmit = async (data: CheckoutForm) => {
     console.log("🚀 [CHECKOUT] Iniciando proceso de orden...");
@@ -75,6 +104,11 @@ function CheckoutContent() {
     try {
       // Crear orden directamente (sin Stripe)
       console.log("📤 [CHECKOUT] Enviando solicitud a API...");
+      console.log(
+        `📦 [CHECKOUT] Modo: ${buyNowMode ? "BUY NOW" : "CART"}, Items: ${
+          displayItems.length
+        }`
+      );
       const response = await fetch("/api/orders/create", {
         method: "POST",
         headers: {
@@ -82,7 +116,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           userId: user?.id,
-          items: cart.map((item) => ({
+          items: displayItems.map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
             price_at_time: item.product.price,
@@ -115,10 +149,16 @@ function CheckoutContent() {
       toast.success("¡Orden creada exitosamente! Revisa tu email.");
       console.log("🎉 [CHECKOUT] Toast mostrado");
 
-      // Limpiar el carrito y navegar a página de éxito
-      console.log("🧹 [CHECKOUT] Limpiando carrito...");
-      clearCart();
-      console.log("✅ [CHECKOUT] Carrito limpiado");
+      // Limpiar según el modo
+      if (buyNowMode) {
+        console.log("🧹 [CHECKOUT] Limpiando sessionStorage (modo Buy Now)...");
+        sessionStorage.removeItem("buyNowProduct");
+        console.log("✅ [CHECKOUT] sessionStorage limpiado");
+      } else {
+        console.log("🧹 [CHECKOUT] Limpiando carrito...");
+        clearCart();
+        console.log("✅ [CHECKOUT] Carrito limpiado");
+      }
 
       console.log(
         `🔀 [CHECKOUT] Navegando a: /checkout/success?orderId=${result.order.id}`
@@ -143,9 +183,9 @@ function CheckoutContent() {
     }
   };
 
-  // Solo retornar null si el carrito está vacío Y NO estamos procesando
-  if (cart.length === 0 && !isProcessingOrder) {
-    console.log("🚫 [RENDER] No renderizando (carrito vacío, no procesando)");
+  // Solo retornar null si no hay items Y NO estamos procesando
+  if (displayItems.length === 0 && !isProcessingOrder) {
+    console.log("🚫 [RENDER] No renderizando (sin items, no procesando)");
     return null;
   }
 
@@ -415,16 +455,24 @@ function CheckoutContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cart.map((item) => (
+              {displayItems.map((item) => (
                 <div
                   key={item.product.id}
                   className="flex items-center space-x-3"
                 >
-                  <img
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="w-12 h-12 object-cover rounded-md"
-                  />
+                  <div className="relative w-12 h-12 flex-shrink-0">
+                    <Image
+                      src={
+                        item.product.image ||
+                        item.product.images?.[0] ||
+                        "https://via.placeholder.com/150"
+                      }
+                      alt={item.product.name}
+                      fill
+                      className="object-cover rounded-md"
+                      sizes="48px"
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
                       {item.product.name}
