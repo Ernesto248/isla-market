@@ -424,6 +424,17 @@ export default function OrderDetailPage({
                   <p className="font-medium">{order.email || "N/A"}</p>
                 </div>
               </div>
+              {order.customer_phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Teléfono del Comprador
+                    </p>
+                    <p className="font-medium">{order.customer_phone}</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -57,6 +57,7 @@ export interface Order {
   shipping_address_id: string;
   status: "pendiente" | "pagado" | "entregado" | "cancelado";
   total_amount: number;
+  customer_phone?: string | null;
   notes?: string | null;
   created_at: string;
   updated_at: string;

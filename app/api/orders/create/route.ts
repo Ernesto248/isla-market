@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Obtener datos del request
     const body = await req.json();
-    const { items, shippingAddress, userId } = body;
+    const { items, shippingAddress, userId, customerPhone } = body;
 
     // Validaciones básicas
     if (!items || items.length === 0) {
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
         shipping_address_id: shippingAddressId,
         status: "pendiente",
         total_amount: totalAmount,
+        customer_phone: customerPhone || null, // Guardar teléfono del comprador si existe
         notes: "Orden creada directamente sin procesador de pagos",
       })
       .select()

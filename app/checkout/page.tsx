@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CreditCard, User, MapPin, ShoppingBag } from "lucide-react";
+import { CreditCard, User, MapPin, ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ const checkoutSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
   lastName: z.string().min(2, "Last name is required"),
   email: z.string().email("Valid email is required"),
-  phone: z.string().min(10, "Valid phone number is required"),
+  phone: z.string().optional().or(z.literal("")), // Campo opcional
 
   // Recipient Information
   recipientFirstName: z.string().min(2, "Recipient first name is required"),
@@ -40,10 +40,14 @@ type CheckoutForm = z.infer<typeof checkoutSchema>;
 
 function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isBuyNowParam = searchParams.get("buyNow") === "true";
+
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [buyNowMode, setBuyNowMode] = useState(false);
   const [buyNowItems, setBuyNowItems] = useState<any[]>([]);
+  const [isLoadingBuyNow, setIsLoadingBuyNow] = useState(isBuyNowParam); // Inicializar basado en el parámetro
   const { user } = useAuth();
   const { cart, getCartTotal, clearCart } = useAppStore();
   const t = translations["es"];
@@ -68,32 +72,57 @@ function CheckoutContent() {
 
   // Verificar si es modo "Comprar Ahora"
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const isBuyNow = searchParams.get("buyNow") === "true";
+    if (isBuyNowParam) {
+      console.log("🛒 [BUY NOW] Detectado modo Buy Now, cargando datos...");
 
-    if (isBuyNow) {
       const buyNowData = sessionStorage.getItem("buyNowProduct");
       if (buyNowData) {
+        console.log("✅ [BUY NOW] Datos encontrados en sessionStorage");
         const { product, quantity } = JSON.parse(buyNowData);
         setBuyNowMode(true);
         setBuyNowItems([{ product, quantity }]);
+        // NO desactivamos isLoadingBuyNow aquí - se hará en otro useEffect
       } else {
+        console.log("❌ [BUY NOW] No hay datos, redirigiendo...");
         // Si no hay datos de buyNow, redirigir a productos
+        setIsLoadingBuyNow(false);
         router.push("/products");
       }
     }
-  }, [router]);
+  }, [isBuyNowParam, router]);
+
+  // Desactivar isLoadingBuyNow solo cuando buyNowItems tenga datos
+  useEffect(() => {
+    if (isLoadingBuyNow && buyNowItems.length > 0) {
+      console.log("✅ [BUY NOW] Items cargados, desactivando estado de carga");
+      setIsLoadingBuyNow(false);
+    }
+  }, [buyNowItems, isLoadingBuyNow]);
 
   useEffect(() => {
     console.log(
-      `🔍 [useEffect] Verificando carrito - Longitud: ${cart.length}, isProcessingOrder: ${isProcessingOrder}, buyNowMode: ${buyNowMode}`
+      `🔍 [useEffect] Verificando carrito - Longitud: ${cart.length}, isProcessingOrder: ${isProcessingOrder}, buyNowMode: ${buyNowMode}, isLoadingBuyNow: ${isLoadingBuyNow}, isBuyNowParam: ${isBuyNowParam}`
     );
-    // Solo redirigir si no hay items Y no estamos procesando una orden Y no es modo buyNow
-    if (displayItems.length === 0 && !isProcessingOrder && !buyNowMode) {
+    // Solo redirigir si no hay items Y no estamos procesando una orden Y no es modo buyNow Y no estamos cargando datos de Buy Now Y no tiene parámetro buyNow
+    if (
+      displayItems.length === 0 &&
+      !isProcessingOrder &&
+      !buyNowMode &&
+      !isLoadingBuyNow &&
+      !isBuyNowParam
+    ) {
       console.log("🔀 [useEffect] Redirigiendo a /products (sin items)");
       router.push("/products");
     }
-  }, [cart, displayItems, router, isProcessingOrder, buyNowMode]);
+  }, [
+    cart,
+    displayItems,
+    router,
+    isProcessingOrder,
+    buyNowMode,
+    isLoadingBuyNow,
+    isBuyNowParam,
+  ]);
 
   const onSubmit = async (data: CheckoutForm) => {
     console.log("🚀 [CHECKOUT] Iniciando proceso de orden...");
@@ -116,6 +145,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           userId: user?.id,
+          customerPhone: data.phone || null, // Teléfono del comprador (opcional)
           items: displayItems.map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
@@ -131,7 +161,7 @@ function CheckoutContent() {
             city: data.province, // Usando provincia como ciudad
             province: data.province,
             country: "Cuba",
-            phone: data.phone,
+            phone: data.phone, // Teléfono del destinatario (requerido para envío)
           },
         }),
       });
@@ -183,14 +213,31 @@ function CheckoutContent() {
     }
   };
 
-  // Solo retornar null si no hay items Y NO estamos procesando
-  if (displayItems.length === 0 && !isProcessingOrder) {
-    console.log("🚫 [RENDER] No renderizando (sin items, no procesando)");
+  // Solo retornar null si no hay items Y NO estamos procesando Y NO estamos cargando Buy Now Y NO tiene parámetro buyNow
+  if (
+    displayItems.length === 0 &&
+    !isProcessingOrder &&
+    !isLoadingBuyNow &&
+    !isBuyNowParam
+  ) {
+    console.log(
+      "🚫 [RENDER] No renderizando (sin items, no procesando, no cargando, no buyNow)"
+    );
     return null;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Botón volver */}
+      <Button
+        variant="ghost"
+        className="mb-6"
+        onClick={() => router.push("/products")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Volver a Productos
+      </Button>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -268,11 +315,17 @@ function CheckoutContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t.phone}</Label>
+                  <Label htmlFor="phone">
+                    {t.phone}{" "}
+                    <span className="text-muted-foreground text-xs">
+                      (opcional)
+                    </span>
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
                     {...form.register("phone")}
+                    placeholder="Ej: +53 5555-5555"
                     className={
                       form.formState.errors.phone ? "border-red-500" : ""
                     }
