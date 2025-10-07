@@ -1,0 +1,259 @@
+{
+  "meta": {
+    "project": "Isla Market Referral System",
+    "date": "2025-10-04",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "El sistema de referidos de Isla Market permite a usuarios seleccionados invitar a nuevos clientes mediante códigos y enlaces únicos, incentivando el crecimiento orgánico a través de comisiones automáticas por compras generadas. Incluye paneles de administración, dashboards personalizados y automatización completa con triggers de base de datos.",
+  "core_goals": [
+    "Incentivar el crecimiento orgánico por medio de referencias de usuarios.",
+    "Recompensar a los referidores con comisiones calculadas automáticamente.",
+    "Proveer herramientas para la gestión y seguimiento de referidores y sus métricas.",
+    "Automatizar el registro y actualización de comisiones mediante triggers en la base de datos.",
+    "Asegurar seguridad y permisos adecuados para administración y usuarios."
+  ],
+  "key_features": [
+    "Panel de administración completo para crear, editar, desactivar y visualizar referidores con filtros y búsqueda.",
+    "Dashboard global de administración con métricas, rankings y estado del programa.",
+    "Dashboard personal para referidores con estadísticas, listado de referidos y historial de comisiones.",
+    "Integración del sistema de referidos con el flujo de signup para registrar códigos automáticamente.",
+    "Generación automática y validación de códigos únicos de referido.",
+    "APIs REST para administración y usuarios con acceso controlado.",
+    "Triggers en base de datos para prevención de auto-referencias, expiraciones, y creación automática de comisiones.",
+    "Menú condicional 'Mis Referidos' visible solo para referidores activos.",
+    "Validaciones estrictas en creación y edición de referidores para evitar duplicados y valores fuera de rango.",
+    "Visualización del historial y estado de referidos y comisiones, con estados Activo, Convertido y Expirado."
+  ],
+  "user_flow_summary": [
+    "Administrador crea un referidor seleccionando un usuario, asignando código, comisión y duración.",
+    "Referidor accede a su dashboard para ver y compartir su código y enlace de invitación.",
+    "Nuevo usuario ingresa el código de referido durante signup, vinculándose automáticamente al referidor.",
+    "Usuario referido realiza compras, las cuales generan comisiones automáticamente tras cambiar la orden a estado 'pagado'.",
+    "Referidor y administrador visualizan las comisiones y estadísticas actualizadas en sus respectivos dashboards.",
+    "El sistema aplica reglas de negocio para expiración, validación y generación única de comisiones.",
+    "Menú del sitio se ajusta dinámicamente mostrando la opción 'Mis Referidos' solo para usuarios con rol de referidor activo."
+  ],
+  "validation_criteria": [
+    "Verificación que solo usuarios con privilegios accedan al panel admin y APIs correspondentes.",
+    "Validación de unicidad de códigos y usuarios al crear o editar referidores.",
+    "Comprobación que el porcentaje de comisión esté dentro del rango 0-100%.",
+    "Confirmación de duración mínima de referido de al menos 1 mes.",
+    "Testeo de triggers en base que previenen auto-referencias, calculan expiraciones y crean comisiones correctamente.",
+    "Pruebas end-to-end del flujo completo: creación de referidor → uso de código → compra → generación de comisión.",
+    "Medición de performance: dashboard carga en <2 segundos, APIs responden en <500ms.",
+    "Validación visual y funcional de dashboards y tablas con filtros, búsquedas y acciones.",
+    "Control de permisos de acceso y visualización de datos sensibles mediante Row Level Security y JWT.",
+    "Garantizar que órdenes canceladas no generen comisiones y que referidos expirados no generen ingresos."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js 13.5.1 (App Router)",
+      "React 18",
+      "Supabase (PostgreSQL)",
+      "Tailwind CSS",
+      "shadcn/ui",
+      "Resend (Email)",
+      "DigitalOcean Spaces (Storage)"
+    ],
+    "features": [
+      {
+        "name": "Sistema de Referidos - Admin Panel",
+        "description": "Panel de administración completo para gestionar referidores, ver estadísticas globales, crear/editar referidores, y visualizar dashboard con métricas del programa de referidos",
+        "files": [
+          "app/admin/referrers/page.tsx",
+          "app/admin/referrers/new/page.tsx",
+          "app/admin/referrers/[id]/page.tsx",
+          "app/admin/referrers/[id]/edit/page.tsx",
+          "app/admin/referrers/dashboard/page.tsx",
+          "app/admin/referrers/codes/page.tsx"
+        ]
+      },
+      {
+        "name": "Sistema de Referidos - APIs de Admin",
+        "description": "APIs para administrar referidores: listar, crear, actualizar, eliminar, ver detalles, estadísticas globales y ranking de referidores",
+        "files": [
+          "app/api/admin/referrers/route.ts",
+          "app/api/admin/referrers/[id]/route.ts",
+          "app/api/admin/referrers/stats/route.ts",
+          "app/api/admin/referrers/ranking/route.ts"
+        ]
+      },
+      {
+        "name": "Sistema de Referidos - Dashboard de Usuario",
+        "description": "Dashboard personal para referidores donde pueden ver sus estadísticas, referidos activos, comisiones ganadas y compartir su código de referido",
+        "files": [
+          "app/profile/referrals/page.tsx"
+        ]
+      },
+      {
+        "name": "Sistema de Referidos - APIs de Usuario",
+        "description": "APIs para usuarios referidores: verificar status de referidor, obtener estadísticas personales, crear relación de referido al signup",
+        "files": [
+          "app/api/referrals/check-status/route.ts",
+          "app/api/referrals/my-stats/route.ts",
+          "app/api/referrals/create-referral-link/route.ts"
+        ]
+      },
+      {
+        "name": "Sistema de Referidos - Base de Datos",
+        "description": "Schema de base de datos con 4 tablas (referral_program_config, referrers, referrals, referral_commissions) y 5 triggers para automatización",
+        "files": [
+          "supabase/migrations/003_create_referral_tables.sql",
+          "supabase/migrations/004_create_referral_rls.sql",
+          "supabase/migrations/006_create_referral_triggers.sql",
+          "supabase/migrations/009_fix_referral_trigger_status.sql",
+          "supabase/migrations/010_fix_referrer_stats_update.sql"
+        ]
+      },
+      {
+        "name": "Autenticación y Autorización",
+        "description": "Sistema de autenticación con Supabase Auth, context de usuario, guards para proteger rutas de admin y usuario, modal de login/signup",
+        "files": [
+          "contexts/auth-context.tsx",
+          "components/auth/auth-modal.tsx",
+          "components/auth/auth-guard.tsx",
+          "components/admin/admin-guard.tsx",
+          "lib/admin-auth.ts"
+        ]
+      },
+      {
+        "name": "Gestión de Productos",
+        "description": "CRUD completo de productos con carga de imágenes, traducciones automáticas, filtros y búsqueda",
+        "files": [
+          "app/products/page.tsx",
+          "app/admin/products/page.tsx",
+          "app/admin/products/new/page.tsx",
+          "app/admin/products/[id]/edit/page.tsx",
+          "app/api/products/route.ts",
+          "app/api/products/[id]/route.ts",
+          "components/products/product-card.tsx",
+          "components/products/product-filters.tsx"
+        ]
+      },
+      {
+        "name": "Sistema de Órdenes",
+        "description": "Gestión de órdenes de compra, checkout, estados de orden (pendiente, pagado, enviado, entregado), visualización en panel de admin",
+        "files": [
+          "app/orders/page.tsx",
+          "app/admin/orders/page.tsx",
+          "app/checkout/page.tsx",
+          "app/checkout/success/page.tsx",
+          "app/checkout/cancel/page.tsx",
+          "app/api/orders/route.ts",
+          "app/api/orders/[id]/route.ts"
+        ]
+      },
+      {
+        "name": "Carrito de Compras",
+        "description": "Carrito de compras con estado global usando Zustand, drawer lateral, agregar/eliminar productos, cálculo de totales",
+        "files": [
+          "components/cart/cart-drawer.tsx",
+          "lib/store.ts"
+        ]
+      },
+      {
+        "name": "Panel de Admin - Dashboard",
+        "description": "Dashboard principal de administración con estadísticas de ventas, productos, órdenes, usuarios y gráficos",
+        "files": [
+          "app/admin/page.tsx",
+          "app/admin/layout.tsx",
+          "components/admin/dashboard/overview-stats.tsx",
+          "components/admin/dashboard/recent-orders.tsx",
+          "components/admin/dashboard/sales-chart.tsx"
+        ]
+      },
+      {
+        "name": "Gestión de Categorías",
+        "description": "CRUD de categorías de productos con traducciones automáticas",
+        "files": [
+          "app/admin/categories/page.tsx",
+          "app/api/categories/route.ts"
+        ]
+      },
+      {
+        "name": "Gestión de Clientes",
+        "description": "Visualización y gestión de usuarios/clientes del sistema",
+        "files": [
+          "app/admin/customers/page.tsx",
+          "app/api/users/route.ts"
+        ]
+      },
+      {
+        "name": "Perfil de Usuario",
+        "description": "Página de perfil donde usuarios pueden ver su información y actualizar datos",
+        "files": [
+          "app/profile/page.tsx"
+        ]
+      },
+      {
+        "name": "Header y Navegación",
+        "description": "Header principal con navegación, menú de usuario, carrito, búsqueda, y menú condicional de 'Mis Referidos' para referidores",
+        "files": [
+          "components/layout/header.tsx",
+          "components/layout/footer.tsx"
+        ]
+      },
+      {
+        "name": "Sistema de Email",
+        "description": "Envío de emails transaccionales usando Resend: confirmación de orden para cliente y notificación para admin",
+        "files": [
+          "lib/email.ts",
+          "emails/order-confirmation-customer.tsx",
+          "emails/order-notification-admin.tsx"
+        ]
+      },
+      {
+        "name": "Almacenamiento de Archivos",
+        "description": "Gestión de carga y eliminación de imágenes usando DigitalOcean Spaces (S3-compatible)",
+        "files": [
+          "lib/spaces.ts",
+          "app/api/upload/route.ts",
+          "components/admin/image-upload.tsx"
+        ]
+      },
+      {
+        "name": "Traducciones Automáticas",
+        "description": "Sistema de traducción automática de contenido (español/inglés) usando OpenAI para productos y categorías",
+        "files": [
+          "lib/translations.ts",
+          "app/api/translate/route.ts"
+        ]
+      },
+      {
+        "name": "Utilidades y Tipos",
+        "description": "Funciones utilitarias, tipos TypeScript compartidos, helpers de formato de moneda y fechas",
+        "files": [
+          "lib/utils.ts",
+          "lib/types.ts",
+          "lib/data-service.ts"
+        ]
+      },
+      {
+        "name": "Componentes UI",
+        "description": "Biblioteca de componentes reutilizables de shadcn/ui: buttons, cards, tables, dialogs, forms, etc.",
+        "files": [
+          "components/ui/button.tsx",
+          "components/ui/card.tsx",
+          "components/ui/table.tsx",
+          "components/ui/dialog.tsx",
+          "components/ui/form.tsx",
+          "components/ui/input.tsx",
+          "components/ui/select.tsx",
+          "components/ui/badge.tsx",
+          "components/ui/alert.tsx",
+          "components/ui/toast.tsx"
+        ]
+      },
+      {
+        "name": "Hooks Personalizados",
+        "description": "Custom hooks para funcionalidades comunes: debounce, hydration check, toast notifications",
+        "files": [
+          "hooks/use-debounce.ts",
+          "hooks/use-hydration.ts",
+          "hooks/use-toast.ts"
+        ]
+      }
+    ]
+  }
+}

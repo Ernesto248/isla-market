@@ -128,6 +128,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session
         );
         setUser(enrichedUser);
+
+        // Procesar código de referido pendiente
+        const pendingReferralCode = localStorage.getItem(
+          "pending_referral_code"
+        );
+        if (pendingReferralCode && session?.access_token) {
+          try {
+            const response = await fetch(
+              "/api/referrals/create-referral-link",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  referral_code: pendingReferralCode,
+                }),
+              }
+            );
+
+            if (response.ok) {
+              console.log("Relación de referido creada exitosamente");
+              localStorage.removeItem("pending_referral_code");
+            } else {
+              console.error("Error al crear relación de referido");
+            }
+          } catch (error) {
+            console.error("Error procesando código de referido:", error);
+          }
+        }
       } else if (event === "SIGNED_OUT") {
         console.log("Usuario cerró sesión");
         setUser(null);

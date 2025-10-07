@@ -1,0 +1,590 @@
+[
+  {
+    "id": "TC001",
+    "title": "Admin panel access control",
+    "description": "Verify that only users with admin privileges can access the admin panel routes and APIs; unauthorized users must be denied access.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to access admin panel UI as an unauthenticated user"
+      },
+      {
+        "type": "assertion",
+        "description": "Access is denied and redirect to login page"
+      },
+      {
+        "type": "action",
+        "description": "Login as a standard user without admin privileges"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access admin panel UI and admin APIs"
+      },
+      {
+        "type": "assertion",
+        "description": "Access is denied with appropriate error message for all admin panel routes and APIs"
+      },
+      {
+        "type": "action",
+        "description": "Login as a user with admin privileges"
+      },
+      {
+        "type": "action",
+        "description": "Access admin panel UI and admin APIs"
+      },
+      {
+        "type": "assertion",
+        "description": "Access is granted without errors; admin functionalities are available"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Create new referrer with valid data",
+    "description": "Test creating a new referrer via the admin panel with valid user, unique code, commission within range, and valid duration",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin and navigate to the create referrer page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in valid user details for the referrer"
+      },
+      {
+        "type": "action",
+        "description": "Enter a unique referral code"
+      },
+      {
+        "type": "action",
+        "description": "Set commission percentage to a value between 0 and 100"
+      },
+      {
+        "type": "action",
+        "description": "Set referral duration to at least 1 month"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Referrer is created successfully and appears in the referrers list"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Prevent duplicate referral codes on creation",
+    "description": "Ensure the system prevents creation of referrers with a referral code that already exists in the system",
+    "category": "validation",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to create a referrer with a code that already exists"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation error is shown indicating code duplication, preventing creation"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Validate commission percentage range",
+    "description": "Check that commission percentage must be within 0 to 100 range during referrer creation and editing",
+    "category": "validation",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Try setting commission to a negative value"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation error is shown and form submission is blocked"
+      },
+      {
+        "type": "action",
+        "description": "Try setting commission to a value above 100"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation error is shown and form submission is blocked"
+      },
+      {
+        "type": "action",
+        "description": "Set commission to boundary values 0 and 100"
+      },
+      {
+        "type": "assertion",
+        "description": "No validation errors; accepted successfully"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Referral duration minimum validation",
+    "description": "Ensure referral duration cannot be set below 1 month when creating or editing a referrer",
+    "category": "validation",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to create or edit a referrer with referral duration less than 1 month"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation error displayed; operation blocked"
+      },
+      {
+        "type": "action",
+        "description": "Set referral duration to exactly 1 month"
+      },
+      {
+        "type": "assertion",
+        "description": "Form accepts the value without error"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Auto-generation and uniqueness of referral codes",
+    "description": "Test that the system automatically generates a unique referral code when requested and rejects duplicates",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger automatic referral code generation in the admin panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Generated code is unique and usable"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to create referrer manually with existing code"
+      },
+      {
+        "type": "assertion",
+        "description": "System rejects duplicate code with validation error"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Signup flow referral code registration",
+    "description": "Verify that a new user signing up via URL with referral code parameter is automatically linked to that referrer. IMPORTANT: The system detects referral codes ONLY via URL parameter ?ref=CODIGO, NOT via manual input field.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to home page with referral code in URL: http://localhost:3000/?ref=TESTCODE123"
+      },
+      {
+        "type": "assertion",
+        "description": "Green banner appears showing 'Código de referido detectado: TESTCODE123'"
+      },
+      {
+        "type": "action",
+        "description": "Click on 'Registrarse' button to open signup modal"
+      },
+      {
+        "type": "assertion",
+        "description": "Signup modal opens and green banner with code is visible inside modal"
+      },
+      {
+        "type": "action",
+        "description": "Complete signup form with firstName, lastName, email, password, confirmPassword"
+      },
+      {
+        "type": "action",
+        "description": "Submit signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Success toast mentions 'código de referido' and user is registered"
+      },
+      {
+        "type": "assertion",
+        "description": "Database table 'referrals' contains new record with referral_code='TESTCODE123' and is_active=true"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Prevention of auto-referrals via triggers",
+    "description": "Ensure database triggers prevent users from referring themselves by rejecting such referrals",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to create a referral where referrer and referred user are the same"
+      },
+      {
+        "type": "assertion",
+        "description": "Trigger blocks referral creation and returns appropriate error"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Automatic commission generation on order payment",
+    "description": "Verify that when a referred user makes a purchase changing order status to 'paid', commission is automatically created for the referrer. IMPORTANT: User must signup via URL with ?ref=CODIGO parameter.",
+    "category": "integration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to http://localhost:3000/?ref=COMMISSIONTEST and complete signup of new user"
+      },
+      {
+        "type": "action",
+        "description": "Login as the newly created referred user"
+      },
+      {
+        "type": "action",
+        "description": "Add products to cart and complete checkout to place an order"
+      },
+      {
+        "type": "assertion",
+        "description": "Order is created with status 'pendiente' and no commission exists yet"
+      },
+      {
+        "type": "action",
+        "description": "Login as admin and navigate to orders panel"
+      },
+      {
+        "type": "action",
+        "description": "Find the order and update status from 'pendiente' to 'paid'"
+      },
+      {
+        "type": "assertion",
+        "description": "Database trigger automatically creates referral commission record in 'referral_commissions' table linked to referrer with correct commission amount (order_total * commission_rate)"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "No commission for cancelled or expired referrals",
+    "description": "Validate that cancelled orders or expired referrals do not generate commissions",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Place an order with referral linked; cancel the order before payment"
+      },
+      {
+        "type": "assertion",
+        "description": "No commission is generated for cancelled order"
+      },
+      {
+        "type": "action",
+        "description": "Simulate referral expiration based on duration trigger"
+      },
+      {
+        "type": "action",
+        "description": "Place and pay order from expired referral"
+      },
+      {
+        "type": "assertion",
+        "description": "No commission is created due to expired referral status"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Referer and admin dashboard display accuracy",
+    "description": "Check personal and global dashboards display accurate statistics, commissions, rankings, and referral statuses",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as referrer and view personal dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard correctly shows referrals list with statuses and commission history"
+      },
+      {
+        "type": "action",
+        "description": "Login as admin and view global referral dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Global metrics, rankings, and program states are correctly displayed and updated"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "'Mis Referidos' menu visibility",
+    "description": "Test the visibility of 'Mis Referidos' menu conditional on user role and active referral status",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as active referrer user"
+      },
+      {
+        "type": "assertion",
+        "description": "'Mis Referidos' menu item is present in the navigation"
+      },
+      {
+        "type": "action",
+        "description": "Login as inactive referrer user"
+      },
+      {
+        "type": "assertion",
+        "description": "'Mis Referidos' menu item is not visible"
+      },
+      {
+        "type": "action",
+        "description": "Login as non-referrer user"
+      },
+      {
+        "type": "assertion",
+        "description": "'Mis Referidos' menu item is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "API performance and response time",
+    "description": "Measure response times of referral-related APIs ensuring they respond within 500ms under normal load",
+    "category": "performance",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send authorized requests to key APIs: admin referrers listing, stats, ranking, user referral status and stats"
+      },
+      {
+        "type": "assertion",
+        "description": "All API responses complete in less than or equal to 500 milliseconds"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Dashboard loading performance",
+    "description": "Verify that all dashboards (admin and user referral) fully load the data and UI within 2 seconds",
+    "category": "performance",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access admin global dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard and all associated charts load and render in under 2 seconds"
+      },
+      {
+        "type": "action",
+        "description": "Login as referrer and access personal referral dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Personal dashboard loads completely within 2 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Row Level Security and JWT access control on APIs",
+    "description": "Test that referral system APIs enforce row level security and JWT authorization to protect sensitive referral data",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Make API calls without JWT token to referral-related endpoints"
+      },
+      {
+        "type": "assertion",
+        "description": "Access denied with 401 Unauthorized"
+      },
+      {
+        "type": "action",
+        "description": "Login and call APIs with JWT token belonging to different users"
+      },
+      {
+        "type": "assertion",
+        "description": "Users can access only their own referral data or data permitted by RLS, admin can access all data"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Editing a referrer with validation",
+    "description": "Ensure that editing an existing referrer respects all validation rules and updates the record correctly",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to edit referrer page with existing referrer"
+      },
+      {
+        "type": "action",
+        "description": "Change referral code to a unique valid value"
+      },
+      {
+        "type": "action",
+        "description": "Change commission percentage within valid range"
+      },
+      {
+        "type": "action",
+        "description": "Change referral duration keeping minimum 1 month"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Updates are saved successfully and changes reflected in referrer details"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Search and filter referrers in admin panel",
+    "description": "Verify that filtering and searching referrers by user, code, status, and commission work correctly in the admin panel",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to referrers listing page"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters for active vs expired referrers"
+      },
+      {
+        "type": "assertion",
+        "description": "Filtered results correctly reflect the selected criteria"
+      },
+      {
+        "type": "action",
+        "description": "Use search box to find referrer by partial or full referral code or username"
+      },
+      {
+        "type": "assertion",
+        "description": "Search results correctly show matching referrers only"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Visual validation of referral and commission histories",
+    "description": "Check that referral and commission history tables display correct data, pagination, sorting, and status indicators (Activo, Convertido, Expirado)",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access referral history and commission history sections in user dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "All data rows are displayed with correct status badges, sorting works, and pagination functions as expected"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Trigger-based referral expiration handling",
+    "description": "Test that database triggers automatically update referral status to 'Expirado' after the referral duration ends and prevent commission generation",
+    "category": "integration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a referrer and referral with known duration"
+      },
+      {
+        "type": "action",
+        "description": "Simulate passage of referral duration beyond expiry"
+      },
+      {
+        "type": "assertion",
+        "description": "Referral status updates to 'Expirado' automatically by trigger"
+      },
+      {
+        "type": "action",
+        "description": "Place paid order under expired referral"
+      },
+      {
+        "type": "assertion",
+        "description": "No referral commission created"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "End-to-end referral flow",
+    "description": "Perform a full referral cycle from referrer creation, referral signup via URL with ?ref parameter, first purchase, to commission display in dashboards",
+    "category": "integration",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin and create a new referrer via admin panel with code 'E2ETEST456' and 10% commission"
+      },
+      {
+        "type": "assertion",
+        "description": "Referrer is created successfully and appears in /admin/referrers listing"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to http://localhost:3000/?ref=E2ETEST456 and complete signup as new user"
+      },
+      {
+        "type": "assertion",
+        "description": "User registered with referral relationship visible in database"
+      },
+      {
+        "type": "action",
+        "description": "Login as referred user, add products to cart, complete checkout and place order"
+      },
+      {
+        "type": "action",
+        "description": "Login as admin, navigate to orders panel, change order status to 'paid'"
+      },
+      {
+        "type": "assertion",
+        "description": "Commission is generated automatically in referral_commissions table with correct amount (10% of order total)"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/referrers/dashboard and verify global stats updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard shows increased total sales, commissions, and active referrals count"
+      },
+      {
+        "type": "action",
+        "description": "Login as referrer user and access /profile/referrals"
+      },
+      {
+        "type": "assertion",
+        "description": "Personal dashboard shows the new referral and commission in respective sections"
+      }
+    ]
+  }
+]

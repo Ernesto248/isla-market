@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    // Verificar que el usuario sea admin
+    const adminCheck = await requireAdmin(request);
+    if (!adminCheck.isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized: Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const supabaseAdmin = createSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";

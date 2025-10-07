@@ -110,3 +110,135 @@ export interface DashboardStats {
 
 export type Language = "en" | "es";
 export type Theme = "light" | "dark";
+
+// ========================================
+// TIPOS PARA SISTEMA DE REFERIDOS
+// ========================================
+
+export interface ReferralProgramConfig {
+  id: string;
+  default_commission_rate: number;
+  default_duration_months: number;
+  is_program_active: boolean;
+  updated_at: string;
+  updated_by?: string | null;
+}
+
+export interface Referrer {
+  id: string;
+  user_id: string;
+  referral_code: string;
+  commission_rate: number;
+  duration_months: number;
+  is_active: boolean;
+  created_at: string;
+  created_by?: string | null;
+  notes?: string | null;
+  // Estadísticas agregadas
+  total_referrals: number;
+  active_referrals: number;
+  total_orders: number;
+  total_sales: number;
+  total_commissions: number;
+  // Datos del usuario (JOIN)
+  user?: {
+    email: string;
+    full_name: string;
+  };
+}
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referred_user_id: string;
+  referral_code: string;
+  commission_rate: number;
+  created_at: string;
+  expires_at: string;
+  is_active: boolean;
+  // Estadísticas de este referido
+  total_orders: number;
+  total_spent: number;
+  total_commission_generated: number;
+  last_order_at?: string | null;
+  // Datos relacionados (JOIN)
+  referrer?: {
+    id: string;
+    referral_code: string;
+    user?: {
+      email: string;
+      full_name: string;
+    };
+  };
+  referred_user?: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
+}
+
+export interface ReferralCommission {
+  id: string;
+  referral_id: string;
+  referrer_id: string;
+  order_id: string;
+  referred_user_id: string;
+  order_total: number;
+  commission_rate: number;
+  commission_amount: number;
+  created_at: string;
+  // Datos relacionados (JOIN)
+  referrer?: {
+    referral_code: string;
+    user?: {
+      email: string;
+      full_name: string;
+    };
+  };
+  referred_user?: {
+    email: string;
+    full_name: string;
+  };
+  order?: {
+    id: string;
+    status: string;
+  };
+}
+
+// Tipos para APIs y formularios
+export interface CreateReferrerData {
+  user_id: string;
+  referral_code: string;
+  commission_rate?: number;
+  duration_months?: number;
+  notes?: string;
+}
+
+export interface UpdateReferrerData {
+  referral_code?: string;
+  commission_rate?: number;
+  duration_months?: number;
+  is_active?: boolean;
+  notes?: string;
+}
+
+export interface ReferrerStats {
+  total_referrers: number;
+  active_referrers: number;
+  total_referrals: number;
+  active_referrals: number;
+  total_commissions_generated: number;
+  total_sales_from_referrals: number;
+  average_commission_per_referrer: number;
+}
+
+export interface ReferrerRanking {
+  referrer_id: string;
+  referral_code: string;
+  user_email: string;
+  user_name: string;
+  total_referrals: number;
+  total_sales: number;
+  total_commissions: number;
+  rank: number;
+}

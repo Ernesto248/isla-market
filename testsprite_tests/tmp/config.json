@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "isla-market",
+    "projectPath": "c:\\Users\\mleon\\code\\market\\isla-market",
+    "testIds": [
+      "TC007"
+    ],
+    "additionalInstruction": "CRITICAL: Test ONLY TC007 (Signup flow). The referral code MUST be detected via URL parameter ?ref=CODIGO. Navigate to http://localhost:3000/?ref=TESTCODE123 to test. A green banner should appear with the detected code. DO NOT search for manual input fields.",
+    "envs": {
+      "API_KEY": "sk-user-nyHA3e6mXS37SPgciE1czkY04acM75I5pyh0eTty04FuJQWvuf-niQssaSUMBkvGHyLa-7QkukMKCH7kguoHgG-5XbyAeACrRdJrb05qfqATOl6FURSkmOSi3oe1gk_jQQ8"
+    }
+  },
+  "proxy": "http://09289371-ed43-4401-8212-90563e783f42:uZbOXfmXTgPd5gF45FCsRuKcGjDBOKoq@tun.testsprite.com:8080"
+}

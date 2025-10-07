@@ -16,6 +16,8 @@ import {
   X,
   FolderOpen,
   BarChart3,
+  UserPlus,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +51,16 @@ const navigation = [
     name: "Clientes",
     href: "/admin/customers",
     icon: Users,
+  },
+  {
+    name: "Referidos",
+    href: "/admin/referrers",
+    icon: UserPlus,
+  },
+  {
+    name: "Códigos de Referido",
+    href: "/admin/referrers/codes",
+    icon: QrCode,
   },
 ];
 

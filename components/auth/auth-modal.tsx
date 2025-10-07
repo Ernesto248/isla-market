@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,8 +60,25 @@ export function AuthModal({
   onModeChange,
 }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const { signIn, signUp, resetPassword } = useAuth();
   const t = translations["es"];
+
+  // Capturar código de referido de la URL cuando el modal se abre
+  useEffect(() => {
+    if (isOpen && typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refParam = urlParams.get("ref");
+
+      if (refParam) {
+        setReferralCode(refParam);
+        // Mostrar mensaje amigable cuando hay un código de referido
+        if (mode === "signup") {
+          toast.info(`Código de referido detectado: ${refParam}`);
+        }
+      }
+    }
+  }, [isOpen, mode]);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -99,6 +116,20 @@ export function AuthModal({
     setIsLoading(true);
 
     try {
+      // Validar código de referido si existe
+      if (referralCode) {
+        const validateResponse = await fetch(
+          `/api/referrals/validate-code?code=${referralCode}`
+        );
+
+        if (!validateResponse.ok) {
+          toast.error(
+            "El código de referido no es válido o ha expirado. Continuando sin código de referido."
+          );
+          setReferralCode(null);
+        }
+      }
+
       const { error } = await signUp(data.email, data.password, {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -109,7 +140,17 @@ export function AuthModal({
         return;
       }
 
-      toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+      // Si hay código de referido y el registro fue exitoso, crear la relación
+      if (referralCode) {
+        // Guardar el código en localStorage para procesarlo después de la confirmación
+        localStorage.setItem("pending_referral_code", referralCode);
+        toast.success(
+          "¡Cuenta creada con código de referido! Revisa tu email para confirmar."
+        );
+      } else {
+        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+      }
+
       onClose();
     } catch (error) {
       toast.error("Error inesperado. Inténtalo de nuevo.");
@@ -229,6 +270,17 @@ export function AuthModal({
               onSubmit={signupForm.handleSubmit(handleSignup)}
               className="space-y-4"
             >
+              {referralCode && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    <span className="font-semibold">Código de referido:</span>{" "}
+                    {referralCode}
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-300 mt-1">
+                    Obtendrás beneficios al registrarte con este código
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">{t.firstName}</Label>

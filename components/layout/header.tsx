@@ -22,6 +22,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { useAuth } from "@/contexts/auth-context";
 import { useHydration } from "@/hooks/use-hydration";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,12 +31,33 @@ export function Header() {
     "login" | "signup" | "forgot-password"
   >("login");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isReferrer, setIsReferrer] = useState(false);
 
   const { theme, setTheme, getCartItemsCount, isHydrated } = useAppStore();
-  const { user, signOut, loading } = useAuth();
+  const { user, session, signOut, loading } = useAuth();
   const clientHydrated = useHydration();
   const t = translations["es"];
   const cartItemsCount = isHydrated ? getCartItemsCount() : 0;
+
+  // Verificar si el usuario es referidor
+  useEffect(() => {
+    if (user && session?.access_token) {
+      fetch("/api/referrals/check-status", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setIsReferrer(data.is_referrer || false);
+        })
+        .catch(() => {
+          setIsReferrer(false);
+        });
+    } else {
+      setIsReferrer(false);
+    }
+  }, [user, session]);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -195,6 +217,13 @@ export function Header() {
                         Mi Perfil
                       </Link>
                     </DropdownMenuItem>
+                    {isReferrer && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile/referrals" className="w-full">
+                          Mis Referidos
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleSignOut}
