@@ -42,19 +42,29 @@ export function Header() {
   // Verificar si el usuario es referidor
   useEffect(() => {
     if (user && session?.access_token) {
+      console.log("[Header] Checking referrer status for:", user.email);
+      console.log("[Header] Has access token:", !!session.access_token);
+
       fetch("/api/referrals/check-status", {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       })
-        .then((res) => res.json())
-        .then((data) => {
-          setIsReferrer(data.is_referrer || false);
+        .then((res) => {
+          console.log("[Header] API response status:", res.status);
+          return res.json();
         })
-        .catch(() => {
+        .then((data) => {
+          console.log("[Header] API response data:", data);
+          setIsReferrer(data.is_referrer || false);
+          console.log("[Header] isReferrer set to:", data.is_referrer || false);
+        })
+        .catch((error) => {
+          console.error("[Header] Error checking referrer status:", error);
           setIsReferrer(false);
         });
     } else {
+      console.log("[Header] No user or session, setting isReferrer to false");
       setIsReferrer(false);
     }
   }, [user, session]);
@@ -217,13 +227,21 @@ export function Header() {
                         Mi Perfil
                       </Link>
                     </DropdownMenuItem>
-                    {isReferrer && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/profile/referrals" className="w-full">
-                          Mis Referidos
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
+                    {(() => {
+                      console.log(
+                        "[Header] Rendering menu, isReferrer:",
+                        isReferrer
+                      );
+                      return (
+                        isReferrer && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/profile/referrals" className="w-full">
+                              Mis Referidos
+                            </Link>
+                          </DropdownMenuItem>
+                        )
+                      );
+                    })()}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={handleSignOut}
