@@ -33,7 +33,14 @@ import {
   Clock,
   Loader2,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { formatCurrency } from "@/lib/utils";
 
 interface ReferrerStats {
@@ -72,6 +79,8 @@ export default function MyReferralsPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ReferrerStats | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isActiveReferralsOpen, setIsActiveReferralsOpen] = useState(true);
+  const [isRecentCommissionsOpen, setIsRecentCommissionsOpen] = useState(true);
 
   useEffect(() => {
     if (session) {
@@ -103,7 +112,9 @@ export default function MyReferralsPage() {
   };
 
   const getReferralUrl = () => {
-    const baseUrl = window.location.origin;
+    // Usar el dominio de producción o el origin actual
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://isla-market.com";
     return `${baseUrl}/?ref=${stats?.referrer?.referral_code}`;
   };
 
@@ -326,125 +337,177 @@ export default function MyReferralsPage() {
       </div>
 
       {/* Active Referrals */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>
-            Referidos Activos ({stats.referrals?.active.length || 0})
-          </CardTitle>
-          <CardDescription>
-            Personas que se registraron con tu código y están activas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {stats.referrals?.active && stats.referrals.active.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuario</TableHead>
-                  <TableHead>Fecha de Registro</TableHead>
-                  <TableHead className="text-right">Órdenes</TableHead>
-                  <TableHead className="text-right">Total Gastado</TableHead>
-                  <TableHead className="text-right">Comisiones</TableHead>
-                  <TableHead>Expira</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.referrals.active.map((referral) => (
-                  <TableRow key={referral.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {referral.referred_user?.full_name || "Sin nombre"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {referral.referred_user?.email}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(referral.created_at).toLocaleDateString(
-                        "es-ES"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {referral.total_orders}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(referral.total_spent)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(referral.total_commission_generated)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(referral.expires_at).toLocaleDateString(
-                          "es-ES"
-                        )}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aún no tienes referidos activos. ¡Comparte tu enlace para empezar!
+      <Collapsible
+        open={isActiveReferralsOpen}
+        onOpenChange={setIsActiveReferralsOpen}
+        className="mb-6"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>
+                  Referidos Activos ({stats.referrals?.active.length || 0})
+                </CardTitle>
+                <CardDescription>
+                  Personas que se registraron con tu código y están activas
+                </CardDescription>
+              </div>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 p-0">
+                  {isActiveReferralsOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">Toggle</span>
+                </Button>
+              </CollapsibleTrigger>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              {stats.referrals?.active && stats.referrals.active.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Fecha de Registro</TableHead>
+                      <TableHead className="text-right">Órdenes</TableHead>
+                      <TableHead className="text-right">
+                        Total Gastado
+                      </TableHead>
+                      <TableHead className="text-right">Comisiones</TableHead>
+                      <TableHead>Expira</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.referrals.active.map((referral) => (
+                      <TableRow key={referral.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {referral.referred_user?.full_name ||
+                                "Sin nombre"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {referral.referred_user?.email}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(referral.created_at).toLocaleDateString(
+                            "es-ES"
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {referral.total_orders}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(referral.total_spent)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(referral.total_commission_generated)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(referral.expires_at).toLocaleDateString(
+                              "es-ES"
+                            )}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aún no tienes referidos activos. ¡Comparte tu enlace para
+                  empezar!
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Recent Commissions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comisiones Recientes</CardTitle>
-          <CardDescription>
-            Últimas 10 comisiones generadas por tus referidos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {stats.commissions?.recent && stats.commissions.recent.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Referido</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Total del Pedido</TableHead>
-                  <TableHead className="text-right">Tu Comisión</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.commissions.recent.map((commission) => (
-                  <TableRow key={commission.id}>
-                    <TableCell>
-                      {commission.referred_user?.full_name ||
-                        commission.referred_user?.email ||
-                        "Usuario"}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(commission.created_at).toLocaleDateString(
-                        "es-ES"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(parseFloat(commission.order_total))}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-green-600">
-                      {formatCurrency(parseFloat(commission.commission_amount))}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aún no has generado comisiones. Tus referidos deben realizar
-              compras para que ganes comisiones.
+      <Collapsible
+        open={isRecentCommissionsOpen}
+        onOpenChange={setIsRecentCommissionsOpen}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Comisiones Recientes</CardTitle>
+                <CardDescription>
+                  Últimas 10 comisiones generadas por tus referidos
+                </CardDescription>
+              </div>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 p-0">
+                  {isRecentCommissionsOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">Toggle</span>
+                </Button>
+              </CollapsibleTrigger>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent>
+              {stats.commissions?.recent &&
+              stats.commissions.recent.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Referido</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead className="text-right">
+                        Total del Pedido
+                      </TableHead>
+                      <TableHead className="text-right">Tu Comisión</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.commissions.recent.map((commission) => (
+                      <TableRow key={commission.id}>
+                        <TableCell>
+                          {commission.referred_user?.full_name ||
+                            commission.referred_user?.email ||
+                            "Usuario"}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(commission.created_at).toLocaleDateString(
+                            "es-ES"
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(parseFloat(commission.order_total))}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-green-600">
+                          {formatCurrency(
+                            parseFloat(commission.commission_amount)
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Aún no has generado comisiones. Tus referidos deben realizar
+                  compras para que ganes comisiones.
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }

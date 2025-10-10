@@ -7,12 +7,12 @@
     "projectName": "isla-market",
     "projectPath": "c:\\Users\\mleon\\code\\market\\isla-market",
     "testIds": [
-      "TC007"
+      "TC009"
     ],
-    "additionalInstruction": "CRITICAL: Test ONLY TC007 (Signup flow). The referral code MUST be detected via URL parameter ?ref=CODIGO. Navigate to http://localhost:3000/?ref=TESTCODE123 to test. A green banner should appear with the detected code. DO NOT search for manual input fields.",
+    "additionalInstruction": "Execute ONLY TC009 (Automatic commission generation). Test flow: 1) Signup new user with ?ref=TESTCODE123 (referrer Juan Barrameda exists), 2) Login as new user, 3) Add products to cart and checkout, 4) Order created with status 'pendiente', 5) Login as admin, 6) Find order and change status to 'paid', 7) Verify commission created in database with correct amount (order_total * 5%). Important: Use URL parameter ?ref for referral code.",
     "envs": {
       "API_KEY": "sk-user-nyHA3e6mXS37SPgciE1czkY04acM75I5pyh0eTty04FuJQWvuf-niQssaSUMBkvGHyLa-7QkukMKCH7kguoHgG-5XbyAeACrRdJrb05qfqATOl6FURSkmOSi3oe1gk_jQQ8"
     }
   },
-  "proxy": "http://09289371-ed43-4401-8212-90563e783f42:uZbOXfmXTgPd5gF45FCsRuKcGjDBOKoq@tun.testsprite.com:8080"
+  "proxy": "http://eb5c5139-0446-4271-86ea-47fa6cd33d88:LXiAFDTqqX8voYGlRUFjWyMqa0BbisYc@tun.testsprite.com:8080"
 }

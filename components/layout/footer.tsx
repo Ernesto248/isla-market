@@ -1,12 +1,36 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Mail, Phone, MapPin } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
+import { Category } from "@/lib/types";
 
 export function Footer() {
   const t = translations["es"];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Cargar categorías desde la API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const data = await response.json();
+          // Limitar a 6 categorías para mantener el diseño limpio
+          setCategories(data.categories?.slice(0, 6) || []);
+        }
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <footer className="bg-muted/50 border-t">
@@ -51,24 +75,33 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold">{t.categories}</h3>
             <div className="space-y-2 text-sm">
-              <Link
-                href="/products?category=1"
-                className="block hover:text-primary transition-colors"
-              >
-                {t.electronics}
-              </Link>
-              <Link
-                href="/products?category=2"
-                className="block hover:text-primary transition-colors"
-              >
-                {t.home}
-              </Link>
-              <Link
-                href="/products?category=3"
-                className="block hover:text-primary transition-colors"
-              >
-                {t.food}
-              </Link>
+              {loadingCategories ? (
+                // Skeleton loading mientras cargan las categorías
+                <>
+                  <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
+                  <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
+                  <div className="h-4 bg-muted animate-pulse rounded w-28"></div>
+                </>
+              ) : categories.length > 0 ? (
+                // Renderizar categorías dinámicamente desde la DB
+                categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/products?category=${category.id}`}
+                    className="block hover:text-primary transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                ))
+              ) : (
+                // Fallback si no hay categorías
+                <Link
+                  href="/products"
+                  className="block hover:text-primary transition-colors"
+                >
+                  Ver todos los productos
+                </Link>
+              )}
             </div>
           </div>
 

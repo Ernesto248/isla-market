@@ -19,20 +19,50 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+type MetricType = "confirmed" | "projected" | "orders";
+
 interface SalesChartProps {
   data: Array<{
     date: string;
-    sales: number;
+    value: number;
   }>;
+  metricType: MetricType;
 }
 
-export function SalesChart({ data }: SalesChartProps) {
+const metricConfig = {
+  confirmed: {
+    title: "Ventas Confirmadas",
+    description: "Solo órdenes pagadas en los últimos 30 días",
+    dataLabel: "Ventas",
+    color: "hsl(var(--primary))",
+    formatter: (value: number) => `$${value.toLocaleString()}`,
+  },
+  projected: {
+    title: "Proyección de Ventas",
+    description: "Todas las órdenes excepto canceladas en los últimos 30 días",
+    dataLabel: "Proyección",
+    color: "hsl(var(--primary))",
+    formatter: (value: number) => `$${value.toLocaleString()}`,
+  },
+  orders: {
+    title: "Órdenes por Día",
+    description: "Cantidad de órdenes diarias en los últimos 30 días",
+    dataLabel: "Órdenes",
+    color: "hsl(142 76% 36%)", // Verde para órdenes
+    formatter: (value: number) =>
+      `${value} ${value === 1 ? "orden" : "órdenes"}`,
+  },
+};
+
+export function SalesChart({ data, metricType }: SalesChartProps) {
+  const config = metricConfig[metricType];
+
   const formattedData = data.map((item) => {
     // Parse como fecha local en lugar de UTC para evitar problemas de zona horaria
     const [year, month, day] = item.date.split("-").map(Number);
     const date = new Date(year, month - 1, day);
     return {
-      ...item,
+      value: item.value,
       date: format(date, "dd MMM", { locale: es }),
     };
   });
@@ -40,26 +70,22 @@ export function SalesChart({ data }: SalesChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ventas</CardTitle>
-        <CardDescription>
-          Evolución de las ventas en los últimos 30 días
-        </CardDescription>
+        <CardTitle>{config.title}</CardTitle>
+        <CardDescription>{config.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
           <AreaChart data={formattedData}>
             <defs>
-              <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="hsl(var(--primary))"
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="hsl(var(--primary))"
-                  stopOpacity={0}
-                />
+              <linearGradient
+                id={`color-${metricType}`}
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="5%" stopColor={config.color} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={config.color} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -73,7 +99,8 @@ export function SalesChart({ data }: SalesChartProps) {
               className="text-xs text-muted-foreground"
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `$${value.toLocaleString()}`}
+              tickFormatter={config.formatter}
+              allowDecimals={metricType === "orders" ? false : true}
             />
             <Tooltip
               contentStyle={{
@@ -83,16 +110,16 @@ export function SalesChart({ data }: SalesChartProps) {
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
               formatter={(value: number) => [
-                `$${value.toLocaleString()}`,
-                "Ventas",
+                config.formatter(value),
+                config.dataLabel,
               ]}
             />
             <Area
               type="monotone"
-              dataKey="sales"
-              stroke="hsl(var(--primary))"
+              dataKey="value"
+              stroke={config.color}
               fillOpacity={1}
-              fill="url(#colorSales)"
+              fill={`url(#color-${metricType})`}
             />
           </AreaChart>
         </ResponsiveContainer>

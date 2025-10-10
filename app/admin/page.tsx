@@ -24,7 +24,9 @@ interface DashboardStats {
     total: number; // Solo órdenes "pagado"
     projected: number; // Todas las órdenes
     average: number;
-    byDay: Array<{ date: string; sales: number }>;
+    byDayConfirmed: Array<{ date: string; value: number }>; // Solo órdenes pagadas
+    byDayProjected: Array<{ date: string; value: number }>; // Todas excepto canceladas
+    byDayOrders: Array<{ date: string; value: number }>; // Cantidad de órdenes
   };
   orders: {
     total: number;
@@ -47,11 +49,14 @@ interface DashboardStats {
   };
 }
 
+type MetricType = "confirmed" | "projected" | "orders";
+
 export default function AdminDashboard() {
   const { session } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<MetricType>("confirmed");
 
   useEffect(() => {
     async function fetchStats() {
@@ -176,18 +181,24 @@ export default function AdminDashboard() {
           value={`$${stats.sales.total.toLocaleString()}`}
           description="solo órdenes pagadas"
           icon={DollarSign}
+          onClick={() => setSelectedMetric("confirmed")}
+          isSelected={selectedMetric === "confirmed"}
         />
         <StatsCard
           title="Proyección Total"
           value={`$${stats.sales.projected.toLocaleString()}`}
           description="todas las órdenes"
           icon={TrendingUp}
+          onClick={() => setSelectedMetric("projected")}
+          isSelected={selectedMetric === "projected"}
         />
         <StatsCard
           title="Órdenes"
           value={stats.orders.total}
           description="total de órdenes"
           icon={ShoppingCart}
+          onClick={() => setSelectedMetric("orders")}
+          isSelected={selectedMetric === "orders"}
         />
         <StatsCard
           title="Productos Activos"
@@ -217,7 +228,16 @@ export default function AdminDashboard() {
 
       {/* Charts */}
       <div className="grid gap-4 md:grid-cols-2">
-        <SalesChart data={stats.sales.byDay} />
+        <SalesChart
+          data={
+            selectedMetric === "confirmed"
+              ? stats.sales.byDayConfirmed
+              : selectedMetric === "projected"
+              ? stats.sales.byDayProjected
+              : stats.sales.byDayOrders
+          }
+          metricType={selectedMetric}
+        />
         <OrdersChart data={stats.orders.byStatus} />
       </div>
 

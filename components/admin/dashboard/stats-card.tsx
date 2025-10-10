@@ -12,6 +12,8 @@ interface StatsCardProps {
     isPositive: boolean;
   };
   className?: string;
+  onClick?: () => void;
+  isSelected?: boolean;
 }
 
 export function StatsCard({
@@ -21,12 +23,27 @@ export function StatsCard({
   icon: Icon,
   trend,
   className,
+  onClick,
+  isSelected = false,
 }: StatsCardProps) {
   return (
-    <Card className={className}>
+    <Card
+      className={cn(
+        "transition-all duration-200",
+        onClick && "cursor-pointer hover:shadow-lg hover:scale-[1.02]",
+        isSelected && "ring-2 ring-primary shadow-lg scale-[1.02] bg-primary/5",
+        className
+      )}
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon
+          className={cn(
+            "h-4 w-4",
+            isSelected ? "text-primary" : "text-muted-foreground"
+          )}
+        />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>

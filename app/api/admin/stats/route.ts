@@ -100,7 +100,8 @@ export async function GET(request: NextRequest) {
     ];
 
     // 5. Ventas por día (últimos N días hasta hoy inclusive)
-    const salesByDay = Array.from({ length: daysAgo + 1 }, (_, i) => {
+    // Generar 3 arrays diferentes: confirmadas, proyectadas, y cantidad de órdenes
+    const salesByDayConfirmed = Array.from({ length: daysAgo + 1 }, (_, i) => {
       const date = new Date(now);
       date.setDate(date.getDate() - (daysAgo - i));
       date.setHours(0, 0, 0, 0);
@@ -109,8 +110,36 @@ export async function GET(request: NextRequest) {
         date.getMonth() + 1
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-      // Excluir órdenes canceladas de las ventas proyectadas por día
-      const daySales = ordersInPeriod
+      // Solo órdenes con estado "pagado"
+      const confirmedSales = ordersInPeriod
+        .filter((order) => {
+          const orderDate = new Date(order.created_at);
+          const orderDateStr = `${orderDate.getFullYear()}-${String(
+            orderDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
+          return orderDateStr === dateStr && order.status === "pagado";
+        })
+        .reduce(
+          (sum, order) => sum + parseFloat(order.total_amount.toString()),
+          0
+        );
+
+      return {
+        date: dateStr,
+        value: confirmedSales,
+      };
+    });
+
+    const salesByDayProjected = Array.from({ length: daysAgo + 1 }, (_, i) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (daysAgo - i));
+      date.setHours(0, 0, 0, 0);
+      const dateStr = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+      // Todas las órdenes excepto canceladas
+      const projectedSales = ordersInPeriod
         .filter((order) => {
           const orderDate = new Date(order.created_at);
           const orderDateStr = `${orderDate.getFullYear()}-${String(
@@ -125,14 +154,30 @@ export async function GET(request: NextRequest) {
 
       return {
         date: dateStr,
-        sales: daySales,
-        orders: ordersInPeriod.filter((order) => {
-          const orderDate = new Date(order.created_at);
-          const orderDateStr = `${orderDate.getFullYear()}-${String(
-            orderDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
-          return orderDateStr === dateStr && order.status !== "cancelado";
-        }).length,
+        value: projectedSales,
+      };
+    });
+
+    const ordersByDay = Array.from({ length: daysAgo + 1 }, (_, i) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (daysAgo - i));
+      date.setHours(0, 0, 0, 0);
+      const dateStr = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+      // Cantidad de órdenes (todas excepto canceladas)
+      const ordersCount = ordersInPeriod.filter((order) => {
+        const orderDate = new Date(order.created_at);
+        const orderDateStr = `${orderDate.getFullYear()}-${String(
+          orderDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
+        return orderDateStr === dateStr && order.status !== "cancelado";
+      }).length;
+
+      return {
+        date: dateStr,
+        value: ordersCount,
       };
     });
 
@@ -140,9 +185,12 @@ export async function GET(request: NextRequest) {
     console.log("[Stats] Period days:", daysAgo);
     console.log("[Stats] StartDate:", startDate.toISOString());
     console.log("[Stats] EndDate:", endDate.toISOString());
-    console.log("[Stats] Days generated:", salesByDay.length);
-    console.log("[Stats] First day:", salesByDay[0]?.date);
-    console.log("[Stats] Last day:", salesByDay[salesByDay.length - 1]?.date);
+    console.log("[Stats] Days generated:", salesByDayConfirmed.length);
+    console.log("[Stats] First day:", salesByDayConfirmed[0]?.date);
+    console.log(
+      "[Stats] Last day:",
+      salesByDayConfirmed[salesByDayConfirmed.length - 1]?.date
+    );
 
     // 6. Productos más vendidos
     const { data: orderItems, error: itemsError } = await supabase
@@ -267,7 +315,9 @@ export async function GET(request: NextRequest) {
         total: Math.round(totalSales * 100) / 100, // Solo órdenes "pagado"
         projected: Math.round(projectedSales * 100) / 100, // Todas las órdenes
         average: Math.round(averageOrderValue * 100) / 100,
-        byDay: salesByDay,
+        byDayConfirmed: salesByDayConfirmed, // Solo órdenes pagadas por día
+        byDayProjected: salesByDayProjected, // Todas las órdenes excepto canceladas por día
+        byDayOrders: ordersByDay, // Cantidad de órdenes por día
       },
       orders: {
         total: totalOrders,
