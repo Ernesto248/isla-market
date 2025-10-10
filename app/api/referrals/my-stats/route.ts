@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
+// Forzar modo dinámico para esta ruta
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 /**
  * GET /api/referrals/my-stats
  * Obtener estadísticas del usuario como referidor (si lo es)

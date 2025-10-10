@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
 
+// Forzar modo dinámico para esta ruta
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // Extraer token del header Authorization
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
