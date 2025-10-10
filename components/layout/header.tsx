@@ -55,7 +55,12 @@ export function Header() {
           return res.json();
         })
         .then((data) => {
-          console.log("[Header] API response data:", data);
+          console.log(
+            "[Header] API response data:",
+            JSON.stringify(data, null, 2)
+          );
+          console.log("[Header] is_referrer value:", data.is_referrer);
+          console.log("[Header] Type of is_referrer:", typeof data.is_referrer);
           setIsReferrer(data.is_referrer || false);
           console.log("[Header] isReferrer set to:", data.is_referrer || false);
         })

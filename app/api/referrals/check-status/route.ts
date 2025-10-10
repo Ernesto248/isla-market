@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
     const user = await getAuthenticatedUser(request);
     const supabase = createSupabaseAdmin();
 
-    console.log("[check-status] Checking referrer status for user:", user.id);
+    console.log("[check-status] ========== START ==========");
+    console.log("[check-status] User ID:", user.id);
+    console.log("[check-status] User email:", user.email);
 
     // Verificar si el usuario es referidor
     const { data: referrer, error: referrerError } = await supabase
@@ -39,35 +41,58 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    console.log("[check-status] Referrer query result:", {
-      found: !!referrer,
-      is_active: referrer?.is_active,
-      referral_code: referrer?.referral_code,
-      error: referrerError?.message,
-    });
+    console.log("[check-status] Query completed");
+    console.log("[check-status] Referrer found:", !!referrer);
+    console.log("[check-status] Referrer data:", referrer);
+    console.log("[check-status] Error:", referrerError);
+    console.log("[check-status] Error code:", referrerError?.code);
 
     // Si hay error y es diferente a "no rows", lanzar error
     if (referrerError && referrerError.code !== "PGRST116") {
-      console.error("[check-status] Database error:", referrerError);
+      console.error(
+        "[check-status] Database error (not 'no rows'):",
+        referrerError
+      );
       throw referrerError;
     }
 
-    // Retornar true si existe el referrer (sin importar is_active para debug)
-    // En producción, considerar solo is_active: true
+    // Si el error es PGRST116, significa que no hay referrer
+    if (referrerError?.code === "PGRST116") {
+      console.log("[check-status] No referrer found (PGRST116 - no rows)");
+    }
+
+    // Retornar true si existe el referrer
     const isReferrer = !!referrer;
 
-    return NextResponse.json({
+    console.log("[check-status] Final isReferrer value:", isReferrer);
+    console.log("[check-status] ========== END ==========");
+
+    const response = {
       is_referrer: isReferrer,
       referrer_id: referrer?.id || null,
       is_active: referrer?.is_active || false,
       debug: {
         user_id: user.id,
+        user_email: user.email,
         found_referrer: !!referrer,
         referrer_is_active: referrer?.is_active,
+        referrer_data: referrer,
+        had_error: !!referrerError,
+        error_code: referrerError?.code,
       },
-    });
+    };
+
+    console.log(
+      "[check-status] Sending response:",
+      JSON.stringify(response, null, 2)
+    );
+
+    return NextResponse.json(response);
   } catch (error: any) {
-    console.error("[check-status] Error checking referrer status:", error);
+    console.error("[check-status] ========== ERROR ==========");
+    console.error("[check-status] Caught error:", error);
+    console.error("[check-status] Error message:", error.message);
+    console.error("[check-status] ========== ERROR END ==========");
 
     if (error.message?.includes("Token")) {
       return NextResponse.json({ error: error.message }, { status: 401 });
