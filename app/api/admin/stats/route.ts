@@ -61,9 +61,11 @@ export async function GET(request: NextRequest) {
     });
 
     // 3. Calcular totales
-    // Total de ventas: solo órdenes con estado "pagado"
+    // Total de ventas: órdenes con estado "pagado" Y "entregado" (porque entregado implica pagado)
     const totalSales = ordersInPeriod
-      .filter((order) => order.status === "pagado")
+      .filter(
+        (order) => order.status === "pagado" || order.status === "entregado"
+      )
       .reduce(
         (sum, order) => sum + parseFloat(order.total_amount.toString()),
         0
@@ -110,14 +112,17 @@ export async function GET(request: NextRequest) {
         date.getMonth() + 1
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-      // Solo órdenes con estado "pagado"
+      // Órdenes con estado "pagado" O "entregado" (entregado implica pagado)
       const confirmedSales = ordersInPeriod
         .filter((order) => {
           const orderDate = new Date(order.created_at);
           const orderDateStr = `${orderDate.getFullYear()}-${String(
             orderDate.getMonth() + 1
           ).padStart(2, "0")}-${String(orderDate.getDate()).padStart(2, "0")}`;
-          return orderDateStr === dateStr && order.status === "pagado";
+          return (
+            orderDateStr === dateStr &&
+            (order.status === "pagado" || order.status === "entregado")
+          );
         })
         .reduce(
           (sum, order) => sum + parseFloat(order.total_amount.toString()),

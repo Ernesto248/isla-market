@@ -181,11 +181,10 @@ export default function AnalyticsPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-CU", {
-      style: "currency",
-      currency: "CUP",
+    return `$${amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
-    }).format(amount);
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const formatPercentage = (value: number) => {

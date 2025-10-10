@@ -287,7 +287,8 @@ export async function GET(request: NextRequest) {
       const existing = salesByDayMap.get(dateKey);
       if (existing) {
         existing.projectedRevenue += revenue;
-        if (order.status === "pagado") {
+        // Incluir ventas confirmadas (pagado o entregado)
+        if (order.status === "pagado" || order.status === "entregado") {
           existing.paidRevenue += revenue;
         }
       }
@@ -303,9 +304,9 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // 6. Métricas de Conversión
-    // Total Revenue: solo órdenes con estado "pagado"
+    // Total Revenue: órdenes con estado "pagado" o "entregado" (ventas confirmadas)
     const totalRevenue = currentOrders
-      .filter((o) => o.status === "pagado")
+      .filter((o) => o.status === "pagado" || o.status === "entregado")
       .reduce(
         (sum, order) => sum + parseFloat(order.total_amount.toString()),
         0
@@ -320,7 +321,7 @@ export async function GET(request: NextRequest) {
       );
 
     const previousRevenue = previousOrders
-      .filter((o) => o.status === "pagado")
+      .filter((o) => o.status === "pagado" || o.status === "entregado")
       .reduce(
         (sum, order) => sum + parseFloat(order.total_amount.toString()),
         0

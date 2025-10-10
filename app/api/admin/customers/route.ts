@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id);
 
-        // Calcular total gastado
+        // Calcular total gastado - incluir órdenes pagadas y entregadas
         const { data: orders } = await supabaseAdmin
           .from("orders")
           .select("total_amount")
           .eq("user_id", user.id)
-          .eq("status", "delivered"); // Solo órdenes completadas
+          .in("status", ["pagado", "entregado"]); // Órdenes confirmadas
 
         const totalSpent =
           orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) ||

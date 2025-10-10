@@ -50,7 +50,7 @@ interface Customer {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,13 +65,25 @@ export default function CustomersPage() {
 
   // Cargar clientes
   const loadCustomers = useCallback(async () => {
+    if (!session?.access_token) {
+      console.log("No access token available");
+      return;
+    }
+
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
       if (roleFilter !== "all") params.append("role", roleFilter);
 
-      const response = await fetch(`/api/admin/customers?${params.toString()}`);
+      const response = await fetch(
+        `/api/admin/customers?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -85,7 +97,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, roleFilter]);
+  }, [searchTerm, roleFilter, session]);
 
   useEffect(() => {
     if (user?.role === "admin") {
