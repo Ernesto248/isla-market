@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
       query = query.eq("category_id", category);
     }
 
+    if (featured === "true") {
+      query = query.eq("featured", true);
+    }
+
     if (search) {
       query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
     }
@@ -56,10 +60,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Procesar productos para calcular precio mínimo de variantes
+    // Procesar productos para calcular precio mínimo y stock total de variantes
     const processedProducts =
       products?.map((product: any) => {
-        // Si tiene variantes activas, usar el precio mínimo
+        // Si tiene variantes activas, usar el precio mínimo y stock total
         if (product.has_variants && product.product_variants?.length > 0) {
           const activeVariants = product.product_variants.filter(
             (v: any) => v.is_active !== false
@@ -69,10 +73,16 @@ export async function GET(request: NextRequest) {
             const minPrice = Math.min(
               ...activeVariants.map((v: any) => v.price)
             );
+            const totalStock = activeVariants.reduce(
+              (sum: number, v: any) => sum + (v.stock_quantity || 0),
+              0
+            );
             return {
               ...product,
               price: minPrice, // Mostrar precio mínimo
+              stock_quantity: totalStock, // Mostrar stock total de variantes
               _originalPrice: product.price, // Guardar precio original por si acaso
+              _originalStock: product.stock_quantity, // Guardar stock original
             };
           }
         }
@@ -81,14 +91,7 @@ export async function GET(request: NextRequest) {
         return product;
       }) || [];
 
-    // Si se solicitan productos destacados, filtrar por featured
-    let filteredProducts = processedProducts;
-    if (featured === "true") {
-      // Como no tenemos campo featured en la DB, usaremos los primeros productos
-      filteredProducts = processedProducts?.slice(0, 4) || [];
-    }
-
-    return NextResponse.json(filteredProducts);
+    return NextResponse.json(processedProducts);
   } catch (error) {
     console.error("Unexpected error:", error);
     return NextResponse.json(

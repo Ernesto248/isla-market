@@ -60,25 +60,15 @@ export class DataService {
   // Obtener productos destacados
   static async getFeaturedProducts(): Promise<Product[]> {
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          `
-          *,
-          categories (
-            id,
-            name,
-            slug
-          )
-        `
-        )
-        .eq("is_active", true)
-        .eq("featured", true)
-        .order("created_at", { ascending: false })
-        .limit(8);
+      // Usar el API endpoint que ya tiene la lógica de variantes
+      const response = await fetch("/api/products?featured=true&limit=8");
 
-      if (error) throw error;
-      return (data || []).map((product) => this.adaptProduct(product));
+      if (!response.ok) {
+        throw new Error("Failed to fetch featured products");
+      }
+
+      const data = await response.json();
+      return (data || []).map((product: any) => this.adaptProduct(product));
     } catch (error) {
       console.error("Error fetching featured products:", error);
       return [];
