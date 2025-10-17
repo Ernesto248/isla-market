@@ -21,6 +21,12 @@ export async function GET(request: NextRequest) {
           id,
           name,
           slug
+        ),
+        product_variants (
+          id,
+          price,
+          stock_quantity,
+          is_active
         )
       `
       )
@@ -50,11 +56,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Procesar productos para calcular precio mínimo de variantes
+    const processedProducts =
+      products?.map((product: any) => {
+        // Si tiene variantes activas, usar el precio mínimo
+        if (product.has_variants && product.product_variants?.length > 0) {
+          const activeVariants = product.product_variants.filter(
+            (v: any) => v.is_active !== false
+          );
+
+          if (activeVariants.length > 0) {
+            const minPrice = Math.min(
+              ...activeVariants.map((v: any) => v.price)
+            );
+            return {
+              ...product,
+              price: minPrice, // Mostrar precio mínimo
+              _originalPrice: product.price, // Guardar precio original por si acaso
+            };
+          }
+        }
+
+        // Si no tiene variantes o no hay activas, devolver tal cual
+        return product;
+      }) || [];
+
     // Si se solicitan productos destacados, filtrar por featured
-    let filteredProducts = products;
+    let filteredProducts = processedProducts;
     if (featured === "true") {
       // Como no tenemos campo featured en la DB, usaremos los primeros productos
-      filteredProducts = products?.slice(0, 4) || [];
+      filteredProducts = processedProducts?.slice(0, 4) || [];
     }
 
     return NextResponse.json(filteredProducts);

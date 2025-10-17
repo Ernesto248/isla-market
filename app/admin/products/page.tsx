@@ -199,6 +199,51 @@ export default function ProductsPage() {
     }).format(price);
   };
 
+  // Obtener precio a mostrar (producto o rango de variantes)
+  const getDisplayPrice = (product: ProductWithCategory) => {
+    if (!product.has_variants) {
+      return formatPrice(product.price);
+    }
+
+    const variants = (product as any).product_variants;
+    if (!variants || variants.length === 0) {
+      return "Sin variantes";
+    }
+
+    const prices = variants
+      .filter((v: any) => v.is_active)
+      .map((v: any) => Number(v.price));
+
+    if (prices.length === 0) {
+      return "Sin variantes activas";
+    }
+
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return formatPrice(minPrice);
+    }
+
+    return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+  };
+
+  // Obtener stock total (producto o suma de variantes)
+  const getDisplayStock = (product: ProductWithCategory) => {
+    if (!product.has_variants) {
+      return product.stock_quantity || 0;
+    }
+
+    const variants = (product as any).product_variants;
+    if (!variants || variants.length === 0) {
+      return 0;
+    }
+
+    return variants
+      .filter((v: any) => v.is_active)
+      .reduce((total: number, v: any) => total + (v.stock_quantity || 0), 0);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -318,18 +363,28 @@ export default function ProductsPage() {
                       <TableCell>
                         {product.categories?.name || "Sin categoría"}
                       </TableCell>
-                      <TableCell>{formatPrice(product.price)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {getDisplayPrice(product)}
+                          {product.has_variants && (
+                            <Badge variant="outline" className="ml-1 text-xs">
+                              {(product as any).product_variants?.length || 0}{" "}
+                              var
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            (product.stock_quantity || 0) > 10
+                            getDisplayStock(product) > 10
                               ? "default"
-                              : (product.stock_quantity || 0) > 0
+                              : getDisplayStock(product) > 0
                               ? "secondary"
                               : "destructive"
                           }
                         >
-                          {product.stock_quantity || 0} unidades
+                          {getDisplayStock(product)} unidades
                         </Badge>
                       </TableCell>
                       <TableCell>

@@ -350,36 +350,51 @@ export default function OrderDetailPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {order.items?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={item.product?.image || "/placeholder.png"}
-                            alt={item.product?.name}
-                            className="w-12 h-12 object-cover rounded"
-                          />
-                          <div>
-                            <p className="font-medium">
-                              {item.product?.name || "Producto"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {item.product_id.substring(0, 8)}...
-                            </p>
+                  {order.items?.map((item) => {
+                    // Usar imagen de variante si existe, sino la del producto
+                    const imageUrl =
+                      item.variant?.image_url ||
+                      item.product?.image ||
+                      "/placeholder.png";
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={imageUrl}
+                              alt={item.product?.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                            <div>
+                              <p className="font-medium">
+                                {item.product?.name || "Producto"}
+                              </p>
+                              {/* NUEVO: Mostrar info de variante si existe */}
+                              {item.variant &&
+                                item.variant.attributes_display && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.variant.attributes_display}
+                                  </p>
+                                )}
+                              <p className="text-xs text-muted-foreground">
+                                ID: {item.product_id.substring(0, 8)}...
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center font-medium">
-                        x{item.quantity}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatPrice(item.unit_price)}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatPrice(item.total_price)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          x{item.quantity}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatPrice(item.unit_price)}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {formatPrice(item.total_price)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
 

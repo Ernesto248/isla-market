@@ -213,33 +213,45 @@ function OrdersContent() {
                       {order.items && order.items.length > 0 ? (
                         order.items
                           .filter((item) => item.product)
-                          .map((item) => (
-                            <div
-                              key={item.product!.id}
-                              className="flex items-center space-x-4"
-                            >
-                              <img
-                                src={item.product!.image}
-                                alt={item.product!.name}
-                                className="w-12 h-12 object-cover rounded-md"
-                              />
-                              <div className="flex-1">
+                          .map((item, idx) => {
+                            // Usar imagen de variante si existe, sino la del producto
+                            const imageUrl =
+                              item.variant?.image_url || item.product!.image;
+                            // Usar precio de unit_price (precio al momento de la orden)
+                            const unitPrice = item.unit_price;
+
+                            return (
+                              <div
+                                key={`${item.product!.id}-${idx}`}
+                                className="flex items-center space-x-4"
+                              >
+                                <img
+                                  src={imageUrl}
+                                  alt={item.product!.name}
+                                  className="w-12 h-12 object-cover rounded-md"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-medium">
+                                    {item.product!.name}
+                                  </p>
+                                  {/* NUEVO: Mostrar info de variante si existe */}
+                                  {item.variant &&
+                                    item.variant.attributes_display && (
+                                      <p className="text-xs text-muted-foreground mb-1">
+                                        {item.variant.attributes_display}
+                                      </p>
+                                    )}
+                                  <p className="text-sm text-muted-foreground">
+                                    {t.quantity}: {item.quantity} × $
+                                    {unitPrice.toFixed(2)}
+                                  </p>
+                                </div>
                                 <p className="font-medium">
-                                  {item.product!.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {t.quantity}: {item.quantity} × $
-                                  {item.product!.price.toFixed(2)}
+                                  ${item.total_price.toFixed(2)}
                                 </p>
                               </div>
-                              <p className="font-medium">
-                                $
-                                {(item.product!.price * item.quantity).toFixed(
-                                  2
-                                )}
-                              </p>
-                            </div>
-                          ))
+                            );
+                          })
                       ) : (
                         <p className="text-sm text-muted-foreground">
                           Cargando artículos...

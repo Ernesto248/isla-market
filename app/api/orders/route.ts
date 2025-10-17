@@ -37,6 +37,25 @@ export async function GET(request: NextRequest) {
       )
       .order("created_at", { ascending: false });
 
+    // Temporal: Obtener variantes por separado para evitar caché de PostgREST
+    const ordersWithVariants = async (orders: any[]) => {
+      for (const order of orders) {
+        if (order.order_items) {
+          for (const item of order.order_items) {
+            if (item.variant_id) {
+              const { data: variant } = await supabaseAdmin
+                .from("product_variants")
+                .select("id, sku, price, image_url, attributes_display")
+                .eq("id", item.variant_id)
+                .single();
+              item.variant = variant;
+            }
+          }
+        }
+      }
+      return orders;
+    };
+
     // Filtros
     if (userId) {
       query = query.eq("user_id", userId);
@@ -57,9 +76,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Cargar variantes por separado
+    const ordersWithVariantsData = orders
+      ? await ordersWithVariants(orders)
+      : [];
+
     // Transformar los datos al formato esperado
     const transformedOrders =
-      orders?.map((order: any) => ({
+      ordersWithVariantsData?.map((order: any) => ({
         ...order,
         email: order.users?.email,
         full_name: order.users?.full_name,

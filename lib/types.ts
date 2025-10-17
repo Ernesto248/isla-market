@@ -9,6 +9,7 @@ export interface Product {
   stock_quantity: number | null;
   is_active: boolean | null;
   featured: boolean | null;
+  has_variants: boolean | null; // NUEVO: Indica si el producto tiene variantes
   created_at: string | null;
   updated_at: string | null;
   // Relaciones
@@ -39,6 +40,8 @@ export interface Category {
 export interface CartItem {
   product: Product;
   quantity: number;
+  variant_id?: string | null; // ID de la variante seleccionada (si aplica)
+  variant?: ProductVariant | null; // Información de la variante (para mostrar en UI)
 }
 
 export interface User {
@@ -83,6 +86,7 @@ export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string;
+  variant_id?: string | null; // NUEVO: ID de la variante (si aplica)
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -93,6 +97,14 @@ export interface OrderItem {
     price: number;
     image: string;
   };
+  // Datos de la variante (del JOIN) - NUEVO
+  variant?: {
+    id: string;
+    sku: string | null;
+    price: number;
+    image_url: string | null;
+    attributes_display: string | null; // "11 litros", "2 Ton • Negro", etc.
+  } | null;
 }
 
 export interface DashboardStats {
@@ -242,3 +254,199 @@ export interface ReferrerRanking {
   total_commissions: number;
   rank: number;
 }
+
+// ========================================
+// TIPOS PARA SISTEMA DE VARIANTES DE PRODUCTOS
+// ========================================
+
+/**
+ * Atributo de producto (ej: "Capacidad", "Color", "Tonelaje")
+ * Define los TIPOS de características que pueden variar en un producto
+ */
+export interface ProductAttribute {
+  id: string;
+  name: string; // Nombre técnico único (ej: "capacidad")
+  display_name: string; // Nombre para mostrar en UI (ej: "Capacidad del Refrigerador")
+  display_order: number; // Orden de visualización (menor = primero)
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Relación opcional con sus valores
+  values?: ProductAttributeValue[];
+}
+
+/**
+ * Valor específico de un atributo (ej: "9 litros", "Blanco", "1 tonelada")
+ * Define las OPCIONES disponibles para cada tipo de atributo
+ */
+export interface ProductAttributeValue {
+  id: string;
+  attribute_id: string; // FK a product_attributes
+  value: string; // Valor específico (ej: "9 litros")
+  display_order: number; // Orden de visualización dentro del atributo
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Relación opcional con el atributo padre
+  attribute?: ProductAttribute;
+}
+
+/**
+ * Atributo con su valor para una variante específica (para UI del cliente)
+ * Simplifica el acceso a nombre de atributo y valor sin hacer múltiples joins
+ */
+export interface VariantAttributeInfo {
+  attribute_name: string; // Ej: "Capacidad"
+  attribute_id: string;
+  value_name: string; // Ej: "9 litros"
+  value_id: string;
+}
+
+/**
+ * Variante específica de un producto con precio y stock individual
+ * Representa una combinación única de valores de atributos
+ * Ejemplo: "Refrigerador X - 9 litros + Blanco"
+ */
+export interface ProductVariant {
+  id: string;
+  product_id: string; // FK a products
+  sku: string | null; // SKU único de la variante (ej: "REF-X-9L-WHITE")
+  price: number; // Precio específico de esta variante
+  stock_quantity: number; // Stock disponible de esta variante
+  image_url: string | null; // Imagen específica (opcional, NULL usa las del producto)
+  display_order: number; // Orden de visualización
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Campos para sistema ultra-simple (sin atributos estructurados)
+  variant_name?: string | null; // Ej: "11 Litros", "1 Tonelada"
+  color?: string | null; // Ej: "Blanco", "Negro"
+  // Relaciones opcionales
+  product?: Product; // Producto padre
+  attribute_values?: ProductAttributeValue[]; // Valores de atributos de esta variante
+  // Para facilitar el renderizado en UI del cliente
+  attributes?: VariantAttributeInfo[]; // Información simplificada de atributos
+  attributes_display?: string; // Ej: "9 litros • Blanco"
+}
+
+/**
+ * Relación N:N entre variantes y valores de atributos
+ * Indica qué valores específicos tiene cada variante
+ */
+export interface ProductVariantAttribute {
+  id: string;
+  variant_id: string; // FK a product_variants
+  attribute_value_id: string; // FK a product_attribute_values
+  created_at: string;
+  // Relaciones opcionales
+  variant?: ProductVariant;
+  attribute_value?: ProductAttributeValue;
+}
+
+/**
+ * Producto completo con todas sus variantes (para admin y cliente)
+ * Extiende Product e incluye toda la información de variantes
+ */
+export interface ProductWithVariants extends Product {
+  has_variants: boolean; // Indica si el producto tiene variantes
+  variants: ProductVariant[]; // Array de variantes del producto
+  attributes: ProductAttribute[]; // Atributos disponibles para este producto
+}
+
+/**
+ * Datos para crear un nuevo atributo (Admin)
+ */
+export interface CreateAttributeData {
+  name: string;
+  display_name: string;
+  display_order?: number;
+}
+
+/**
+ * Datos para actualizar un atributo existente (Admin)
+ */
+export interface UpdateAttributeData {
+  name?: string;
+  display_name?: string;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+/**
+ * Datos para crear un nuevo valor de atributo (Admin)
+ */
+export interface CreateAttributeValueData {
+  attribute_id: string;
+  value: string;
+  display_order?: number;
+}
+
+/**
+ * Datos para crear una nueva variante (Admin)
+ */
+export interface CreateVariantData {
+  product_id: string;
+  sku?: string;
+  price: number;
+  stock_quantity: number;
+  image_url?: string;
+  attribute_value_ids: string[]; // IDs de los valores de atributos
+  display_order?: number;
+  is_active?: boolean;
+  // Campos adicionales para variantes simples
+  variant_name?: string;
+  color?: string;
+  attributes_display?: string;
+}
+
+/**
+ * Datos para actualizar una variante existente (Admin)
+ */
+export interface UpdateVariantData {
+  sku?: string;
+  price?: number;
+  stock_quantity?: number;
+  image_url?: string;
+  attribute_value_ids?: string[]; // IDs de los valores de atributos
+  display_order?: number;
+  is_active?: boolean;
+  // Campos adicionales para variantes simples
+  variant_name?: string;
+  color?: string;
+  attributes_display?: string;
+}
+
+// Aliases para DTOs (Data Transfer Objects) - nombres más explícitos para APIs
+export type CreateProductVariantDTO = CreateVariantData;
+export type UpdateProductVariantDTO = UpdateVariantData;
+
+/**
+ * Datos para crear un producto completo con sus variantes en una sola operación (Admin)
+ */
+export interface CreateProductWithVariantsData {
+  product: {
+    name: string;
+    slug?: string;
+    description?: string;
+    category_id: string;
+    images?: string[];
+    is_active?: boolean;
+    featured?: boolean;
+  };
+  attributes: {
+    attribute_id: string;
+    value_ids: string[]; // IDs de los valores seleccionados para este atributo
+  }[];
+  variants: {
+    attribute_value_ids: string[]; // Combinación específica de valores
+    price: number;
+    stock_quantity: number;
+    sku?: string;
+    image_url?: string;
+  }[];
+}
+
+/**
+ * CartItem incluye variante opcionalmente
+ * Ya no necesitamos CartItemWithVariant
+ */

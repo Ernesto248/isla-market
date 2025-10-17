@@ -26,8 +26,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const t = translations["es"]; // Forzar español
 
   // Calcular stock disponible
-  const stock = product.stock_quantity || product.stock || 0;
-  const isOutOfStock = stock === 0;
+  // Si el producto tiene variantes, NO mostrar como sin stock
+  // (el stock se ve en la página de detalles al seleccionar variante)
+  const hasVariants = product.has_variants === true;
+  const stock = hasVariants ? 1 : product.stock_quantity || product.stock || 0;
+  const isOutOfStock = hasVariants ? false : stock === 0;
 
   // Función para truncar descripción
   const truncateDescription = (
@@ -40,8 +43,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir navegación al hacer clic en el botón
-    e.stopPropagation(); // Evitar que el evento se propague al Link
+    // Si tiene variantes, NO prevenir navegación - dejar que el Link funcione
+    if (hasVariants) {
+      // No hacer e.preventDefault() ni e.stopPropagation()
+      // El Link padre navegará a la página de detalles
+      return;
+    }
+
+    // Para productos sin variantes, prevenir navegación y agregar al carrito
+    e.preventDefault();
+    e.stopPropagation();
 
     // Verificar stock primero
     if (isOutOfStock) {
@@ -147,14 +158,23 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             <div className="flex-1"></div>
 
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl font-bold text-primary">
-                ${product.price.toFixed(2)}
-              </span>
+              <div className="flex flex-col">
+                {hasVariants && (
+                  <span className="text-xs text-muted-foreground">Desde</span>
+                )}
+                <span className="text-2xl font-bold text-primary">
+                  ${product.price.toFixed(2)}
+                </span>
+              </div>
             </div>
 
             {/* Indicador de stock - Solo mostrar cuando sea relevante (stock bajo o sin stock) */}
             <div className="min-h-[20px]">
-              {isOutOfStock ? (
+              {hasVariants ? (
+                <p className="text-sm font-medium text-muted-foreground">
+                  Múltiples opciones disponibles
+                </p>
+              ) : isOutOfStock ? (
                 <p className="text-sm font-semibold text-red-600">
                   Sin stock disponible
                 </p>
@@ -174,12 +194,21 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               variant={isOutOfStock ? "secondary" : "default"}
             >
               <ShoppingCart className="h-4 w-4 shrink-0" />
-              <span className="sm:hidden">
-                {isOutOfStock ? "Agotado" : "Agregar"}
-              </span>
-              <span className="hidden sm:inline">
-                {isOutOfStock ? "Producto Agotado" : t.addToCart}
-              </span>
+              {hasVariants ? (
+                <>
+                  <span className="sm:hidden">Ver opciones</span>
+                  <span className="hidden sm:inline">Ver opciones</span>
+                </>
+              ) : (
+                <>
+                  <span className="sm:hidden">
+                    {isOutOfStock ? "Agotado" : "Agregar"}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {isOutOfStock ? "Producto Agotado" : t.addToCart}
+                  </span>
+                </>
+              )}
             </Button>
           </CardFooter>
         </Card>

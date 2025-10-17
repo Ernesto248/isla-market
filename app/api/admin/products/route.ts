@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("category_id");
     const isActive = searchParams.get("is_active");
 
-    // Construir query
+    // Construir query con variantes
     let query = supabaseAdmin
       .from("products")
       .select(
@@ -43,6 +43,13 @@ export async function GET(request: NextRequest) {
           id,
           name,
           slug
+        ),
+        product_variants (
+          id,
+          sku,
+          price,
+          stock_quantity,
+          is_active
         )
       `
       )
@@ -106,19 +113,29 @@ export async function POST(request: NextRequest) {
       stock_quantity,
       is_active,
       featured,
+      has_variants,
     } = body;
 
     // Validaciones
-    if (!name || !price || !category_id) {
+    if (!name || price === undefined || !category_id) {
       return NextResponse.json(
         { error: "Missing required fields: name, price, category_id" },
         { status: 400 }
       );
     }
 
+    // Validar precio: debe ser >= 0, puede ser 0 si tiene variantes
     if (price < 0) {
       return NextResponse.json(
-        { error: "Price must be a positive number" },
+        { error: "Price must be a positive number or zero" },
+        { status: 400 }
+      );
+    }
+
+    // Si no tiene variantes, el precio debe ser mayor a 0
+    if (!has_variants && price === 0) {
+      return NextResponse.json(
+        { error: "Price must be greater than 0 for products without variants" },
         { status: 400 }
       );
     }
@@ -135,6 +152,7 @@ export async function POST(request: NextRequest) {
         stock_quantity: stock_quantity || 0,
         is_active: is_active !== undefined ? is_active : true,
         featured: featured !== undefined ? featured : false,
+        has_variants: has_variants || false,
       })
       .select(
         `
@@ -156,7 +174,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ product }, { status: 201 });
+    return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Error in POST /api/admin/products:", error);
     return NextResponse.json(

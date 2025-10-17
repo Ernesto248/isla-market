@@ -40,6 +40,16 @@ export async function GET(
           id,
           name,
           slug
+        ),
+        product_variants (
+          id,
+          sku,
+          price,
+          stock_quantity,
+          image_url,
+          attributes_display,
+          is_active,
+          display_order
         )
       `
       )

@@ -129,12 +129,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         setUser(enrichedUser);
 
-        // Procesar código de referido pendiente
+        // Procesar código de referido pendiente (silencioso para el usuario)
         const pendingReferralCode = localStorage.getItem(
           "pending_referral_code"
         );
         if (pendingReferralCode && session?.access_token) {
           try {
+            // Primero validar el código
+            const validationResponse = await fetch(
+              `/api/referrals/validate-code?code=${encodeURIComponent(
+                pendingReferralCode
+              )}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${session.access_token}`,
+                },
+              }
+            );
+
+            if (!validationResponse.ok) {
+              // Código inválido o referidor inactivo - simplemente limpiar y continuar
+              console.log(
+                "Código de referido inválido o referidor inactivo - usuario registrado sin referidor"
+              );
+              localStorage.removeItem("pending_referral_code");
+              return;
+            }
+
+            // Si el código es válido, intentar crear la relación
             const response = await fetch(
               "/api/referrals/create-referral-link",
               {
@@ -150,13 +172,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             );
 
             if (response.ok) {
-              console.log("Relación de referido creada exitosamente");
-              localStorage.removeItem("pending_referral_code");
+              console.log(
+                "Relación de referido creada exitosamente (interno para comisiones)"
+              );
             } else {
-              console.error("Error al crear relación de referido");
+              const data = await response.json();
+              console.log(
+                "No se pudo crear relación de referido:",
+                data.error || "Error desconocido"
+              );
             }
+
+            // Siempre limpiar el código pendiente
+            localStorage.removeItem("pending_referral_code");
           } catch (error) {
             console.error("Error procesando código de referido:", error);
+            localStorage.removeItem("pending_referral_code");
           }
         }
       } else if (event === "SIGNED_OUT") {

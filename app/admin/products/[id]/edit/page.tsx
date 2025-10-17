@@ -23,9 +23,30 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { ImageUpload } from "@/components/admin/image-upload";
+import {
+  VariantEditor,
+  type VariantData,
+} from "@/components/admin/variant-editor-simple";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Save,
+  AlertCircle,
+  Package,
+  Settings,
+} from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function EditProductPage({
   params,
@@ -38,6 +59,11 @@ export default function EditProductPage({
   const [loading, setLoading] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variantsData, setVariantsData] = useState<any[]>([]);
+  const [showVariantEditor, setShowVariantEditor] = useState(false);
+  const [variantEditorData, setVariantEditorData] = useState<VariantData[]>([]);
+  const [savingVariants, setSavingVariants] = useState(false);
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -71,6 +97,13 @@ export default function EditProductPage({
         const product: Product = data.product;
 
         if (isMounted) {
+          // Detectar si tiene variantes
+          const productHasVariants = product.has_variants || false;
+          const variants = (product as any).product_variants || [];
+
+          setHasVariants(productHasVariants);
+          setVariantsData(variants);
+
           setFormData({
             name: product.name,
             description: product.description || "",
@@ -135,6 +168,11 @@ export default function EditProductPage({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Manejar cambios en el editor de variantes
+  const handleVariantEditorChange = (variants: VariantData[]) => {
+    setVariantEditorData(variants);
+  };
+
   // Manejar cambio en el select
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -167,9 +205,11 @@ export default function EditProductPage({
       return false;
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      toast.error("El precio debe ser mayor a 0");
-      return false;
+    if (!hasVariants) {
+      if (!formData.price || parseFloat(formData.price) <= 0) {
+        toast.error("El precio debe ser mayor a 0");
+        return false;
+      }
     }
 
     if (!formData.category_id) {
@@ -178,6 +218,184 @@ export default function EditProductPage({
     }
 
     return true;
+  };
+
+  // Guardar variantes
+  const handleSaveVariants = async () => {
+    try {
+      setSavingVariants(true);
+
+      // Validar que todas las variantes tengan nombre de variante
+      const variantsWithoutName = variantEditorData.filter(
+        (v) => !v.variant_name || v.variant_name.trim() === ""
+      );
+
+      if (variantsWithoutName.length > 0) {
+        toast.error(
+          "Todas las variantes deben tener un nombre (ej: 11 Litros, 1 Tonelada)"
+        );
+        setSavingVariants(false);
+        return;
+      }
+
+      // Validar que todas las variantes tengan SKU
+      const variantsWithoutSku = variantEditorData.filter(
+        (v) => !v.sku || v.sku.trim() === ""
+      );
+
+      if (variantsWithoutSku.length > 0) {
+        toast.error("Todas las variantes deben tener un SKU");
+        setSavingVariants(false);
+        return;
+      }
+
+      // Validar que todas las variantes tengan precio válido
+      const variantsWithInvalidPrice = variantEditorData.filter(
+        (v) => v.price === undefined || v.price <= 0
+      );
+
+      if (variantsWithInvalidPrice.length > 0) {
+        toast.error("Todas las variantes deben tener un precio mayor a 0");
+        setSavingVariants(false);
+        return;
+      }
+
+      // Obtener variantes existentes
+      const existingVariantIds = variantsData.map((v) => v.id);
+
+      // Separar variantes nuevas y existentes
+      const newVariants = variantEditorData.filter((v) => !v.id);
+      const updatedVariants = variantEditorData.filter((v) => v.id);
+      const deletedVariantIds = existingVariantIds.filter(
+        (id) => !variantEditorData.find((v) => v.id === id)
+      );
+
+      // Eliminar variantes borradas
+      for (const variantId of deletedVariantIds) {
+        const response = await fetch(
+          `/api/admin/products/${params.id}/variants/${variantId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error al eliminar variante ${variantId}`);
+        }
+      }
+
+      // Crear variantes nuevas
+      for (const variant of newVariants) {
+        const response = await fetch(
+          `/api/admin/products/${params.id}/variants`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              sku: variant.sku,
+              price: variant.price,
+              stock_quantity: variant.stock_quantity,
+              is_active: variant.is_active,
+              attribute_value_ids: variant.attribute_value_ids,
+              variant_name: variant.variant_name || null,
+              color: variant.color || null,
+              attributes_display: variant.attributes_display || null,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Error al crear variante");
+        }
+      }
+
+      // Actualizar variantes existentes
+      for (const variant of updatedVariants) {
+        const response = await fetch(
+          `/api/admin/products/${params.id}/variants/${variant.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              sku: variant.sku,
+              price: variant.price,
+              stock_quantity: variant.stock_quantity,
+              is_active: variant.is_active,
+              attribute_value_ids: variant.attribute_value_ids,
+              variant_name: variant.variant_name || null,
+              color: variant.color || null,
+              attributes_display: variant.attributes_display || null,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error al actualizar variante ${variant.id}`);
+        }
+      }
+
+      // Recargar producto para obtener variantes actualizadas
+      const productResponse = await fetch(`/api/admin/products/${params.id}`, {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (productResponse.ok) {
+        const data = await productResponse.json();
+        const variants = (data.product as any).product_variants || [];
+        setVariantsData(variants);
+        setHasVariants(data.product.has_variants);
+      }
+
+      toast.success("Variantes guardadas correctamente");
+      setShowVariantEditor(false);
+    } catch (error) {
+      console.error("Error saving variants:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Error al guardar variantes"
+      );
+    } finally {
+      setSavingVariants(false);
+    }
+  };
+
+  // Habilitar modo variantes
+  const handleEnableVariants = async () => {
+    try {
+      // Actualizar has_variants en el producto
+      const response = await fetch(`/api/admin/products/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          has_variants: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al habilitar variantes");
+      }
+
+      setHasVariants(true);
+      setShowVariantEditor(true);
+      toast.success("Modo variantes habilitado");
+    } catch (error) {
+      console.error("Error enabling variants:", error);
+      toast.error("Error al habilitar variantes");
+    }
   };
 
   // Enviar formulario
@@ -372,48 +590,174 @@ export default function EditProductPage({
           </CardContent>
         </Card>
 
-        {/* Precio e inventario */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Precio e Inventario</CardTitle>
-            <CardDescription>Información de precio y stock</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Precio */}
-              <div className="space-y-2">
-                <Label htmlFor="price">
-                  Precio (ARS) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  required
-                />
+        {/* Alerta de producto con variantes */}
+        {hasVariants && variantsData.length > 0 && (
+          <Alert>
+            <Package className="h-4 w-4" />
+            <AlertTitle>Producto con Variantes</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>
+                Este producto tiene{" "}
+                <strong>{variantsData.length} variante(s)</strong>. El precio y
+                stock se gestionan en cada variante individual.
+              </p>
+              <div className="mt-2 space-y-1">
+                {variantsData.map((variant: any, index: number) => (
+                  <div
+                    key={variant.id}
+                    className="flex items-center justify-between text-sm bg-muted p-2 rounded"
+                  >
+                    <span className="font-medium">
+                      {variant.sku || `Variante ${index + 1}`}
+                      {variant.attributes_display && (
+                        <span className="ml-2 text-muted-foreground">
+                          ({variant.attributes_display})
+                        </span>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline">
+                        ${Number(variant.price).toFixed(2)}
+                      </Badge>
+                      <Badge
+                        variant={
+                          variant.stock_quantity > 0 ? "default" : "destructive"
+                        }
+                      >
+                        {variant.stock_quantity} unidades
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
               </div>
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowVariantEditor(true)}
+                  className="w-full"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Gestionar Variantes
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
-              {/* Stock */}
-              <div className="space-y-2">
-                <Label htmlFor="stock_quantity">Cantidad en Stock</Label>
-                <Input
-                  id="stock_quantity"
-                  name="stock_quantity"
-                  type="number"
-                  min="0"
-                  value={formData.stock_quantity}
-                  onChange={handleChange}
-                  placeholder="0"
-                />
+        {/* Botón para habilitar variantes si no las tiene */}
+        {!hasVariants && (
+          <Alert>
+            <Package className="h-4 w-4" />
+            <AlertTitle>Producto Simple</AlertTitle>
+            <AlertDescription>
+              <p className="mb-3">
+                Este producto no tiene variantes. Si deseas crear variantes (por
+                ejemplo: diferentes tamaños, colores, capacidades), puedes
+                habilitarlas.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleEnableVariants}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Habilitar Variantes
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Dialog para gestionar variantes */}
+        <Dialog open={showVariantEditor} onOpenChange={setShowVariantEditor}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Gestionar Variantes del Producto</DialogTitle>
+              <DialogDescription>
+                Crea, edita o elimina las variantes de este producto. Las
+                variantes permiten ofrecer el mismo producto en diferentes
+                configuraciones (talla, color, capacidad, etc.).
+              </DialogDescription>
+            </DialogHeader>
+
+            <VariantEditor
+              productId={params.id}
+              initialVariants={variantsData}
+              onChange={handleVariantEditorChange}
+              disabled={savingVariants}
+            />
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowVariantEditor(false)}
+                disabled={savingVariants}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveVariants}
+                disabled={savingVariants}
+              >
+                {savingVariants ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar Variantes"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Precio e inventario */}
+        {!hasVariants && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Precio e Inventario</CardTitle>
+              <CardDescription>Información de precio y stock</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Precio */}
+                <div className="space-y-2">
+                  <Label htmlFor="price">
+                    Precio (ARS) <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                {/* Stock */}
+                <div className="space-y-2">
+                  <Label htmlFor="stock_quantity">Cantidad en Stock</Label>
+                  <Input
+                    id="stock_quantity"
+                    name="stock_quantity"
+                    type="number"
+                    min="0"
+                    value={formData.stock_quantity}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Imágenes */}
         <Card>

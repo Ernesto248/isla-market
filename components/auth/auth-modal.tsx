@@ -140,16 +140,13 @@ export function AuthModal({
         return;
       }
 
-      // Si hay código de referido y el registro fue exitoso, crear la relación
+      // Si hay código de referido, guardarlo silenciosamente (solo para tracking interno de comisiones)
       if (referralCode) {
-        // Guardar el código en localStorage para procesarlo después de la confirmación
         localStorage.setItem("pending_referral_code", referralCode);
-        toast.success(
-          "¡Cuenta creada con código de referido! Revisa tu email para confirmar."
-        );
-      } else {
-        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       }
+
+      // Mensaje genérico - el sistema de referidos es interno
+      toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
 
       onClose();
     } catch (error) {

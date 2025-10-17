@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
     const orderItems = items.map((item: any) => ({
       order_id: order.id,
       product_id: item.product_id,
+      variant_id: item.variant_id || null, // NUEVO: Incluir variant_id si existe
       quantity: item.quantity,
       unit_price: item.price_at_time,
       total_price: item.price_at_time * item.quantity,
@@ -134,62 +135,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7.5. Reducir stock de productos
-    console.log("🔄 Iniciando reducción de stock...");
-    for (const item of items) {
-      console.log(
-        `📦 Procesando producto ${item.product_id}, cantidad: ${item.quantity}`
-      );
+    // 7.5. El trigger de Supabase reduce el stock automáticamente
+    // Ver: supabase/migrations/013_add_variant_id_to_order_items.sql
+    console.log(
+      "✅ Order items creados. El trigger reduce el stock automáticamente."
+    );
 
-      // Primero obtener el stock actual
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .select("stock_quantity")
-        .eq("id", item.product_id)
-        .single();
-
-      if (productError) {
-        console.error(
-          `❌ Error obteniendo producto ${item.product_id}:`,
-          productError
-        );
-        continue;
-      }
-
-      if (product) {
-        console.log(
-          `📊 Stock actual del producto ${item.product_id}: ${product.stock_quantity}`
-        );
-        const newStock = product.stock_quantity - item.quantity;
-
-        // Actualizar el stock (no puede ser negativo)
-        if (newStock >= 0) {
-          const { error: updateError } = await supabase
-            .from("products")
-            .update({ stock_quantity: newStock })
-            .eq("id", item.product_id);
-
-          if (updateError) {
-            console.error(
-              `❌ Error actualizando stock del producto ${item.product_id}:`,
-              updateError
-            );
-          } else {
-            console.log(
-              `✅ Stock actualizado para producto ${item.product_id}: ${product.stock_quantity} → ${newStock}`
-            );
-          }
-        } else {
-          console.warn(
-            `⚠️ Stock insuficiente para producto ${item.product_id}. Stock actual: ${product.stock_quantity}, solicitado: ${item.quantity}`
-          );
-          // No fallar la orden, solo advertir
-        }
-      }
-    }
-    console.log("✅ Reducción de stock completada");
-
-    // 8. Obtener orden completa con items y productos
+    // 8. Obtener orden completa con items, productos Y variantes
     const { data: fullOrder, error: fullOrderError } = await supabase
       .from("orders")
       .select(
@@ -199,6 +151,13 @@ export async function POST(req: NextRequest) {
           *,
           product:products (
             *
+          ),
+          variant:product_variants (
+            id,
+            sku,
+            price,
+            image_url,
+            attributes_display
           )
         )
       `

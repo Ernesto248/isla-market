@@ -75,102 +75,130 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <>
                 <div className="flex-1 overflow-y-auto py-2 -mx-1 px-1">
                   <div className="space-y-3">
-                    {cart.map((item) => (
-                      <motion.div
-                        key={item.product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="relative flex flex-col gap-3 p-3 border rounded-lg bg-card"
-                      >
-                        {/* Botón de eliminar en la esquina superior derecha */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-red-500"
-                          onClick={() => removeFromCart(item.product.id)}
+                    {cart.map((item) => {
+                      // Calcular precio unitario (variante o producto)
+                      const unitPrice = item.variant
+                        ? item.variant.price
+                        : item.product.price;
+
+                      // Obtener imagen (variante específica o producto)
+                      const imageUrl =
+                        item.variant?.image_url ||
+                        item.product.image ||
+                        item.product.images?.[0] ||
+                        "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=200";
+
+                      // Crear key única para el item (producto + variante)
+                      const itemKey = item.variant_id
+                        ? `${item.product.id}-${item.variant_id}`
+                        : item.product.id;
+
+                      return (
+                        <motion.div
+                          key={itemKey}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className="relative flex flex-col gap-3 p-3 border rounded-lg bg-card"
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          {/* Botón de eliminar en la esquina superior derecha */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-red-500"
+                            onClick={() =>
+                              removeFromCart(item.product.id, item.variant_id)
+                            }
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
 
-                        {/* Contenedor principal con imagen y detalles */}
-                        <div className="flex gap-3 pr-6">
-                          <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
-                            <Image
-                              src={
-                                item.product.image ||
-                                item.product.images?.[0] ||
-                                "https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=200"
-                              }
-                              alt={item.product.name}
-                              fill
-                              sizes="80px"
-                              className="object-cover"
-                            />
+                          {/* Contenedor principal con imagen y detalles */}
+                          <div className="flex gap-3 pr-6">
+                            <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                              <Image
+                                src={imageUrl}
+                                alt={item.product.name}
+                                fill
+                                sizes="80px"
+                                className="object-cover"
+                              />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm line-clamp-2 leading-tight mb-1">
+                                {item.product.name}
+                              </h3>
+
+                              {/* Mostrar información de variante si existe */}
+                              {item.variant &&
+                                item.variant.attributes_display && (
+                                  <p className="text-xs text-muted-foreground mb-1">
+                                    {item.variant.attributes_display}
+                                  </p>
+                                )}
+
+                              <p className="text-base font-semibold text-primary">
+                                ${unitPrice.toFixed(2)}
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-sm line-clamp-2 leading-tight mb-1">
-                              {item.product.name}
-                            </h3>
-                            <p className="text-base font-semibold text-primary">
-                              ${item.product.price.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Controles de cantidad */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">
-                            Cantidad:
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 rounded-full"
-                              onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.quantity - 1
-                                )
-                              }
-                              disabled={item.quantity <= 1}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-
-                            <span className="min-w-[2rem] text-center text-sm font-semibold">
-                              {item.quantity}
+                          {/* Controles de cantidad */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">
+                              Cantidad:
                             </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.product.id,
+                                    item.quantity - 1,
+                                    item.variant_id
+                                  )
+                                }
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
 
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 rounded-full"
-                              onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.quantity + 1
-                                )
-                              }
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
+                              <span className="min-w-[2rem] text-center text-sm font-semibold">
+                                {item.quantity}
+                              </span>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() =>
+                                  updateQuantity(
+                                    item.product.id,
+                                    item.quantity + 1,
+                                    item.variant_id
+                                  )
+                                }
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Subtotal del producto */}
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-sm text-muted-foreground">
-                            Subtotal:
-                          </span>
-                          <span className="text-sm font-semibold">
-                            ${(item.product.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))}
+                          {/* Subtotal del producto */}
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-sm text-muted-foreground">
+                              Subtotal:
+                            </span>
+                            <span className="text-sm font-semibold">
+                              ${(unitPrice * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
 

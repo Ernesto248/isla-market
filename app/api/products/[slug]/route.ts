@@ -46,7 +46,8 @@ export async function GET(
         price,
         images,
         stock_quantity,
-        featured
+        featured,
+        has_variants
       `
       )
       .eq("category_id", product.category_id)
@@ -58,9 +59,36 @@ export async function GET(
       console.error("Error fetching related products:", relatedError);
     }
 
+    // Para productos con variantes, obtener el precio mínimo
+    const enrichedRelatedProducts = await Promise.all(
+      (relatedProducts || []).map(async (prod) => {
+        if (prod.has_variants) {
+          // Obtener variantes para calcular precio mínimo y stock total
+          const { data: variants } = await supabase
+            .from("product_variants")
+            .select("price, stock_quantity")
+            .eq("product_id", prod.id);
+
+          if (variants && variants.length > 0) {
+            const minPrice = Math.min(...variants.map((v) => v.price));
+            const totalStock = variants.reduce(
+              (sum, v) => sum + (v.stock_quantity || 0),
+              0
+            );
+            return {
+              ...prod,
+              price: minPrice,
+              stock_quantity: totalStock,
+            };
+          }
+        }
+        return prod;
+      })
+    );
+
     return NextResponse.json({
       product,
-      relatedProducts: relatedProducts || [],
+      relatedProducts: enrichedRelatedProducts,
     });
   } catch (error) {
     console.error("Error in product API:", error);

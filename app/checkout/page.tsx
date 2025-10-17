@@ -55,10 +55,11 @@ function CheckoutContent() {
   // Determinar qué items mostrar: buyNow o carrito
   const displayItems = buyNowMode ? buyNowItems : cart;
   const total = buyNowMode
-    ? buyNowItems.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
-      )
+    ? buyNowItems.reduce((sum, item) => {
+        // Usar precio de variante si existe, sino precio del producto
+        const itemPrice = item.variant?.price || item.product.price;
+        return sum + itemPrice * item.quantity;
+      }, 0)
     : getCartTotal();
 
   const form = useForm<CheckoutForm>({
@@ -78,9 +79,17 @@ function CheckoutContent() {
       const buyNowData = sessionStorage.getItem("buyNowProduct");
       if (buyNowData) {
         console.log("✅ [BUY NOW] Datos encontrados en sessionStorage");
-        const { product, quantity } = JSON.parse(buyNowData);
+        const { product, quantity, variant_id, variant } =
+          JSON.parse(buyNowData);
         setBuyNowMode(true);
-        setBuyNowItems([{ product, quantity }]);
+        setBuyNowItems([
+          {
+            product,
+            quantity,
+            variant_id: variant_id || null,
+            variant: variant || null,
+          },
+        ]);
         // NO desactivamos isLoadingBuyNow aquí - se hará en otro useEffect
       } else {
         console.log("❌ [BUY NOW] No hay datos, redirigiendo...");
@@ -148,8 +157,9 @@ function CheckoutContent() {
           customerPhone: data.phone || null, // Teléfono del comprador (opcional)
           items: displayItems.map((item) => ({
             product_id: item.product.id,
+            variant_id: item.variant_id || null, // NUEVO: Incluir variant_id
             quantity: item.quantity,
-            price_at_time: item.product.price,
+            price_at_time: item.variant?.price || item.product.price, // NUEVO: Usar precio de variante si existe
           })),
           shippingAddress: {
             first_name: data.recipientFirstName,
@@ -508,37 +518,55 @@ function CheckoutContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {displayItems.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="flex items-center space-x-3"
-                >
-                  <div className="relative w-12 h-12 flex-shrink-0">
-                    <Image
-                      src={
-                        item.product.image ||
-                        item.product.images?.[0] ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt={item.product.name}
-                      fill
-                      className="object-cover rounded-md"
-                      sizes="48px"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {item.product.name}
+              {displayItems.map((item) => {
+                // Usar precio de variante si existe, sino precio del producto
+                const itemPrice = item.variant?.price || item.product.price;
+
+                return (
+                  <div
+                    key={`${item.product.id}-${
+                      item.variant_id || "no-variant"
+                    }`}
+                    className="flex items-center space-x-3"
+                  >
+                    <div className="relative w-12 h-12 flex-shrink-0">
+                      <Image
+                        src={
+                          item.variant?.image_url ||
+                          item.product.image ||
+                          item.product.images?.[0] ||
+                          "https://via.placeholder.com/150"
+                        }
+                        alt={item.product.name}
+                        fill
+                        className="object-cover rounded-md"
+                        sizes="48px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {item.product.name}
+                      </p>
+                      {/* Mostrar nombre de variante si existe */}
+                      {item.variant && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.variant.variant_name && item.variant.color
+                            ? `${item.variant.variant_name} - ${item.variant.color}`
+                            : item.variant.variant_name ||
+                              item.variant.color ||
+                              item.variant.attributes_display}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {item.quantity} × ${itemPrice.toFixed(2)}
+                      </p>
+                    </div>
+                    <p className="font-medium text-sm">
+                      ${(itemPrice * item.quantity).toFixed(2)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.quantity} × ${item.product.price.toFixed(2)}
-                    </p>
                   </div>
-                  <p className="font-medium text-sm">
-                    ${(item.product.price * item.quantity).toFixed(2)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
 
               <Separator />
 

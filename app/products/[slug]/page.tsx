@@ -9,11 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ImageCarousel } from "@/components/products/image-carousel";
 import { ProductCard } from "@/components/products/product-card";
+import { VariantSelectorSimple } from "@/components/products/variant-selector-simple";
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/contexts/auth-context";
 import { useAuthModal } from "@/contexts/auth-modal-context";
 import { translations } from "@/lib/translations";
-import { Product } from "@/lib/types";
+import { Product, ProductVariant } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,10 @@ export default function ProductDetailPage() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null
+  );
   const [quantity, setQuantity] = useState(1);
 
   const { addToCart } = useAppStore();
@@ -49,6 +54,17 @@ export default function ProductDetailPage() {
 
         const data = await response.json();
         setProductData(data);
+
+        // Si el producto tiene variantes, cargarlas
+        if (data.product.has_variants) {
+          const variantsResponse = await fetch(
+            `/api/products/${slug}/variants`
+          );
+          if (variantsResponse.ok) {
+            const variantsData = await variantsResponse.json();
+            setVariants(variantsData);
+          }
+        }
       } catch (error) {
         console.error("Error fetching product:", error);
         toast.error("Error al cargar el producto");
@@ -78,9 +94,21 @@ export default function ProductDetailPage() {
     }
 
     if (productData?.product) {
-      // Verificar stock disponible
-      const availableStock =
-        productData.product.stock_quantity || productData.product.stock || 0;
+      const product = productData.product;
+      const hasVariants = product.has_variants && variants.length > 0;
+
+      // Si tiene variantes, verificar que se haya seleccionado una
+      if (hasVariants && !selectedVariant) {
+        toast.error("Selecciona una variante", {
+          description: "Por favor selecciona todas las opciones del producto",
+        });
+        return;
+      }
+
+      // Obtener stock disponible (variante o producto simple)
+      const availableStock = hasVariants
+        ? selectedVariant?.stock_quantity || 0
+        : product.stock_quantity || product.stock || 0;
 
       if (availableStock === 0) {
         toast.error("Producto sin stock");
@@ -94,11 +122,15 @@ export default function ProductDetailPage() {
         return;
       }
 
-      // Agregar la cantidad seleccionada al carrito
-      addToCart(productData.product, quantity);
+      // Agregar la cantidad seleccionada al carrito (CON variante si aplica)
+      addToCart(product, quantity, selectedVariant);
 
       toast.success("Producto agregado al carrito", {
-        description: `${quantity} x ${productData.product.name}`,
+        description: `${quantity} x ${product.name}${
+          selectedVariant
+            ? ` (${selectedVariant.attributes_display || ""})`
+            : ""
+        }`,
       });
 
       // Resetear cantidad
@@ -121,9 +153,21 @@ export default function ProductDetailPage() {
     }
 
     if (productData?.product) {
-      // Verificar stock disponible
-      const availableStock =
-        productData.product.stock_quantity || productData.product.stock || 0;
+      const product = productData.product;
+      const hasVariants = product.has_variants && variants.length > 0;
+
+      // Si tiene variantes, verificar que se haya seleccionado una
+      if (hasVariants && !selectedVariant) {
+        toast.error("Selecciona una variante", {
+          description: "Por favor selecciona todas las opciones del producto",
+        });
+        return;
+      }
+
+      // Obtener stock disponible (variante o producto simple)
+      const availableStock = hasVariants
+        ? selectedVariant?.stock_quantity || 0
+        : product.stock_quantity || product.stock || 0;
 
       if (availableStock === 0) {
         toast.error("Producto sin stock");
@@ -142,8 +186,10 @@ export default function ProductDetailPage() {
       sessionStorage.setItem(
         "buyNowProduct",
         JSON.stringify({
-          product: productData.product,
+          product: product,
           quantity: quantity,
+          variant_id: selectedVariant?.id || null,
+          variant: selectedVariant || null, // Incluir objeto completo de variante
         })
       );
 
@@ -174,8 +220,18 @@ export default function ProductDetailPage() {
   }
 
   const { product, relatedProducts } = productData;
-  const stock = product.stock_quantity || product.stock || 0;
+  const hasVariants = product.has_variants && variants.length > 0;
+
+  // Stock disponible: variante seleccionada o producto simple
+  const stock = hasVariants
+    ? selectedVariant?.stock_quantity || 0
+    : product.stock_quantity || product.stock || 0;
+
   const isOutOfStock = stock === 0;
+
+  // Precio a mostrar: variante seleccionada o producto simple
+  const displayPrice =
+    hasVariants && selectedVariant ? selectedVariant.price : product.price;
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
@@ -235,7 +291,7 @@ export default function ProductDetailPage() {
           {/* Precio */}
           <div className="flex items-baseline gap-3">
             <span className="text-2xl sm:text-3xl font-bold">
-              ${product.price.toFixed(2)}
+              ${displayPrice.toFixed(2)}
             </span>
           </div>
 
@@ -244,6 +300,23 @@ export default function ProductDetailPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               {product.description}
             </p>
+          )}
+
+          {/* Selector de variantes (si el producto tiene variantes) */}
+          {hasVariants && (
+            <div className="pt-4 border-t">
+              <VariantSelectorSimple
+                productId={product.id}
+                variants={variants}
+                onVariantChange={(variant: ProductVariant | null) => {
+                  setSelectedVariant(variant);
+                  // Resetear cantidad cuando cambia la variante
+                  if (variant) {
+                    setQuantity(1);
+                  }
+                }}
+              />
+            </div>
           )}
 
           {/* Selector de cantidad */}
