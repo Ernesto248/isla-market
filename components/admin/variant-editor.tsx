@@ -35,6 +35,10 @@ export interface VariantData {
   price: number;
   stock_quantity: number;
   is_active: boolean;
+  // Nuevos campos para sistema simplificado
+  variant_name?: string;
+  color?: string;
+  attributes_display?: string;
   // Información temporal para mostrar en UI
   _displayName?: string;
   _attributeValues?: { attributeName: string; value: string }[];

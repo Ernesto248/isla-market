@@ -38,6 +38,7 @@ export interface VariantData {
   // Nuevos campos para sistema simplificado
   variant_name?: string; // ej: "11 Litros", "1 Tonelada"
   color?: string; // ej: "Blanco", "Negro"
+  attributes_display?: string; // ej: "11 Litros • Blanco"
   _displayName?: string;
   _attributeValues?: { attributeName: string; value: string }[];
 }
