@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://isla-market.vercel.app"
   ),
-  title: "Isla Market - Envía Amor a Cuba",
+  title: "Isla Market",
   description:
     "Compra electrónicos, artículos para el hogar y alimentos para enviar a tus seres queridos en Cuba",
   icons: {

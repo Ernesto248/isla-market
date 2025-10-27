@@ -9,7 +9,13 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Obtener datos del request
     const body = await req.json();
-    const { items, shippingAddress, userId, customerPhone } = body;
+    const {
+      items,
+      shippingAddress,
+      userId,
+      customerPhone,
+      deliveryType = "home_delivery",
+    } = body;
 
     // Validaciones básicas
     if (!items || items.length === 0) {
@@ -21,9 +27,25 @@ export async function POST(req: NextRequest) {
 
     if (!shippingAddress) {
       return NextResponse.json(
-        { error: "Dirección de envío requerida" },
+        { error: "Información del destinatario requerida" },
         { status: 400 }
       );
+    }
+
+    // Validar que si es home_delivery, tenga dirección completa
+    if (deliveryType === "home_delivery") {
+      if (
+        !shippingAddress.street ||
+        !shippingAddress.house_number ||
+        !shippingAddress.between_streets ||
+        !shippingAddress.neighborhood ||
+        !shippingAddress.province
+      ) {
+        return NextResponse.json(
+          { error: "Dirección completa requerida para entrega a domicilio" },
+          { status: 400 }
+        );
+      }
     }
 
     if (!userId) {
@@ -55,27 +77,33 @@ export async function POST(req: NextRequest) {
 
     if (!shippingAddressId) {
       // Crear nueva dirección
+      const addressData: any = {
+        user_id: userId,
+        first_name: shippingAddress.first_name,
+        last_name: shippingAddress.last_name,
+        phone: shippingAddress.phone,
+        is_default: false,
+      };
+
+      // Solo agregar campos de dirección si es home_delivery
+      if (deliveryType === "home_delivery") {
+        addressData.street = shippingAddress.street;
+        addressData.house_number = shippingAddress.house_number;
+        addressData.between_streets = shippingAddress.between_streets;
+        addressData.neighborhood = shippingAddress.neighborhood;
+        addressData.province = shippingAddress.province;
+      }
+
       const { data: newAddress, error: addressError } = await supabase
         .from("shipping_addresses")
-        .insert({
-          user_id: userId,
-          first_name: shippingAddress.first_name,
-          last_name: shippingAddress.last_name,
-          phone: shippingAddress.phone,
-          street: shippingAddress.street,
-          house_number: shippingAddress.house_number,
-          between_streets: shippingAddress.between_streets,
-          neighborhood: shippingAddress.neighborhood,
-          province: shippingAddress.province,
-          is_default: false,
-        })
+        .insert(addressData)
         .select()
         .single();
 
       if (addressError || !newAddress) {
         console.error("Error al crear dirección:", addressError);
         return NextResponse.json(
-          { error: "Error al crear dirección de envío" },
+          { error: "Error al crear información del destinatario" },
           { status: 500 }
         );
       }
@@ -84,10 +112,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Calcular total (usando price_at_time que viene del checkout)
-    const totalAmount = items.reduce(
+    const subtotal = items.reduce(
       (sum: number, item: any) => sum + item.price_at_time * item.quantity,
       0
     );
+
+    // Calcular cargo de envío ($5 para domicilio, $0 para recogida)
+    const SHIPPING_FEE_HOME_DELIVERY = 5.0;
+    const shippingFee =
+      deliveryType === "home_delivery" ? SHIPPING_FEE_HOME_DELIVERY : 0;
+    const totalAmount = subtotal + shippingFee;
 
     // 6. Crear orden con estado "pendiente"
     const { data: order, error: orderError } = await supabase
@@ -96,9 +130,14 @@ export async function POST(req: NextRequest) {
         user_id: userId,
         shipping_address_id: shippingAddressId,
         status: "pendiente",
+        delivery_type: deliveryType, // NUEVO: Tipo de entrega
+        shipping_fee: shippingFee, // NUEVO: Cargo de envío
         total_amount: totalAmount,
         customer_phone: customerPhone || null, // Guardar teléfono del comprador si existe
-        notes: "Orden creada directamente sin procesador de pagos",
+        notes:
+          deliveryType === "store_pickup"
+            ? "Orden para recogida en tienda"
+            : "Orden creada directamente sin procesador de pagos",
       })
       .select()
       .single();

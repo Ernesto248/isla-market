@@ -59,6 +59,8 @@ export interface Order {
   user_id: string;
   shipping_address_id: string;
   status: "pendiente" | "pagado" | "entregado" | "cancelado";
+  delivery_type: "home_delivery" | "store_pickup"; // NUEVO: Tipo de entrega
+  shipping_fee: number; // NUEVO: Cargo adicional por envío
   total_amount: number;
   customer_phone?: string | null;
   notes?: string | null;
@@ -72,11 +74,11 @@ export interface Order {
     first_name: string;
     last_name: string;
     phone: string;
-    street: string;
-    house_number: string;
-    between_streets: string;
-    neighborhood: string;
-    province: string;
+    street?: string; // Opcional para store_pickup
+    house_number?: string; // Opcional para store_pickup
+    between_streets?: string; // Opcional para store_pickup
+    neighborhood?: string; // Opcional para store_pickup
+    province?: string; // Opcional para store_pickup
   };
   // Items de la orden
   items?: OrderItem[];

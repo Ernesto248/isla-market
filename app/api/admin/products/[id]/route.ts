@@ -102,6 +102,7 @@ export async function PUT(
       stock_quantity,
       is_active,
       featured,
+      has_variants,
     } = body;
 
     // Validaciones
@@ -124,6 +125,7 @@ export async function PUT(
         ...(stock_quantity !== undefined && { stock_quantity }),
         ...(is_active !== undefined && { is_active }),
         ...(featured !== undefined && { featured }),
+        ...(has_variants !== undefined && { has_variants }),
         updated_at: new Date().toISOString(),
       })
       .eq("id", params.id)

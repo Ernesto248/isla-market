@@ -373,7 +373,9 @@ export default function EditProductPage({
   // Habilitar modo variantes
   const handleEnableVariants = async () => {
     try {
-      // Actualizar has_variants en el producto
+      setLoading(true);
+
+      // Actualizar has_variants en el producto y resetear precio/stock
       const response = await fetch(`/api/admin/products/${params.id}`, {
         method: "PUT",
         headers: {
@@ -382,19 +384,104 @@ export default function EditProductPage({
         },
         body: JSON.stringify({
           has_variants: true,
+          price: 0, // Resetear precio a 0
+          stock_quantity: 0, // Resetear stock a 0
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al habilitar variantes");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al habilitar variantes");
       }
 
       setHasVariants(true);
       setShowVariantEditor(true);
-      toast.success("Modo variantes habilitado");
+
+      // Actualizar estado local
+      setFormData((prev) => ({
+        ...prev,
+        price: "0",
+        stock_quantity: "0",
+      }));
+
+      toast.success(
+        "Modo variantes habilitado. Ahora puedes crear las variantes del producto."
+      );
     } catch (error) {
       console.error("Error enabling variants:", error);
-      toast.error("Error al habilitar variantes");
+      toast.error(
+        error instanceof Error ? error.message : "Error al habilitar variantes"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Convertir a producto simple (eliminar todas las variantes)
+  const handleConvertToSimple = async () => {
+    if (
+      !confirm(
+        "¿Estás seguro de que deseas eliminar todas las variantes y convertir este producto a producto simple? Esta acción no se puede deshacer."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Eliminar todas las variantes
+      for (const variant of variantsData) {
+        const response = await fetch(
+          `/api/admin/products/${params.id}/variants/${variant.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error al eliminar variante ${variant.id}`);
+        }
+      }
+
+      // Actualizar producto para desactivar variantes
+      const response = await fetch(`/api/admin/products/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          has_variants: false,
+          price: 0, // Resetear precio para que el usuario lo establezca
+          stock_quantity: 0, // Resetear stock
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar producto");
+      }
+
+      // Actualizar estado local
+      setHasVariants(false);
+      setVariantsData([]);
+      setFormData((prev) => ({
+        ...prev,
+        price: "0",
+        stock_quantity: "0",
+      }));
+
+      toast.success(
+        "Producto convertido a simple. Ahora puedes establecer precio y stock."
+      );
+    } catch (error) {
+      console.error("Error converting to simple:", error);
+      toast.error("Error al convertir a producto simple");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -630,15 +717,27 @@ export default function EditProductPage({
                   </div>
                 ))}
               </div>
-              <div className="mt-4">
+              <div className="mt-4 flex gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowVariantEditor(true)}
-                  className="w-full"
+                  className="flex-1"
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   Gestionar Variantes
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleConvertToSimple}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Convertir a Producto Simple"
+                  )}
                 </Button>
               </div>
             </AlertDescription>
