@@ -72,10 +72,7 @@ export function AuthModal({
 
       if (refParam) {
         setReferralCode(refParam);
-        // Mostrar mensaje amigable cuando hay un código de referido
-        if (mode === "signup") {
-          toast.info(`Código de referido detectado: ${refParam}`);
-        }
+        // No mostrar mensaje al usuario - el código se procesa internamente
       }
     }
   }, [isOpen, mode]);
@@ -140,12 +137,12 @@ export function AuthModal({
         return;
       }
 
-      // Si hay código de referido, guardarlo silenciosamente (solo para tracking interno de comisiones)
+      // Si hay código de referido, guardarlo silenciosamente
       if (referralCode) {
         localStorage.setItem("pending_referral_code", referralCode);
       }
 
-      // Mensaje genérico - el sistema de referidos es interno
+      // Mensaje genérico sin mención a referidos
       toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
 
       onClose();
@@ -267,17 +264,6 @@ export function AuthModal({
               onSubmit={signupForm.handleSubmit(handleSignup)}
               className="space-y-4"
             >
-              {referralCode && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    <span className="font-semibold">Código de referido:</span>{" "}
-                    {referralCode}
-                  </p>
-                  <p className="text-xs text-green-600 dark:text-green-300 mt-1">
-                    Obtendrás beneficios al registrarte con este código
-                  </p>
-                </div>
-              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">{t.firstName}</Label>
