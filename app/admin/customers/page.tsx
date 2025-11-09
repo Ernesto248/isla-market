@@ -46,6 +46,11 @@ interface Customer {
   created_at: string;
   orders_count: number;
   total_spent: number;
+  referrer?: {
+    referral_code: string;
+    referrer_name: string;
+    referrer_email: string;
+  } | null;
 }
 
 export default function CustomersPage() {
@@ -248,6 +253,7 @@ export default function CustomersPage() {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead className="text-center">Rol</TableHead>
+                    <TableHead className="text-center">Referidor</TableHead>
                     <TableHead className="text-center">Órdenes</TableHead>
                     <TableHead className="text-right">Total Gastado</TableHead>
                     <TableHead>Registrado</TableHead>
@@ -273,6 +279,25 @@ export default function CustomersPage() {
                         >
                           {customer.role === "admin" ? "Admin" : "Cliente"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {customer.referrer ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge
+                              variant="outline"
+                              className="bg-sky-50 border-sky-200 text-sky-700"
+                            >
+                              {customer.referrer.referral_code}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {customer.referrer.referrer_name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">
+                            Sin referidor
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">

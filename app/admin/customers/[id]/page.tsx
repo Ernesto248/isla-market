@@ -75,6 +75,11 @@ interface CustomerData {
     pending_orders: number;
     completed_orders: number;
   };
+  referrer?: {
+    referral_code: string;
+    referrer_name: string;
+    referrer_email: string;
+  } | null;
 }
 
 // Función helper para obtener el color del badge según el estado
@@ -329,6 +334,48 @@ export default function CustomerDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Información del Referidor */}
+          {customerData.referrer && (
+            <Card className="border-sky-200 bg-sky-50/50">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  🤝 Referidor
+                </CardTitle>
+                <CardDescription>
+                  Cliente referido por otro usuario
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Código de Referido
+                    </p>
+                    <Badge className="bg-sky-500 hover:bg-sky-600">
+                      {customerData.referrer.referral_code}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Nombre del Referidor
+                    </p>
+                    <p className="font-medium">
+                      {customerData.referrer.referrer_name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Email del Referidor
+                    </p>
+                    <p className="text-sm">
+                      {customerData.referrer.referrer_email}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Historial de Órdenes */}
           <Card>

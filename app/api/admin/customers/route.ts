@@ -64,10 +64,48 @@ export async function GET(request: NextRequest) {
           orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) ||
           0;
 
+        // Obtener información del referidor (si existe)
+        const { data: referral } = await supabaseAdmin
+          .from("referrals")
+          .select(
+            `
+            referral_code,
+            is_active,
+            referrers!inner (
+              referral_code,
+              user_id,
+              users!inner (
+                full_name,
+                email
+              )
+            )
+          `
+          )
+          .eq("referred_user_id", user.id)
+          .eq("is_active", true)
+          .single();
+
+        let referrerInfo = null;
+        if (referral && referral.referrers && referral.referrers.length > 0) {
+          const referrerData = Array.isArray(referral.referrers)
+            ? referral.referrers[0]
+            : referral.referrers;
+          const userData = Array.isArray(referrerData.users)
+            ? referrerData.users[0]
+            : referrerData.users;
+
+          referrerInfo = {
+            referral_code: referrerData.referral_code,
+            referrer_name: userData.full_name,
+            referrer_email: userData.email,
+          };
+        }
+
         return {
           ...user,
           orders_count: ordersCount || 0,
           total_spent: totalSpent,
+          referrer: referrerInfo,
         };
       })
     );

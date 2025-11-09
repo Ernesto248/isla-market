@@ -15,21 +15,10 @@ export async function GET(request: NextRequest) {
 
     const supabase = createSupabaseAdmin();
 
-    // Buscar el referidor con ese código e incluir el nombre del usuario
+    // Buscar el referidor con ese código
     const { data: referrer, error: referrerError } = await supabase
       .from("referrers")
-      .select(
-        `
-        id, 
-        user_id, 
-        is_active, 
-        duration_months,
-        profiles:user_id (
-          full_name,
-          email
-        )
-      `
-      )
+      .select("id, user_id, is_active, duration_months")
       .eq("referral_code", code.toUpperCase())
       .eq("is_active", true)
       .single();
@@ -44,11 +33,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Extraer el nombre del referidor
-    const profiles = referrer.profiles as any;
-    const referrerName = Array.isArray(profiles)
-      ? profiles[0]?.full_name || profiles[0]?.email || "referidor"
-      : profiles?.full_name || profiles?.email || "referidor";
+    // Obtener información del usuario referidor
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("full_name, email")
+      .eq("id", referrer.user_id)
+      .single();
+
+    const referrerName = user?.full_name || user?.email || "referidor";
 
     return NextResponse.json({
       valid: true,

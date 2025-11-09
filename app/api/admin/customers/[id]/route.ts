@@ -66,10 +66,48 @@ export async function GET(
           .length || 0,
     };
 
+    // Obtener información del referidor (si existe)
+    const { data: referral } = await supabaseAdmin
+      .from("referrals")
+      .select(
+        `
+        referral_code,
+        is_active,
+        referrers!inner (
+          referral_code,
+          user_id,
+          users!inner (
+            full_name,
+            email
+          )
+        )
+      `
+      )
+      .eq("referred_user_id", params.id)
+      .eq("is_active", true)
+      .single();
+
+    let referrerInfo = null;
+    if (referral && referral.referrers && referral.referrers.length > 0) {
+      const referrerData = Array.isArray(referral.referrers)
+        ? referral.referrers[0]
+        : referral.referrers;
+      const userData = Array.isArray(referrerData.users)
+        ? referrerData.users[0]
+        : referrerData.users;
+
+      referrerInfo = {
+        referral_code: referrerData.referral_code,
+        referrer_name: userData.full_name,
+        referrer_email: userData.email,
+      };
+    }
+
     return NextResponse.json({
       user,
       orders: orders || [],
       stats,
+      referrer: referrerInfo,
     });
   } catch (error) {
     console.error("Unexpected error:", error);
