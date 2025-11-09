@@ -217,7 +217,11 @@ export async function POST(req: NextRequest) {
       .single();
 
     // 9.5. Obtener información del referidor (si existe)
-    let referrerInfo = null;
+    let referrerInfo: {
+      referral_code: string;
+      referrer_name: string;
+      referrer_email: string;
+    } | null = null;
     try {
       const { data: referral } = await supabase
         .from("referrals")
