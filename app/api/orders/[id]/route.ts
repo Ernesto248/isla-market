@@ -12,42 +12,65 @@ export async function GET(
 
     // Función para obtener información del referidor
     const getReferrerInfo = async (userId: string) => {
-      const { data: referral } = await supabaseAdmin
-        .from("referrals")
-        .select(
-          `
-          referral_code,
-          is_active,
-          referrer_id,
-          referrers!inner (
-            referral_code,
-            user_id,
-            users!inner (
-              full_name,
-              email
-            )
-          )
-        `
-        )
-        .eq("referred_user_id", userId)
-        .eq("is_active", true)
-        .single();
+      try {
+        // Obtener referral
+        const { data: referral, error: referralError } = await supabaseAdmin
+          .from("referrals")
+          .select("referrer_id, referral_code, is_active")
+          .eq("referred_user_id", userId)
+          .eq("is_active", true)
+          .single();
 
-      if (!referral || !referral.referrers || referral.referrers.length === 0)
+        if (!referral || referralError) {
+          console.log(`[GET-REFERRER] No referral found for user ${userId}`);
+          return null;
+        }
+
+        // Obtener información del referidor
+        const { data: referrer } = await supabaseAdmin
+          .from("referrers")
+          .select("referral_code, user_id")
+          .eq("id", referral.referrer_id)
+          .single();
+
+        if (!referrer) {
+          console.log(
+            `[GET-REFERRER] No referrer found with id ${referral.referrer_id}`
+          );
+          return null;
+        }
+
+        // Obtener información del usuario referidor
+        const { data: referrerUser } = await supabaseAdmin
+          .from("users")
+          .select("full_name, email")
+          .eq("id", referrer.user_id)
+          .single();
+
+        if (!referrerUser) {
+          console.log(
+            `[GET-REFERRER] No user found with id ${referrer.user_id}`
+          );
+          return null;
+        }
+
+        console.log(`[GET-REFERRER] Found referrer for user ${userId}:`, {
+          code: referrer.referral_code,
+          name: referrerUser.full_name,
+        });
+
+        return {
+          referral_code: referrer.referral_code,
+          referrer_name: referrerUser.full_name,
+          referrer_email: referrerUser.email,
+        };
+      } catch (error) {
+        console.error(
+          `[GET-REFERRER] Error fetching referrer for user ${userId}:`,
+          error
+        );
         return null;
-
-      const referrerData = Array.isArray(referral.referrers)
-        ? referral.referrers[0]
-        : referral.referrers;
-      const userData = Array.isArray(referrerData.users)
-        ? referrerData.users[0]
-        : referrerData.users;
-
-      return {
-        referral_code: referrerData.referral_code,
-        referrer_name: userData.full_name,
-        referrer_email: userData.email,
-      };
+      }
     };
 
     const { data: order, error } = await supabaseAdmin
@@ -121,44 +144,53 @@ export async function PUT(
 
     // Función para obtener información del referidor
     const getReferrerInfo = async (userId: string) => {
-      const { data: referral } = await supabaseAdmin
-        .from("referrals")
-        .select(
-          `
-          referral_code,
-          is_active,
-          referrer_id,
-          referrers!inner (
-            referral_code,
-            user_id,
-            users!inner (
-              full_name,
-              email
-            )
-          )
-        `
-        )
-        .eq("referred_user_id", userId)
-        .eq("is_active", true)
-        .single();
+      try {
+        // Obtener referral
+        const { data: referral, error: referralError } = await supabaseAdmin
+          .from("referrals")
+          .select("referrer_id, referral_code, is_active")
+          .eq("referred_user_id", userId)
+          .eq("is_active", true)
+          .single();
 
-      if (!referral || !referral.referrers || referral.referrers.length === 0)
+        if (!referral || referralError) {
+          return null;
+        }
+
+        // Obtener información del referidor
+        const { data: referrer } = await supabaseAdmin
+          .from("referrers")
+          .select("referral_code, user_id")
+          .eq("id", referral.referrer_id)
+          .single();
+
+        if (!referrer) {
+          return null;
+        }
+
+        // Obtener información del usuario referidor
+        const { data: referrerUser } = await supabaseAdmin
+          .from("users")
+          .select("full_name, email")
+          .eq("id", referrer.user_id)
+          .single();
+
+        if (!referrerUser) {
+          return null;
+        }
+
+        return {
+          referral_code: referrer.referral_code,
+          referrer_name: referrerUser.full_name,
+          referrer_email: referrerUser.email,
+        };
+      } catch (error) {
+        console.error(`[GET-REFERRER-PUT] Error:`, error);
         return null;
-
-      const referrerData = Array.isArray(referral.referrers)
-        ? referral.referrers[0]
-        : referral.referrers;
-      const userData = Array.isArray(referrerData.users)
-        ? referrerData.users[0]
-        : referrerData.users;
-
-      return {
-        referral_code: referrerData.referral_code,
-        referrer_name: userData.full_name,
-        referrer_email: userData.email,
-      };
+      }
     };
 
+    // Actualizar la orden
     const { data: order, error } = await supabaseAdmin
       .from("orders")
       .update({
