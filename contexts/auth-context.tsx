@@ -122,7 +122,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Manejar eventos específicos
       if (event === "SIGNED_IN") {
-        console.log("Usuario autenticado:", session?.user?.email);
+        console.log(
+          "[AUTH-CONTEXT] Usuario autenticado:",
+          session?.user?.email
+        );
         const enrichedUser = await enrichUserData(
           session?.user ?? null,
           session
@@ -133,7 +136,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const pendingReferralCode = localStorage.getItem(
           "pending_referral_code"
         );
-        console.log("[AUTH] Pending referral code:", pendingReferralCode);
+        console.log(
+          "[AUTH-CONTEXT] Pending referral code:",
+          pendingReferralCode
+        );
+        console.log("[AUTH-CONTEXT] User ID:", session?.user?.id);
+        console.log(
+          "[AUTH-CONTEXT] Has access token:",
+          !!session?.access_token
+        );
 
         if (pendingReferralCode && session?.access_token) {
           try {

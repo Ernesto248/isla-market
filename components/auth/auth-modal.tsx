@@ -60,22 +60,11 @@ export function AuthModal({
   onModeChange,
 }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [referralCode, setReferralCode] = useState<string | null>(null);
   const { signIn, signUp, resetPassword } = useAuth();
   const t = translations["es"];
 
-  // Capturar código de referido de la URL cuando el modal se abre
-  useEffect(() => {
-    if (isOpen && typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const refParam = urlParams.get("ref");
-
-      if (refParam) {
-        setReferralCode(refParam);
-        // No mostrar mensaje al usuario - el código se procesa internamente
-      }
-    }
-  }, [isOpen, mode]);
+  // Ya no necesitamos capturar el código aquí - se hace en ReferralCapture
+  // El código ya está en localStorage cuando el usuario abre el modal
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -113,6 +102,14 @@ export function AuthModal({
     setIsLoading(true);
 
     try {
+      // Leer código de referido desde localStorage (guardado por ReferralCapture)
+      const referralCode = localStorage.getItem("pending_referral_code");
+
+      console.log(
+        "[AUTH-MODAL] Iniciando signup con código de referido:",
+        referralCode
+      );
+
       // Validar código de referido si existe
       if (referralCode) {
         const validateResponse = await fetch(
@@ -120,10 +117,15 @@ export function AuthModal({
         );
 
         if (!validateResponse.ok) {
+          console.log(
+            "[AUTH-MODAL] Código de referido inválido, continuando sin referidor"
+          );
           toast.error(
             "El código de referido no es válido o ha expirado. Continuando sin código de referido."
           );
-          setReferralCode(null);
+          localStorage.removeItem("pending_referral_code");
+        } else {
+          console.log("[AUTH-MODAL] Código de referido validado exitosamente");
         }
       }
 
@@ -137,10 +139,10 @@ export function AuthModal({
         return;
       }
 
-      // Si hay código de referido, guardarlo silenciosamente
-      if (referralCode) {
-        localStorage.setItem("pending_referral_code", referralCode);
-      }
+      // El código ya está en localStorage, no necesitamos guardarlo de nuevo
+      console.log(
+        "[AUTH-MODAL] Signup exitoso, código permanece en localStorage para procesamiento"
+      );
 
       // Mensaje genérico sin mención a referidos
       toast.success("¡Cuenta creada! Revisa tu email para confirmar.");

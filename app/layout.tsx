@@ -9,6 +9,7 @@ import { AuthModalProvider } from "@/contexts/auth-modal-context";
 import { GlobalAuthModal } from "@/components/auth/global-auth-modal";
 import { SessionRefresher } from "@/components/auth/session-refresher";
 import { CartGuard } from "@/components/cart/cart-guard";
+import { ReferralCapture } from "@/components/referral-capture";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -74,6 +75,7 @@ export default function RootLayout({
         <AuthProvider>
           <AuthModalProvider>
             <ThemeProvider>
+              <ReferralCapture />
               <SessionRefresher />
               <CartGuard />
               <div className="min-h-screen flex flex-col">
