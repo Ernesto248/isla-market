@@ -54,6 +54,7 @@ import {
   CheckCircle2,
   Truck,
   XCircle,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -506,10 +507,52 @@ export default function OrderDetailPage({
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Columna Lateral (1/3) */}
-        <div className="space-y-6">
+          {/* Información del Referidor */}
+          {order.referrer && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Users className="h-5 w-5" />
+                  Referidor
+                </CardTitle>
+                <CardDescription>
+                  Cliente referido por este vendedor
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Código de Referido
+                    </p>
+                    <Badge variant="outline" className="font-mono text-sm mt-1">
+                      {order.referrer.referral_code}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nombre</p>
+                      <p className="font-medium">
+                        {order.referrer.referrer_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium text-xs break-all">
+                        {order.referrer.referrer_email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Cambiar Estado */}
           <Card>
             <CardHeader>

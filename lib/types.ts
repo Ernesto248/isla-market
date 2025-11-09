@@ -80,6 +80,12 @@ export interface Order {
     neighborhood?: string; // Opcional para store_pickup
     province?: string; // Opcional para store_pickup
   };
+  // Información del referidor (si aplica)
+  referrer?: {
+    referral_code: string;
+    referrer_name: string;
+    referrer_email: string;
+  } | null;
   // Items de la orden
   items?: OrderItem[];
 }

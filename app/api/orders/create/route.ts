@@ -216,6 +216,48 @@ export async function POST(req: NextRequest) {
       .eq("id", shippingAddressId)
       .single();
 
+    // 9.5. Obtener información del referidor (si existe)
+    let referrerInfo = null;
+    try {
+      const { data: referral } = await supabase
+        .from("referrals")
+        .select(
+          `
+          referral_code,
+          is_active,
+          referrer_id,
+          referrers!inner (
+            referral_code,
+            user_id,
+            users!inner (
+              full_name,
+              email
+            )
+          )
+        `
+        )
+        .eq("referred_user_id", user.id)
+        .eq("is_active", true)
+        .single();
+
+      if (referral && referral.referrers && referral.referrers.length > 0) {
+        const referrerData = Array.isArray(referral.referrers)
+          ? referral.referrers[0]
+          : referral.referrers;
+        const userData = Array.isArray(referrerData.users)
+          ? referrerData.users[0]
+          : referrerData.users;
+
+        referrerInfo = {
+          referral_code: referrerData.referral_code,
+          referrer_name: userData.full_name,
+          referrer_email: userData.email,
+        };
+      }
+    } catch (error) {
+      console.error("Error al obtener referidor (no crítico):", error);
+    }
+
     // 10. Enviar emails (no bloqueante) - Dynamic import to avoid build-time evaluation
     if (fullOrder && fullShippingAddress) {
       import("@/lib/email")
@@ -224,6 +266,7 @@ export async function POST(req: NextRequest) {
             order: fullOrder as any,
             user: user as any,
             shippingAddress: fullShippingAddress as any,
+            referrer: referrerInfo,
           });
         })
         .catch((error: any) => {

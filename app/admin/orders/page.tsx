@@ -324,6 +324,7 @@ export default function OrdersPage() {
                   <TableHead>ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Destinatario</TableHead>
+                  <TableHead>Referidor</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Estado</TableHead>
@@ -333,7 +334,7 @@ export default function OrdersPage() {
               <TableBody>
                 {filteredOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Package className="h-12 w-12 text-muted-foreground opacity-50" />
                         <p className="text-muted-foreground">
@@ -373,6 +374,25 @@ export default function OrdersPage() {
                             {order.recipientInfo?.province || "N/A"}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {order.referrer ? (
+                          <div className="flex flex-col">
+                            <Badge
+                              variant="outline"
+                              className="w-fit mb-1 font-mono text-xs"
+                            >
+                              {order.referrer.referral_code}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                              {order.referrer.referrer_name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Sin referidor
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatDate(order.created_at)}

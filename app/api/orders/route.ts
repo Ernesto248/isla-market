@@ -37,6 +37,46 @@ export async function GET(request: NextRequest) {
       )
       .order("created_at", { ascending: false });
 
+    // Función para obtener información del referidor de una orden
+    const getReferrerInfo = async (userId: string) => {
+      const { data: referral } = await supabaseAdmin
+        .from("referrals")
+        .select(
+          `
+          referral_code,
+          is_active,
+          referrer_id,
+          referrers!inner (
+            referral_code,
+            user_id,
+            users!inner (
+              full_name,
+              email
+            )
+          )
+        `
+        )
+        .eq("referred_user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (!referral || !referral.referrers || referral.referrers.length === 0)
+        return null;
+
+      const referrerData = Array.isArray(referral.referrers)
+        ? referral.referrers[0]
+        : referral.referrers;
+      const userData = Array.isArray(referrerData.users)
+        ? referrerData.users[0]
+        : referrerData.users;
+
+      return {
+        referral_code: referrerData.referral_code,
+        referrer_name: userData.full_name,
+        referrer_email: userData.email,
+      };
+    };
+
     // Temporal: Obtener variantes por separado para evitar caché de PostgREST
     const ordersWithVariants = async (orders: any[]) => {
       for (const order of orders) {
@@ -81,9 +121,22 @@ export async function GET(request: NextRequest) {
       ? await ordersWithVariants(orders)
       : [];
 
+    // Obtener información del referidor para cada orden
+    const ordersWithReferrers = await Promise.all(
+      ordersWithVariantsData.map(async (order: any) => {
+        const referrerInfo = order.user_id
+          ? await getReferrerInfo(order.user_id)
+          : null;
+        return {
+          ...order,
+          referrer: referrerInfo,
+        };
+      })
+    );
+
     // Transformar los datos al formato esperado
     const transformedOrders =
-      ordersWithVariantsData?.map((order: any) => ({
+      ordersWithReferrers?.map((order: any) => ({
         ...order,
         email: order.users?.email,
         full_name: order.users?.full_name,

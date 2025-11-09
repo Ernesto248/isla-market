@@ -50,6 +50,11 @@ export interface SendOrderEmailsParams {
   order: Order;
   user: User;
   shippingAddress: ShippingAddress;
+  referrer?: {
+    referral_code: string;
+    referrer_name: string;
+    referrer_email: string;
+  } | null;
 }
 
 // HTML Template Generator for Customer Email
@@ -204,6 +209,11 @@ function generateAdminEmailHTML(params: {
   recipientPhone: string;
   recipientAddress?: string;
   adminLink: string;
+  referrer?: {
+    referral_code: string;
+    referrer_name: string;
+    referrer_email: string;
+  } | null;
 }) {
   const itemsHTML = params.items
     .map(
@@ -281,6 +291,16 @@ function generateAdminEmailHTML(params: {
               params.customerPhone
             }</p>
           </div>
+          ${
+            params.referrer
+              ? `<h3 style="color: #1e293b; margin-top: 30px;">🤝 Información del Referidor:</h3>
+          <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0ea5e9;">
+            <p style="margin: 0; color: #334155;"><strong>Código:</strong> <span style="background: #0ea5e9; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">${params.referrer.referral_code}</span></p>
+            <p style="margin: 8px 0 0; color: #334155;"><strong>Nombre:</strong> ${params.referrer.referrer_name}</p>
+            <p style="margin: 8px 0 0; color: #334155;"><strong>Email:</strong> ${params.referrer.referrer_email}</p>
+          </div>`
+              : ""
+          }
           <h3 style="color: #1e293b;">💰 Resumen del Pedido:</h3>
           <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
             <p style="margin: 0; color: #64748b;"><strong>Subtotal:</strong> ${
@@ -319,6 +339,103 @@ function generateAdminEmailHTML(params: {
   `;
 }
 
+// HTML Template Generator for Referrer Email
+function generateReferrerEmailHTML(params: {
+  orderId: string;
+  orderDate: string;
+  totalAmount: string;
+  subtotal: string;
+  shippingFee: string;
+  deliveryType: "home_delivery" | "store_pickup";
+  customerName: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: string;
+    total: string;
+  }>;
+  referrerName: string;
+}) {
+  const itemsHTML = params.items
+    .map(
+      (item) => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">${item.name}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #64748b;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #334155;">${item.price}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #0ea5e9;">${item.total}</td>
+    </tr>
+  `
+    )
+    .join("");
+
+  const deliveryBadge =
+    params.deliveryType === "home_delivery"
+      ? `<span style="background: #0ea5e9; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">🚚 Entrega a Domicilio</span>`
+      : `<span style="background: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">🏪 Recogida en Tienda</span>`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
+        <div style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Nueva Comisión Generada</h1>
+        </div>
+        <div style="background: white; padding: 40px; border-radius: 0 0 8px 8px;">
+          <h2 style="color: #1e293b; margin-bottom: 10px;">¡Felicidades ${
+            params.referrerName
+          }!</h2>
+          <div style="margin-bottom: 10px;">${deliveryBadge}</div>
+          <p style="color: #64748b; font-size: 14px; margin-bottom: 30px;">Orden #${
+            params.orderId
+          } - ${params.orderDate}</p>
+          <div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #0369a1; font-weight: 600;">💰 ¡Tu cliente ha realizado un pedido!</p>
+            <p style="margin: 8px 0 0; color: #075985; font-size: 14px;">Ganarás una comisión por esta orden cuando sea entregada y marcada como pagada.</p>
+          </div>
+          <h3 style="color: #1e293b; margin-top: 30px;">👤 Cliente:</h3>
+          <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #334155; font-weight: 600;">${
+              params.customerName
+            }</p>
+          </div>
+          <h3 style="color: #1e293b;">💰 Resumen del Pedido:</h3>
+          <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #64748b;"><strong>Subtotal:</strong> ${
+              params.subtotal
+            }</p>
+            <p style="margin: 8px 0 0; color: #64748b;"><strong>Envío:</strong> ${
+              params.shippingFee === "$0.00 USD"
+                ? "Gratis (Recogida en tienda)"
+                : params.shippingFee
+            }</p>
+            <p style="margin: 8px 0 0; color: #0ea5e9; font-size: 24px; font-weight: 700;"><strong>Total:</strong> ${
+              params.totalAmount
+            }</p>
+          </div>
+          <h3 style="color: #1e293b; margin-top: 30px;">📦 Productos:</h3>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr style="background: #f8fafc;">
+                <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b; font-weight: 600;">PRODUCTO</th>
+                <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b; font-weight: 600;">CANT.</th>
+                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b; font-weight: 600;">PRECIO</th>
+                <th style="padding: 12px; text-align: right; font-size: 12px; color: #64748b; font-weight: 600;">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHTML}</tbody>
+          </table>
+          <div style="background: #ecfccb; padding: 16px; border-radius: 8px; margin-top: 30px;">
+            <p style="margin: 0; color: #3f6212; font-weight: 600;">✨ Sigue recomendando Isla Market</p>
+            <p style="margin: 8px 0 0; color: #4d7c0f; font-size: 14px;">Cada venta de tus referidos te genera comisión. ¡Gracias por confiar en nosotros!</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
 /**
  * Envía emails de confirmación de orden al cliente y notificación al admin
  */
@@ -326,6 +443,7 @@ export async function sendOrderEmails({
   order,
   user,
   shippingAddress,
+  referrer,
 }: SendOrderEmailsParams) {
   try {
     // Preparar datos comunes
@@ -421,6 +539,7 @@ export async function sendOrderEmails({
       recipientPhone,
       recipientAddress,
       adminLink,
+      referrer,
     });
 
     const adminEmailResult = await resend.emails.send({
@@ -435,10 +554,38 @@ export async function sendOrderEmails({
 
     console.log("✅ Email enviado al admin:", adminEmailResult);
 
+    // 3. Enviar email al referidor (si existe)
+    let referrerEmailResult = null;
+    if (referrer && referrer.referrer_email) {
+      const referrerEmailHtml = generateReferrerEmailHTML({
+        orderId: order.id.slice(0, 8).toUpperCase(),
+        orderDate,
+        totalAmount,
+        subtotal: subtotalFormatted,
+        shippingFee: shippingFeeFormatted,
+        deliveryType: deliveryType as "home_delivery" | "store_pickup",
+        customerName,
+        items,
+        referrerName: referrer.referrer_name,
+      });
+
+      referrerEmailResult = await resend.emails.send({
+        from: EMAIL_FROM,
+        to: referrer.referrer_email,
+        subject: `🎉 Nueva Comisión - Pedido #${order.id
+          .slice(0, 8)
+          .toUpperCase()} - Isla Market`,
+        html: referrerEmailHtml,
+      });
+
+      console.log("✅ Email enviado al referidor:", referrerEmailResult);
+    }
+
     return {
       success: true,
       customerEmailId: customerEmailResult.data?.id,
       adminEmailId: adminEmailResult.data?.id,
+      referrerEmailId: referrerEmailResult?.data?.id,
     };
   } catch (error) {
     console.error("❌ Error al enviar emails:", error);

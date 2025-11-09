@@ -9,6 +9,47 @@ export async function GET(
 ) {
   try {
     const supabaseAdmin = createSupabaseAdmin();
+
+    // Función para obtener información del referidor
+    const getReferrerInfo = async (userId: string) => {
+      const { data: referral } = await supabaseAdmin
+        .from("referrals")
+        .select(
+          `
+          referral_code,
+          is_active,
+          referrer_id,
+          referrers!inner (
+            referral_code,
+            user_id,
+            users!inner (
+              full_name,
+              email
+            )
+          )
+        `
+        )
+        .eq("referred_user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (!referral || !referral.referrers || referral.referrers.length === 0)
+        return null;
+
+      const referrerData = Array.isArray(referral.referrers)
+        ? referral.referrers[0]
+        : referral.referrers;
+      const userData = Array.isArray(referrerData.users)
+        ? referrerData.users[0]
+        : referrerData.users;
+
+      return {
+        referral_code: referrerData.referral_code,
+        referrer_name: userData.full_name,
+        referrer_email: userData.email,
+      };
+    };
+
     const { data: order, error } = await supabaseAdmin
       .from("orders")
       .select(
@@ -51,7 +92,15 @@ export async function GET(
       items: order.order_items,
     });
 
-    return NextResponse.json(order);
+    // Obtener información del referidor
+    const referrerInfo = order.user_id
+      ? await getReferrerInfo(order.user_id)
+      : null;
+
+    return NextResponse.json({
+      ...order,
+      referrer: referrerInfo,
+    });
   } catch (error) {
     console.error("Unexpected error:", error);
     return NextResponse.json(
@@ -69,6 +118,46 @@ export async function PUT(
     const supabaseAdmin = createSupabaseAdmin();
     const body = await request.json();
     const { status, notes } = body;
+
+    // Función para obtener información del referidor
+    const getReferrerInfo = async (userId: string) => {
+      const { data: referral } = await supabaseAdmin
+        .from("referrals")
+        .select(
+          `
+          referral_code,
+          is_active,
+          referrer_id,
+          referrers!inner (
+            referral_code,
+            user_id,
+            users!inner (
+              full_name,
+              email
+            )
+          )
+        `
+        )
+        .eq("referred_user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (!referral || !referral.referrers || referral.referrers.length === 0)
+        return null;
+
+      const referrerData = Array.isArray(referral.referrers)
+        ? referral.referrers[0]
+        : referral.referrers;
+      const userData = Array.isArray(referrerData.users)
+        ? referrerData.users[0]
+        : referrerData.users;
+
+      return {
+        referral_code: referrerData.referral_code,
+        referrer_name: userData.full_name,
+        referrer_email: userData.email,
+      };
+    };
 
     const { data: order, error } = await supabaseAdmin
       .from("orders")
@@ -107,7 +196,15 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(order);
+    // Obtener información del referidor
+    const referrerInfo = order.user_id
+      ? await getReferrerInfo(order.user_id)
+      : null;
+
+    return NextResponse.json({
+      ...order,
+      referrer: referrerInfo,
+    });
   } catch (error) {
     console.error("Unexpected error:", error);
     return NextResponse.json(
