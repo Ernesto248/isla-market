@@ -32,8 +32,12 @@ export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación
     const user = await getAuthenticatedUser(request);
+    console.log("[CREATE-REFERRAL] User authenticated:", user.id, user.email);
+
     const body = await request.json();
     const { referral_code } = body;
+
+    console.log("[CREATE-REFERRAL] Referral code received:", referral_code);
 
     if (!referral_code) {
       return NextResponse.json(
@@ -52,8 +56,14 @@ export async function POST(request: NextRequest) {
       .eq("is_active", true)
       .single();
 
+    console.log("[CREATE-REFERRAL] Referrer lookup result:", {
+      found: !!referrer,
+      error: referrerError?.message,
+      referrerId: referrer?.id,
+    });
+
     if (referrerError || !referrer) {
-      console.error("Referrer not found:", {
+      console.error("[CREATE-REFERRAL] Referrer not found:", {
         referral_code,
         error: referrerError,
       });
@@ -86,6 +96,11 @@ export async function POST(request: NextRequest) {
       .select("id")
       .eq("referred_user_id", user.id)
       .single();
+
+    console.log("[CREATE-REFERRAL] Existing referral check:", {
+      exists: !!existingReferral,
+      userId: user.id,
+    });
 
     if (existingReferral) {
       return NextResponse.json(

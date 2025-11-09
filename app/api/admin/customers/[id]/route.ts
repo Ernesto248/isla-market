@@ -67,40 +67,42 @@ export async function GET(
     };
 
     // Obtener información del referidor (si existe)
-    const { data: referral } = await supabaseAdmin
-      .from("referrals")
-      .select(
-        `
-        referral_code,
-        is_active,
-        referrers!inner (
-          referral_code,
-          user_id,
-          users!inner (
-            full_name,
-            email
-          )
-        )
-      `
-      )
-      .eq("referred_user_id", params.id)
-      .eq("is_active", true)
-      .single();
-
     let referrerInfo = null;
-    if (referral && referral.referrers && referral.referrers.length > 0) {
-      const referrerData = Array.isArray(referral.referrers)
-        ? referral.referrers[0]
-        : referral.referrers;
-      const userData = Array.isArray(referrerData.users)
-        ? referrerData.users[0]
-        : referrerData.users;
+    try {
+      const { data: referral, error: referralError } = await supabaseAdmin
+        .from("referrals")
+        .select("referrer_id, referral_code, is_active")
+        .eq("referred_user_id", params.id)
+        .eq("is_active", true)
+        .single();
 
-      referrerInfo = {
-        referral_code: referrerData.referral_code,
-        referrer_name: userData.full_name,
-        referrer_email: userData.email,
-      };
+      if (referral && !referralError) {
+        // Obtener información del referidor
+        const { data: referrer } = await supabaseAdmin
+          .from("referrers")
+          .select("referral_code, user_id")
+          .eq("id", referral.referrer_id)
+          .single();
+
+        if (referrer) {
+          // Obtener información del usuario referidor
+          const { data: referrerUser } = await supabaseAdmin
+            .from("users")
+            .select("full_name, email")
+            .eq("id", referrer.user_id)
+            .single();
+
+          if (referrerUser) {
+            referrerInfo = {
+              referral_code: referrer.referral_code,
+              referrer_name: referrerUser.full_name,
+              referrer_email: referrerUser.email,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching referrer for user ${params.id}:`, error);
     }
 
     return NextResponse.json({

@@ -133,8 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const pendingReferralCode = localStorage.getItem(
           "pending_referral_code"
         );
+        console.log("[AUTH] Pending referral code:", pendingReferralCode);
+
         if (pendingReferralCode && session?.access_token) {
           try {
+            console.log(
+              "[AUTH] Validating referral code:",
+              pendingReferralCode
+            );
+
             // Primero validar el código
             const validationResponse = await fetch(
               `/api/referrals/validate-code?code=${encodeURIComponent(
@@ -147,16 +154,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             );
 
+            console.log(
+              "[AUTH] Validation response status:",
+              validationResponse.status
+            );
+
             if (!validationResponse.ok) {
               // Código inválido o referidor inactivo - simplemente limpiar y continuar
               console.log(
-                "Código de referido inválido o referidor inactivo - usuario registrado sin referidor"
+                "[AUTH] Código de referido inválido o referidor inactivo - usuario registrado sin referidor"
               );
               localStorage.removeItem("pending_referral_code");
               return;
             }
 
+            const validationData = await validationResponse.json();
+            console.log("[AUTH] Validation data:", validationData);
+
             // Si el código es válido, intentar crear la relación
+            console.log("[AUTH] Creating referral relationship...");
             const response = await fetch(
               "/api/referrals/create-referral-link",
               {
@@ -171,22 +187,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             );
 
+            console.log(
+              "[AUTH] Create referral response status:",
+              response.status
+            );
+
             if (response.ok) {
+              const responseData = await response.json();
               console.log(
-                "Relación de referido creada exitosamente (interno para comisiones)"
+                "[AUTH] Relación de referido creada exitosamente:",
+                responseData
               );
+              localStorage.removeItem("pending_referral_code");
             } else {
               const data = await response.json();
               console.log(
-                "No se pudo crear relación de referido:",
+                "[AUTH] No se pudo crear la relación de referido:",
                 data.error || "Error desconocido"
               );
+              localStorage.removeItem("pending_referral_code");
             }
-
-            // Siempre limpiar el código pendiente
-            localStorage.removeItem("pending_referral_code");
           } catch (error) {
-            console.error("Error procesando código de referido:", error);
+            console.error("[AUTH] Error procesando código de referido:", error);
             localStorage.removeItem("pending_referral_code");
           }
         }

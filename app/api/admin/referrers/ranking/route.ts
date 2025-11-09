@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase";
 import { requireAdmin } from "@/lib/admin-auth";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/admin/referrers/ranking
  * Obtener ranking de referidores ordenados por diferentes métricas
