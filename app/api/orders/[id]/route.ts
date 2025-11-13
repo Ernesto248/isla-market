@@ -228,6 +228,13 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Log para cambios de estado a "entregado"
+    if (status === "entregado") {
+      console.log(
+        `[ORDER-UPDATE] Orden ${params.id} marcada como ENTREGADA. El trigger de BD reducirá el stock automáticamente.`
+      );
+    }
+
     // Obtener información del referidor
     const referrerInfo = order.user_id
       ? await getReferrerInfo(order.user_id)

@@ -37,6 +37,7 @@ import {
   DollarSign,
   Package,
   Shield,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -80,6 +81,18 @@ interface CustomerData {
     referrer_name: string;
     referrer_email: string;
   } | null;
+}
+
+interface Referrer {
+  id: string;
+  referral_code: string;
+  user_id: string;
+  is_active: boolean;
+  user?: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
 }
 
 // Función helper para obtener el color del badge según el estado
@@ -134,6 +147,9 @@ export default function CustomerDetailPage() {
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingRole, setUpdatingRole] = useState(false);
+  const [referrers, setReferrers] = useState<Referrer[]>([]);
+  const [selectedReferrerId, setSelectedReferrerId] = useState<string>("");
+  const [updatingReferrer, setUpdatingReferrer] = useState(false);
 
   // Redirigir si no está autenticado o no es admin
   useEffect(() => {
@@ -169,6 +185,30 @@ export default function CustomerDetailPage() {
     loadCustomerData();
   }, [customerId, user, router]);
 
+  // Cargar referidores disponibles
+  useEffect(() => {
+    const loadReferrers = async () => {
+      if (!user || user.role !== "admin") return;
+
+      try {
+        const response = await fetch("/api/admin/referrers?is_active=true");
+        const data = await response.json();
+
+        if (response.ok) {
+          // Filtrar para no incluir al usuario actual como su propio referidor
+          const availableReferrers = data.referrers.filter(
+            (ref: Referrer) => ref.user_id !== customerId
+          );
+          setReferrers(availableReferrers);
+        }
+      } catch (error) {
+        console.error("Error loading referrers:", error);
+      }
+    };
+
+    loadReferrers();
+  }, [user, customerId]);
+
   // Actualizar rol del usuario
   const handleRoleChange = async (newRole: "customer" | "admin") => {
     if (!customerData) return;
@@ -198,6 +238,53 @@ export default function CustomerDetailPage() {
       toast.error(error.message || "Error al actualizar el rol");
     } finally {
       setUpdatingRole(false);
+    }
+  };
+
+  // Actualizar referidor del cliente
+  const handleReferrerChange = async () => {
+    if (!customerData) return;
+
+    try {
+      setUpdatingReferrer(true);
+
+      // Si seleccionó "remove", enviar null
+      const referrerIdToSend =
+        selectedReferrerId === "remove" ? null : selectedReferrerId;
+
+      const response = await fetch(
+        `/api/admin/customers/${customerId}/referrer`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            referrerId: referrerIdToSend,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al actualizar el referidor");
+      }
+
+      // Recargar datos del cliente
+      const customerResponse = await fetch(
+        `/api/admin/customers/${customerId}`
+      );
+      const updatedData = await customerResponse.json();
+
+      if (customerResponse.ok) {
+        setCustomerData(updatedData);
+        setSelectedReferrerId("");
+        toast.success(data.message);
+      }
+    } catch (error: any) {
+      console.error("Error updating referrer:", error);
+      toast.error(error.message || "Error al actualizar el referidor");
+    } finally {
+      setUpdatingReferrer(false);
     }
   };
 
@@ -336,46 +423,103 @@ export default function CustomerDetailPage() {
           </Card>
 
           {/* Información del Referidor */}
-          {customerData.referrer && (
-            <Card className="border-sky-200 bg-sky-50/50">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  🤝 Referidor
-                </CardTitle>
-                <CardDescription>
-                  Cliente referido por otro usuario
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Código de Referido
-                    </p>
-                    <Badge className="bg-sky-500 hover:bg-sky-600">
-                      {customerData.referrer.referral_code}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Nombre del Referidor
-                    </p>
-                    <p className="font-medium">
-                      {customerData.referrer.referrer_name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Email del Referidor
-                    </p>
-                    <p className="text-sm">
-                      {customerData.referrer.referrer_email}
-                    </p>
+          <Card className="border-sky-200 bg-sky-50/50">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Referidor
+              </CardTitle>
+              <CardDescription>
+                Asigna o cambia el referidor de este cliente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Referidor Actual */}
+              {customerData.referrer ? (
+                <div className="p-4 border rounded-lg bg-white">
+                  <p className="text-sm font-medium mb-3">Referidor Actual</p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Código de Referido
+                      </p>
+                      <Badge className="bg-sky-500 hover:bg-sky-600">
+                        {customerData.referrer.referral_code}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Nombre</p>
+                      <p className="text-sm font-medium">
+                        {customerData.referrer.referrer_name}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Email</p>
+                      <p className="text-sm">
+                        {customerData.referrer.referrer_email}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <div className="p-4 border rounded-lg bg-white">
+                  <p className="text-sm text-muted-foreground">
+                    Este cliente no tiene referidor asignado
+                  </p>
+                </div>
+              )}
+
+              {/* Cambiar Referidor */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  {customerData.referrer ? "Cambiar" : "Asignar"} Referidor
+                </label>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedReferrerId}
+                    onValueChange={setSelectedReferrerId}
+                    disabled={updatingReferrer}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar referidor..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customerData.referrer && (
+                        <SelectItem value="remove">
+                          🗑️ Eliminar referidor
+                        </SelectItem>
+                      )}
+                      {referrers.map((referrer) => (
+                        <SelectItem key={referrer.id} value={referrer.id}>
+                          {referrer.referral_code} -{" "}
+                          {referrer.user?.full_name || referrer.user?.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleReferrerChange}
+                    disabled={!selectedReferrerId || updatingReferrer}
+                    size="default"
+                  >
+                    {updatingReferrer ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      "Guardar"
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un referidor para{" "}
+                  {customerData.referrer ? "cambiar" : "asignar"} o eliminar el
+                  actual
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Historial de Órdenes */}
           <Card>

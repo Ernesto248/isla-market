@@ -174,10 +174,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7.5. El trigger de Supabase reduce el stock automáticamente
-    // Ver: supabase/migrations/013_add_variant_id_to_order_items.sql
+    // 7.5. NOTA: El stock NO se reduce aquí
+    // El stock se reducirá automáticamente cuando el admin marque la orden como "entregado"
+    // Ver: supabase/migrations/017_change_stock_reduction_to_delivery.sql
     console.log(
-      "✅ Order items creados. El trigger reduce el stock automáticamente."
+      "✅ Order items creados. El stock se reducirá cuando la orden sea marcada como entregada."
     );
 
     // 8. Obtener orden completa con items, productos Y variantes
@@ -222,48 +223,79 @@ export async function POST(req: NextRequest) {
       referrer_name: string;
       referrer_email: string;
     } | null = null;
+
     try {
-      const { data: referral } = await supabase
+      console.log("[CREATE-ORDER] Buscando referidor para usuario:", user.id);
+
+      // 1. Obtener referral
+      const { data: referral, error: referralError } = await supabase
         .from("referrals")
-        .select(
-          `
-          referral_code,
-          is_active,
-          referrer_id,
-          referrers!inner (
-            referral_code,
-            user_id,
-            users!inner (
-              full_name,
-              email
-            )
-          )
-        `
-        )
+        .select("referrer_id, referral_code, is_active")
         .eq("referred_user_id", user.id)
         .eq("is_active", true)
         .single();
 
-      if (referral && referral.referrers && referral.referrers.length > 0) {
-        const referrerData = Array.isArray(referral.referrers)
-          ? referral.referrers[0]
-          : referral.referrers;
-        const userData = Array.isArray(referrerData.users)
-          ? referrerData.users[0]
-          : referrerData.users;
+      if (!referral || referralError) {
+        console.log("[CREATE-ORDER] No se encontró referral activo");
+      } else {
+        console.log("[CREATE-ORDER] Referral encontrado:", {
+          referrer_id: referral.referrer_id,
+          referral_code: referral.referral_code,
+        });
 
-        referrerInfo = {
-          referral_code: referrerData.referral_code,
-          referrer_name: userData.full_name,
-          referrer_email: userData.email,
-        };
+        // 2. Obtener información del referidor
+        const { data: referrer, error: referrerError } = await supabase
+          .from("referrers")
+          .select("referral_code, user_id")
+          .eq("id", referral.referrer_id)
+          .single();
+
+        if (!referrer || referrerError) {
+          console.error(
+            "[CREATE-ORDER] Error al obtener referrer:",
+            referrerError
+          );
+        } else {
+          console.log("[CREATE-ORDER] Referrer encontrado:", {
+            user_id: referrer.user_id,
+            referral_code: referrer.referral_code,
+          });
+
+          // 3. Obtener información del usuario referidor
+          const { data: referrerUser, error: userError } = await supabase
+            .from("users")
+            .select("full_name, email")
+            .eq("id", referrer.user_id)
+            .single();
+
+          if (!referrerUser || userError) {
+            console.error(
+              "[CREATE-ORDER] Error al obtener usuario referidor:",
+              userError
+            );
+          } else {
+            referrerInfo = {
+              referral_code: referrer.referral_code,
+              referrer_name: referrerUser.full_name,
+              referrer_email: referrerUser.email,
+            };
+            console.log(
+              "[CREATE-ORDER] Información del referidor completa:",
+              referrerInfo
+            );
+          }
+        }
       }
     } catch (error) {
-      console.error("Error al obtener referidor (no crítico):", error);
+      console.error(
+        "[CREATE-ORDER] Error al obtener referidor (no crítico):",
+        error
+      );
     }
 
     // 10. Enviar emails (no bloqueante) - Dynamic import to avoid build-time evaluation
     if (fullOrder && fullShippingAddress) {
+      console.log("[CREATE-ORDER] Enviando emails con referrer:", referrerInfo);
       import("@/lib/email")
         .then((emailModule) => {
           return emailModule.sendOrderEmails({
@@ -273,8 +305,14 @@ export async function POST(req: NextRequest) {
             referrer: referrerInfo,
           });
         })
+        .then((result) => {
+          console.log("[CREATE-ORDER] Resultado de envío de emails:", result);
+        })
         .catch((error: any) => {
-          console.error("Error al enviar emails (no crítico):", error);
+          console.error(
+            "[CREATE-ORDER] Error al enviar emails (no crítico):",
+            error
+          );
         });
     }
 
