@@ -294,15 +294,24 @@ export async function POST(req: NextRequest) {
     }
 
     // 10. Enviar emails (no bloqueante) - Dynamic import to avoid build-time evaluation
-    if (fullOrder && fullShippingAddress) {
-      console.log("[CREATE-ORDER] Enviando emails con referrer:", referrerInfo);
+    if (fullOrder) {
+      // Capturar referrerInfo en una constante local para el closure
+      const referrerData = referrerInfo;
+      console.log("[CREATE-ORDER] Preparando envío de emails...");
+      console.log("[CREATE-ORDER] - fullOrder:", !!fullOrder);
+      console.log(
+        "[CREATE-ORDER] - fullShippingAddress:",
+        !!fullShippingAddress
+      );
+      console.log("[CREATE-ORDER] - referrerData:", referrerData);
+
       import("@/lib/email")
         .then((emailModule) => {
           return emailModule.sendOrderEmails({
             order: fullOrder as any,
             user: user as any,
             shippingAddress: fullShippingAddress as any,
-            referrer: referrerInfo,
+            referrer: referrerData,
           });
         })
         .then((result) => {
@@ -314,6 +323,10 @@ export async function POST(req: NextRequest) {
             error
           );
         });
+    } else {
+      console.error(
+        "[CREATE-ORDER] No se pudieron enviar emails: fullOrder es null"
+      );
     }
 
     // 11. Retornar orden creada

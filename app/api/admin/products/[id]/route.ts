@@ -49,7 +49,9 @@ export async function GET(
           image_url,
           attributes_display,
           is_active,
-          display_order
+          display_order,
+          variant_name,
+          color
         )
       `
       )

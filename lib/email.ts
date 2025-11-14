@@ -555,8 +555,20 @@ export async function sendOrderEmails({
     console.log("✅ Email enviado al admin:", adminEmailResult);
 
     // 3. Enviar email al referidor (si existe)
+    console.log("[SEND-EMAILS] Verificando si hay referidor...");
+    console.log("[SEND-EMAILS] - referrer:", referrer);
+    console.log(
+      "[SEND-EMAILS] - referrer?.referrer_email:",
+      referrer?.referrer_email
+    );
+
     let referrerEmailResult = null;
     if (referrer && referrer.referrer_email) {
+      console.log(
+        "[SEND-EMAILS] 🎯 Enviando email al referidor:",
+        referrer.referrer_email
+      );
+
       const referrerEmailHtml = generateReferrerEmailHTML({
         orderId: order.id.slice(0, 8).toUpperCase(),
         orderDate,
@@ -579,6 +591,10 @@ export async function sendOrderEmails({
       });
 
       console.log("✅ Email enviado al referidor:", referrerEmailResult);
+    } else {
+      console.log(
+        "[SEND-EMAILS] ❌ NO se enviará email al referidor (referrer es null o sin email)"
+      );
     }
 
     return {

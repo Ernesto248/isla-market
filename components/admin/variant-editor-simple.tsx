@@ -86,23 +86,47 @@ export function VariantEditor({
   // Cargar variantes iniciales si existen
   useEffect(() => {
     if (initialVariants && initialVariants.length > 0) {
-      const variantData: VariantData[] = initialVariants.map((variant) => ({
-        id: variant.id,
-        attribute_value_ids:
-          variant.attribute_values?.map((a: ProductAttributeValue) => a.id) ||
-          [],
-        sku: variant.sku || "",
-        price: variant.price,
-        stock_quantity: variant.stock_quantity,
-        is_active: variant.is_active,
-        _displayName: getVariantDisplayName(variant),
-        _attributeValues: variant.attribute_values?.map(
-          (a: ProductAttributeValue) => ({
-            attributeName: a.attribute?.display_name || "",
-            value: a.value,
-          })
-        ),
-      }));
+      const variantData: VariantData[] = initialVariants.map((variant) => {
+        // Extraer los nuevos campos del sistema simplificado
+        const variantAny = variant as any;
+        const variantName = variantAny.variant_name || "";
+        const color = variantAny.color || "";
+        const attributesDisplay = variantAny.attributes_display || "";
+
+        // Generar display name
+        let displayName = "";
+        if (variantName && color) {
+          displayName = `${variantName} - ${color}`;
+        } else if (variantName) {
+          displayName = variantName;
+        } else if (attributesDisplay) {
+          displayName = attributesDisplay;
+        } else {
+          displayName = getVariantDisplayName(variant);
+        }
+
+        return {
+          id: variant.id,
+          attribute_value_ids:
+            variant.attribute_values?.map((a: ProductAttributeValue) => a.id) ||
+            [],
+          sku: variant.sku || "",
+          price: variant.price,
+          stock_quantity: variant.stock_quantity,
+          is_active: variant.is_active,
+          // Incluir los nuevos campos del sistema simplificado
+          variant_name: variantName,
+          color: color,
+          attributes_display: attributesDisplay,
+          _displayName: displayName,
+          _attributeValues: variant.attribute_values?.map(
+            (a: ProductAttributeValue) => ({
+              attributeName: a.attribute?.display_name || "",
+              value: a.value,
+            })
+          ),
+        };
+      });
 
       setVariants(variantData);
     }

@@ -145,7 +145,7 @@ export function AuthModal({
       );
 
       // Mensaje genérico sin mención a referidos
-      toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+      toast.success("¡Cuenta creada exitosamente!");
 
       onClose();
     } catch (error) {
