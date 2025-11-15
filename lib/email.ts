@@ -155,9 +155,13 @@ function generateCustomerEmailHTML(params: {
             <p style="color: #64748b; margin: 8px 0 0; font-size: 14px;"><strong>Subtotal:</strong> ${
               params.subtotal
             }</p>
-            <p style="color: #64748b; margin: 8px 0 0; font-size: 14px;"><strong>Envío:</strong> ${
-              params.shippingFee === "$0.00 USD" ? "Gratis" : params.shippingFee
-            }</p>
+            <p style="color: #64748b; margin: 8px 0 0; font-size: 14px;"><strong>${
+              params.deliveryType === "home_delivery"
+                ? "Envío:"
+                : "Recogida en tienda"
+            }</strong> ${
+    params.deliveryType === "home_delivery" ? params.shippingFee : ""
+  }</p>
             <p style="color: #64748b; margin: 8px 0 0; font-size: 14px;"><strong>Total:</strong> <span style="color: #0ea5e9; font-size: 18px; font-weight: 700;">${
               params.totalAmount
             }</span></p>
@@ -306,11 +310,13 @@ function generateAdminEmailHTML(params: {
             <p style="margin: 0; color: #64748b;"><strong>Subtotal:</strong> ${
               params.subtotal
             }</p>
-            <p style="margin: 8px 0 0; color: #64748b;"><strong>Envío:</strong> ${
-              params.shippingFee === "$0.00 USD"
-                ? "Gratis (Recogida en tienda)"
-                : params.shippingFee
-            }</p>
+            <p style="margin: 8px 0 0; color: #64748b;"><strong>${
+              params.deliveryType === "home_delivery"
+                ? "Envío:"
+                : "Recogida en tienda:"
+            }</strong> ${
+    params.deliveryType === "home_delivery" ? params.shippingFee : ""
+  }</p>
             <p style="margin: 8px 0 0; color: #0ea5e9; font-size: 24px; font-weight: 700;"><strong>Total:</strong> ${
               params.totalAmount
             }</p>
@@ -405,11 +411,13 @@ function generateReferrerEmailHTML(params: {
             <p style="margin: 0; color: #64748b;"><strong>Subtotal:</strong> ${
               params.subtotal
             }</p>
-            <p style="margin: 8px 0 0; color: #64748b;"><strong>Envío:</strong> ${
-              params.shippingFee === "$0.00 USD"
-                ? "Gratis (Recogida en tienda)"
-                : params.shippingFee
-            }</p>
+            <p style="margin: 8px 0 0; color: #64748b;"><strong>${
+              params.deliveryType === "home_delivery"
+                ? "Envío:"
+                : "Recogida en tienda:"
+            }</strong> ${
+    params.deliveryType === "home_delivery" ? params.shippingFee : ""
+  }</p>
             <p style="margin: 8px 0 0; color: #0ea5e9; font-size: 24px; font-weight: 700;"><strong>Total:</strong> ${
               params.totalAmount
             }</p>
