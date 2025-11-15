@@ -143,7 +143,7 @@ export default function CustomerDetailPage() {
   const router = useRouter();
   const params = useParams();
   const customerId = params?.id as string;
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingRole, setUpdatingRole] = useState(false);
@@ -154,6 +154,10 @@ export default function CustomerDetailPage() {
   // Redirigir si no está autenticado o no es admin
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "admin")) {
+      console.log("🚫 [ADMIN] Usuario no autorizado, redirigiendo...", {
+        hasUser: !!user,
+        userRole: user?.role,
+      });
       router.push("/");
     }
   }, [user, authLoading, router]);
@@ -161,7 +165,16 @@ export default function CustomerDetailPage() {
   // Cargar datos del cliente
   useEffect(() => {
     const loadCustomerData = async () => {
-      if (!customerId || !user || user.role !== "admin") return;
+      // No cargar si aún está cargando auth o el usuario no es admin
+      if (authLoading || !customerId || !user || user.role !== "admin") {
+        console.log("⏸️ [CUSTOMER DATA] Saltando carga", {
+          authLoading,
+          hasCustomerId: !!customerId,
+          hasUser: !!user,
+          userRole: user?.role,
+        });
+        return;
+      }
 
       try {
         setLoading(true);
@@ -183,31 +196,78 @@ export default function CustomerDetailPage() {
     };
 
     loadCustomerData();
-  }, [customerId, user, router]);
+  }, [customerId, user, authLoading, router]);
 
   // Cargar referidores disponibles
   useEffect(() => {
     const loadReferrers = async () => {
-      if (!user || user.role !== "admin") return;
+      // Verificación estricta: debe ser admin, no estar cargando Y tener session token
+      if (
+        !user ||
+        authLoading ||
+        user.role !== "admin" ||
+        !session?.access_token
+      ) {
+        console.log(
+          "⏸️ [REFERRERS] Saltando carga - No es admin o aún cargando",
+          {
+            hasUser: !!user,
+            authLoading,
+            userRole: user?.role,
+            hasToken: !!session?.access_token,
+          }
+        );
+        return;
+      }
 
       try {
-        const response = await fetch("/api/admin/referrers?is_active=true");
-        const data = await response.json();
+        console.log("🔄 [REFERRERS] Iniciando carga de referidores...");
+        const response = await fetch("/api/admin/referrers?is_active=true", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-        if (response.ok) {
+        if (!response.ok) {
+          if (response.status === 403) {
+            // Usuario no tiene permisos - esto es normal si no es admin
+            // No mostrar error, simplemente retornar
+            return;
+          }
+          console.error("❌ [REFERRERS] Error en respuesta:", response.status);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("📋 [REFERRERS] Respuesta de API:", data);
+
+        if (data.referrers && Array.isArray(data.referrers)) {
           // Filtrar para no incluir al usuario actual como su propio referidor
           const availableReferrers = data.referrers.filter(
             (ref: Referrer) => ref.user_id !== customerId
           );
+          console.log(
+            "✅ [REFERRERS] Referidores disponibles:",
+            availableReferrers.length
+          );
+          console.log(
+            "📋 [REFERRERS] Lista de referidores:",
+            availableReferrers
+          );
           setReferrers(availableReferrers);
+        } else {
+          console.warn("⚠️ [REFERRERS] No se encontraron referidores");
+          setReferrers([]);
         }
       } catch (error) {
-        console.error("Error loading referrers:", error);
+        console.error("❌ [REFERRERS] Error loading referrers:", error);
+        // No mostrar toast si es error de permisos
+        setReferrers([]);
       }
     };
 
     loadReferrers();
-  }, [user, customerId]);
+  }, [user, authLoading, session?.access_token, customerId]);
 
   // Actualizar rol del usuario
   const handleRoleChange = async (newRole: "customer" | "admin") => {
@@ -478,10 +538,16 @@ export default function CustomerDetailPage() {
                   <Select
                     value={selectedReferrerId}
                     onValueChange={setSelectedReferrerId}
-                    disabled={updatingReferrer}
+                    disabled={updatingReferrer || referrers.length === 0}
                   >
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Seleccionar referidor..." />
+                      <SelectValue
+                        placeholder={
+                          referrers.length === 0
+                            ? "No hay referidores disponibles"
+                            : "Seleccionar referidor..."
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {customerData.referrer && (
@@ -489,12 +555,20 @@ export default function CustomerDetailPage() {
                           🗑️ Eliminar referidor
                         </SelectItem>
                       )}
-                      {referrers.map((referrer) => (
-                        <SelectItem key={referrer.id} value={referrer.id}>
-                          {referrer.referral_code} -{" "}
-                          {referrer.user?.full_name || referrer.user?.email}
-                        </SelectItem>
-                      ))}
+                      {referrers.length === 0 ? (
+                        <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                          No hay referidores activos disponibles
+                        </div>
+                      ) : (
+                        referrers.map((referrer) => (
+                          <SelectItem key={referrer.id} value={referrer.id}>
+                            {referrer.referral_code} -{" "}
+                            {referrer.user?.full_name ||
+                              referrer.user?.email ||
+                              "Sin nombre"}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <Button
@@ -513,9 +587,11 @@ export default function CustomerDetailPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Selecciona un referidor para{" "}
-                  {customerData.referrer ? "cambiar" : "asignar"} o eliminar el
-                  actual
+                  {referrers.length === 0
+                    ? "No hay referidores activos en el sistema"
+                    : `Selecciona un referidor para ${
+                        customerData.referrer ? "cambiar" : "asignar"
+                      } o eliminar el actual`}
                 </p>
               </div>
             </CardContent>

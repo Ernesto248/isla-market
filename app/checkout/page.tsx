@@ -34,7 +34,7 @@ const checkoutSchema = z
     firstName: z.string().min(2, "First name is required"),
     lastName: z.string().min(2, "Last name is required"),
     email: z.string().email("Valid email is required"),
-    phone: z.string().optional().or(z.literal("")), // Campo opcional
+    phone: z.string().min(8, "Phone number is required"), // Campo obligatorio
 
     // Delivery Type
     deliveryType: z.enum(["home_delivery", "store_pickup"], {
@@ -55,26 +55,23 @@ const checkoutSchema = z
   })
   .refine(
     (data) => {
-      // Si es entrega a domicilio, validar que todos los campos de dirección estén llenos
+      // Si es entrega a domicilio, validar los campos de dirección requeridos
+      // Entre calles es opcional, municipio y provincia están hardcodeados
       if (data.deliveryType === "home_delivery") {
         return (
           data.street &&
           data.street.length >= 5 &&
           data.houseNumber &&
           data.houseNumber.length >= 1 &&
-          data.betweenStreets &&
-          data.betweenStreets.length >= 5 &&
           data.neighborhood &&
-          data.neighborhood.length >= 2 &&
-          data.province &&
-          data.province.length >= 2
+          data.neighborhood.length >= 2
         );
       }
       return true;
     },
     {
       message:
-        "Todos los campos de dirección son requeridos para entrega a domicilio",
+        "Los campos de calle, número y barrio son requeridos para entrega a domicilio",
       path: ["street"], // Error aparecerá en el campo street
     }
   );
@@ -204,7 +201,7 @@ function CheckoutContent() {
         },
         body: JSON.stringify({
           userId: user?.id,
-          customerPhone: data.phone || null, // Teléfono del comprador (opcional)
+          customerPhone: data.phone, // Teléfono del comprador (obligatorio)
           deliveryType: data.deliveryType, // NUEVO: Tipo de entrega
           items: displayItems.map((item) => ({
             product_id: item.product.id,
@@ -220,10 +217,10 @@ function CheckoutContent() {
             ...(data.deliveryType === "home_delivery" && {
               street: data.street,
               house_number: data.houseNumber,
-              between_streets: data.betweenStreets,
+              between_streets: data.betweenStreets || "", // Entre calles es opcional
               neighborhood: data.neighborhood,
-              city: data.province,
-              province: data.province,
+              city: "Camagüey", // Municipio hardcodeado
+              province: "Camagüey", // Provincia hardcodeada
               country: "Cuba",
             }),
           },
@@ -384,12 +381,7 @@ function CheckoutContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">
-                      {t.phone}{" "}
-                      <span className="text-muted-foreground text-xs">
-                        (opcional)
-                      </span>
-                    </Label>
+                    <Label htmlFor="phone">{t.phone}</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -648,7 +640,10 @@ function CheckoutContent() {
 
                         <div className="space-y-2">
                           <Label htmlFor="betweenStreets">
-                            {t.betweenStreets}
+                            {t.betweenStreets}{" "}
+                            <span className="text-muted-foreground text-xs">
+                              (opcional)
+                            </span>
                           </Label>
                           <Input
                             id="betweenStreets"
@@ -693,19 +688,13 @@ function CheckoutContent() {
                             <Label htmlFor="province">{t.province}</Label>
                             <Input
                               id="province"
-                              {...form.register("province")}
-                              placeholder="Ej: La Habana"
-                              className={
-                                form.formState.errors.province
-                                  ? "border-red-500"
-                                  : ""
-                              }
+                              value="Camagüey"
+                              disabled
+                              className="bg-muted cursor-not-allowed"
                             />
-                            {form.formState.errors.province && (
-                              <p className="text-sm text-red-500">
-                                {form.formState.errors.province.message}
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Municipio y provincia fijos
+                            </p>
                           </div>
                         </div>
                       </div>

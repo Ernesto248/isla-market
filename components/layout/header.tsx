@@ -114,7 +114,11 @@ export function Header() {
                 {/* Logo Image - Redondeado */}
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 rounded-xl overflow-hidden shadow-md">
                   <Image
-                    src="/icono.png"
+                    src={
+                      theme === "dark"
+                        ? "/icono-oscuro.png"
+                        : "/icono-blanco.png"
+                    }
                     alt="Isla Market Logo"
                     width={48}
                     height={48}
